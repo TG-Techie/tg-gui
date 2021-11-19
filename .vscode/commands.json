@@ -1,0 +1,30 @@
+{
+    "commands": [
+        {
+            "text": "$(refresh)",
+            "command": "commands.refresh",
+            "tooltip": "reload these commands"
+        },
+        {
+            "text": "CirPy (",
+            "tooltip": "CircuitPython Commands"
+        },
+        {
+            "text": "$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles",
+            ],
+            "tooltip": "Sync file to CIRCUITPY"
+        },
+        {
+            "text": "$(file-symlink-file)",
+            "command": "workbench.action",
+            "tooltip": "Toggle Zen mode"
+        },
+        {
+            "text": ")",
+            "tooltip": "..."
+        }
+    ]
+}

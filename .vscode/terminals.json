@@ -1,0 +1,17 @@
+{
+  "autorun": true, 
+  "autokill": true, 
+  "__env": { "GlobalVarName": "GlobalVarValue" }, 
+  "terminals": [
+    { 
+      "name": "CirPySyncFiles",
+      "description": "sync ./ to CIRCUITPY",
+      "icon": "sign-out",
+      "focus": false, 
+      "commands" : [
+          "notify echo PutRsyncCommandHere",
+          "exit"
+      ]
+    }
+  ]
+}
