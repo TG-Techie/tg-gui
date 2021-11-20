@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, Container, declarable, isoncircuitpython
+from tg_gui_core import Widget, Widget, declarable, isoncircuitpython
 from tg_gui_core.container import self as tg_gui_env_self
 
 try:
@@ -32,7 +32,7 @@ if isoncircuitpython():
     from .pure_python_property import property
 
 
-class View(Container):
+class View(Widget):
     raise NotImplementedError
     _declareable_ = False
     _body_fn_: ClassVar[Callable[[], Widget] | Callable[[object], Widget]]

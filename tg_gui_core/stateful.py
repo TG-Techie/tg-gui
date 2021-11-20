@@ -24,8 +24,6 @@ from ._shared import uid, UID, isoncircuitpython
 
 if not isoncircuitpython():
     from typing import Callable, TypeVar, Any, Generic
-
-
 else:
     from .typing_bypass import Callable, TypeVar, Any, Generic  # type: ignore
 

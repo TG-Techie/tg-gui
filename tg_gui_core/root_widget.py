@@ -22,11 +22,11 @@
 
 import gc
 from ._shared import uid
-from .container import Container
+from .container import Widget
 from .base import _Screen_
 
 
-class Root(Container):
+class Root(Widget):
 
     _theme_ = None
 

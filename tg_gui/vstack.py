@@ -1,8 +1,8 @@
-from tg_gui_core import Widget, Container, below, top, SubTheme
-from tg_gui_platform import Button
+from tg_gui_core import Widget, Widget, below, top, SubTheme
+from tg_gui_platform.button import Button
 
 
-class VStack(Container):
+class VStack(Widget):
 
     _theme_ = SubTheme(
         {
@@ -58,7 +58,7 @@ class VStack(Container):
 
     def _place_(self, pos_spec):
 
-        super(Container, self)._place_(pos_spec)
+        super(Widget, self)._place_(pos_spec)
 
         # put the first widget at teh top thern stack them below that
         wid_iter = iter(self._nested_)

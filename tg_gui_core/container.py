@@ -42,11 +42,11 @@ else:
 def _search_traverse_up(
     attr_spec: AttrSpec,
     widget: Widget,
-    foundit: Callable[["Container"], bool],
+    foundit: Callable[["Widget"], bool],
     debug_name: str,
 ):
     assert isinstance(widget, Widget)
-    container = widget if isinstance(widget, Container) else widget._superior_
+    container = widget if isinstance(widget, Widget) else widget._superior_
     while not foundit(container):
         prev = container
         container = container._superior_
@@ -95,14 +95,14 @@ if not isoncircuitpython():
 
 
 # --- class tagging tools ---
-def declarable(cls: Type["Container"]) -> Type["Container"]:
+def declarable(cls: Type["Widget"]) -> Type["Widget"]:
     """
     dcecorator to mark that a contianer is declarable (like layout or Pages).
     this is used for attr_specs to finf the referenced self in `self.blah`
     """
     assert isinstance(cls, type), f"can only decorate classes"
     assert issubclass(
-        cls, Container
+        cls, Widget
     ), f"{cls} does not subclass Container, it must to be @declarable"
     cls._declarable_ = True
     return cls
@@ -115,7 +115,7 @@ def isdeclarable(obj: object) -> bool:
 
     return (
         isinstance(obj, type)
-        and issubclass(obj, Container)
+        and issubclass(obj, Widget)
         and hasattr(obj, "_declarable_")
         and obj._declarable_  # type: ignore
     )
@@ -192,7 +192,7 @@ class Container(Widget, **_continer_meta_kwarg):
         #     + " see tg_gui_core/container.py for the template"
         # )
         # Tempalte:
-        super(Container, self)._show_()
+        super(Widget, self)._show_()
         for wid in self._nested_:
             wid._show_()
         self._screen_.on_container_show(self)
