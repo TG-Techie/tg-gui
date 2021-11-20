@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-import builtins
+import sys
 
 from ._shared import ConstantGroup, isoncircuitpython
 from .base import Widget, LazyInheritedAttribute, NestingError, InheritedAttribute
@@ -42,7 +42,7 @@ else:
 def _search_traverse_up(
     attr_spec: AttrSpec,
     widget: Widget,
-    foundit: Callable[["Container"], bool],
+    foundit: Callable[["Widget"], bool],
     debug_name: str,
 ):
     assert isinstance(widget, Widget)
@@ -71,13 +71,13 @@ app = SpecifierReference(
     check=lambda c: c._is_app_,
 )
 
-# a mapping of what specifiers should be avaible in a container's
-# class body for constructin sub widgets
-_bulitin_tg_specifiers_ = {
-    "self": self,
-    "superior": superior,
-    "app": app,
-}
+# # a mapping of what specifiers should be avaible in a container's
+# # class body for constructin sub widgets
+# _bulitin_tg_specifiers_ = {
+#     "self": self,
+#     "superior": superior,
+#     "app": app,
+# }
 
 # --- metaclass scopeing for specifiers ---
 # will inject a metaclass into
@@ -88,23 +88,37 @@ if not isoncircuitpython():
 
     class _ContainerScopeingMeta(type):
         def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
-            global _bulitin_tg_specifiers_
-            return dict(_bulitin_tg_specifiers_)
+            from . import _bulitin_tg_specifiers_ as tgbuilitns
+
+            return {
+                name: attr
+                for name, attr in tgbuilitns.__dict__.items()
+                if not name.startswith("__")
+            }
 
     _continer_meta_kwarg["metaclass"] = _ContainerScopeingMeta
 
 
 # --- class tagging tools ---
-def declarable(cls: Type["Container"]) -> Type["Container"]:
+def declarable(cls: Type["Widget"]) -> Type["Widget"]:
     """
     dcecorator to mark that a contianer is declarable (like layout or Pages).
     this is used for attr_specs to finf the referenced self in `self.blah`
     """
     assert isinstance(cls, type), f"can only decorate classes"
     assert issubclass(
-        cls, Container
+        cls, Widget
     ), f"{cls} does not subclass Container, it must to be @declarable"
     cls._declarable_ = True
+
+    if not isoncircuitpython():
+        mro = cls.mro()[1:]
+
+        class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+            locals().update(cls.__dict__)
+
+        cls = NewCls
+
     return cls
 
 
@@ -115,7 +129,7 @@ def isdeclarable(obj: object) -> bool:
 
     return (
         isinstance(obj, type)
-        and issubclass(obj, Container)
+        and issubclass(obj, Widget)
         and hasattr(obj, "_declarable_")
         and obj._declarable_  # type: ignore
     )
@@ -192,7 +206,7 @@ class Container(Widget, **_continer_meta_kwarg):
         #     + " see tg_gui_core/container.py for the template"
         # )
         # Tempalte:
-        super(Container, self)._show_()
+        super()._show_()
         for wid in self._nested_:
             wid._show_()
         self._screen_.on_container_show(self)

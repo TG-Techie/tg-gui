@@ -1,7 +1,7 @@
 from typing import Tuple, TypeVar, Type, Callable, Any, Union, Generic, Protocol
 
 from ._shared import uid, UID
-from .container import Container
+from .base import Widget
 
 T = TypeVar("T")
 
@@ -18,7 +18,7 @@ __all__ = (
 )
 
 class State(Generic[T]):
-    Self = Union["State"]
+    Self = Union["State"]  # type: ignore
     def __init__(
         self,
         value: T,
@@ -28,8 +28,8 @@ class State(Generic[T]):
     def value(self, reader: _Identifiable) -> T: ...
     def update(self, updater: _Identifiable, value: T) -> None: ...
     def __repr__(self) -> str: ...
-    def __get__(self, owner: Container, ownertype: Type[Container]) -> T: ...
-    def __set__(self, owner: Container, value: T) -> None: ...
+    def __get__(self, owner: Widget, ownertype: Type[Widget]) -> T: ...
+    def __set__(self, owner: Widget, value: T) -> None: ...
     def _register_handler_(
         self, key: None | _Identifiable, handler: Handler
     ) -> None: ...

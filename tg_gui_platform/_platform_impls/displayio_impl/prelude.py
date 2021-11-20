@@ -6,7 +6,7 @@ if not isoncircuitpython():
     from typing import Callable
 
     if isoncircuitpython():  # typing import hack
-        from ...styling import Theme
+        from tg_gui_core import Theme
 else:
     pass
 
@@ -33,7 +33,8 @@ def default_screen(
     if display is None:
         try:
             from drivers import display  # type: ignore
-        except:
+        except ImportError as err:
+            print(f"ERROR:`{type(err).__name__}: {err}`")
             raise RuntimeError(
                 "unable to automagically find a display for TG-Gui, no display "
                 + "provided to prelude.screen(display=...) and unable to find a "

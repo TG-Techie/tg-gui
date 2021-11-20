@@ -24,8 +24,6 @@ from ._shared import uid, UID, isoncircuitpython
 
 if not isoncircuitpython():
     from typing import Callable, TypeVar, Any, Generic
-
-
 else:
     from .typing_bypass import Callable, TypeVar, Any, Generic  # type: ignore
 
@@ -41,7 +39,7 @@ def _not(obj: object) -> bool:
 
 
 class State(Generic[T]):
-    def __init__(self, value: T, *, repr: Callable[["State"], str] = repr) -> None:
+    def __init__(self, value: T, *, repr: Callable[[T], str] = repr) -> None:
         self._id_ = uid()
         self._value = value
 

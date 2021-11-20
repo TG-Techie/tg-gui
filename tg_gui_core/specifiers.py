@@ -33,9 +33,9 @@ try:
 
     AttrSpec = Tuple[str, ...]
 
-    from .container import Container
+    from .container import Widget
 
-    ResolveCheck = Callable[[Container], bool]
+    ResolveCheck = Callable[[Widget], bool]
     Resolver = Callable[
         [
             AttrSpec,
@@ -55,7 +55,7 @@ class SpecifierReference:
         self,
         name: str,
         resolver: Resolver,
-        check: Callable[[Container], bool],
+        check: Callable[[Widget], bool],
     ):
         self._name = name
         self._resolver = resolver

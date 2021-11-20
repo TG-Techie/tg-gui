@@ -32,7 +32,7 @@ if not isoncircuitpython():
 
     if isoncircuitpython():  # hack for circular typing import
         from .root_widget import Root
-        from .container import Container
+        from .container import Widget
 
 else:
     from .typing_bypass import Protocol, Union, TypeVar, Generic, Any, Callable  # type: ignore
@@ -217,7 +217,7 @@ class _Screen_:
 class Widget:  # type: ignore
     _id_ = uid()
 
-    _superior_: Container
+    _superior_: Widget
     _native_: Any
 
     _size_: tuple[int, int]

@@ -1,5 +1,5 @@
 from tg_gui_core import Widget, Container, below, top, SubTheme
-from tg_gui_platform import Button
+from tg_gui_platform.button import Button
 
 
 class VStack(Container):

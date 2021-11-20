@@ -20,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# # import guard for tg_gui_std
-# import sys
+import sys
 
+# import guard for tg_gui_std
 # _ImportGuard = type(
 #     "ImportNotAllowedYet",
 #     (),
@@ -90,10 +90,15 @@ from .dimension_specifiers import (
 # classes and functions for making widget classes
 from .base import _Screen_
 from .container import (
-    _bulitin_tg_specifiers_,
     declarable,
     isdeclarable,
 )
+
+from . import _bulitin_tg_specifiers_
+
+if isoncircuitpython():
+    from tg_gui_core._bulitin_tg_specifiers_ import *
+
 from .root_widget import Root
 from .specifiers import (
     SpecifierReference,
@@ -117,6 +122,6 @@ from .styling import (
     themedwidget,
 )
 
-# # un-inject (deject?) the bad import value
+# un-inject (deject?) the bad import value
 # sys.modules.pop("tg_gui_platform")
 # sys.modules.pop("tg_gui")
