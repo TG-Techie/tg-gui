@@ -1,4 +1,4 @@
-from tg_gui_core import State, DerivedState
+from tg_gui_core import State, DerivedState, uid
 from tg_gui_platform.label import Label
 
 import time
@@ -83,10 +83,13 @@ class Date(Label):
             DerivedState(deps, self._derive_new_str) if len(deps) else None
         )
 
-        super().__init__(
-            "" if state is None else state,
-            **kwargs,
-        )
+        if format == "":
+            self._id_ = uid()  # hack in identiable for setting purposes
+        else:
+            super().__init__(
+                format if state is None else state,
+                **kwargs,
+            )
 
     @classmethod
     def dateshort(cls: "Type[Date]") -> "Date":
