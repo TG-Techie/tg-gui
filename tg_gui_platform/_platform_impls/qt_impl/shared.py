@@ -1,6 +1,7 @@
-from tg_gui_std.styling import align
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtCore import Qt
+
+from tg_gui_core import align
 
 Native = QtWidgets.QWidget
 

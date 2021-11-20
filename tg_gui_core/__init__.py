@@ -20,19 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# import guard for tg_gui_std
-import sys
+# # import guard for tg_gui_std
+# import sys
 
-_ImportGuard = type(
-    "ImportNotAllowedYet",
-    (),
-    {
-        "__repr__": lambda self: f"<ImportNotAlloedYet {self._name}>",
-        "__init__": lambda self, name: setattr(self, "_name", name),
-    },
-)
-sys.modules["tg_gui_platform"] = _ImportGuard("tg_gui_platform")
-sys.modules["tg_gui"] = _ImportGuard("tg_gui")
+# _ImportGuard = type(
+#     "ImportNotAllowedYet",
+#     (),
+#     {
+#         "__repr__": lambda self: f"<ImportNotAlloedYet {self._name}>",
+#         "__init__": lambda self, name: setattr(self, "_name", name),
+#     },
+# )
+# sys.modules["tg_gui_platform"] = _ImportGuard("tg_gui_platform")
+# sys.modules["tg_gui"] = _ImportGuard("tg_gui")
 
 # -- start exposed api imports ---
 
@@ -107,6 +107,16 @@ from ._shared import (
     Constant,
 )
 
-# un-injct (deject?) the bad import value
-sys.modules.pop("tg_gui_platform")
-sys.modules.pop("tg_gui")
+from .styling import (
+    align,
+    StyledWidget,
+    Theme,
+    SubTheme,
+    Style,
+    DerivedStyle,
+    themedwidget,
+)
+
+# # un-inject (deject?) the bad import value
+# sys.modules.pop("tg_gui_platform")
+# sys.modules.pop("tg_gui")

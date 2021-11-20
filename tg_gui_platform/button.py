@@ -1,6 +1,5 @@
-from tg_gui_core import Specifier, Color, isoncircuitpython
-from .styling import StyledWidget, themedwidget
-from ._platform_.impl import button as _button_impl
+from tg_gui_core import Specifier, Color, isoncircuitpython, StyledWidget, themedwidget
+from ._platform_impls._platform_ import button as _button_impl
 
 if not isoncircuitpython():
     from typing import Union, Callable

@@ -1,6 +1,10 @@
 from typing import Optional, Tuple, Callable, NoReturn
-from . import impl
+from . import _platform_
 
-prelude = impl.prelude
+__all__ = (
+    "_platform_",
+    "guiexit",
+)
+
 SizeHint = Tuple[Optional[int], Optional[int]]
 guiexit: Callable[[], NoReturn]

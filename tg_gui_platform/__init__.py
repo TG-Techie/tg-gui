@@ -1,5 +1,5 @@
 from tg_gui_core import *
-from . import _platform_
+from ._platform_impls import _platform_
 
 
 # --- start attribute guard ---
@@ -9,17 +9,9 @@ Widget._reserve_space_ = None  # type: ignore
 Widget._self_sizing_ = None  # type: ignore
 
 # --- start interface ---
+
 Screen = _platform_.Screen
-
-
-from .styling import (
-    align,
-    StyledWidget,
-    Theme,
-    SubTheme,
-    Style,
-    DerivedStyle,
-)
+prelude = _platform_.prelude
 
 # platform dependent
 from .button import Button

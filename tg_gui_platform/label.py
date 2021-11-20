@@ -1,8 +1,6 @@
-from tg_gui_core import State, Color
+from tg_gui_core import State, Color, StyledWidget, themedwidget, align
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
-from . import align
-from .styling import StyledWidget, themedwidget
-from ._platform_.impl import label as _label_impl
+from ._platform_impls._platform_ import label as _label_impl
 
 
 @_label_impl.format_class

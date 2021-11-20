@@ -1,6 +1,8 @@
-# custom
-.prev/
+# --- custom ---
+.recal/ 
 *.mpy
+
+# --- default ---
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
