@@ -1,5 +1,4 @@
-from tg_gui_std import *
-from tg_gui_std.prelude import *
+from tg_gui.prelude import *
 
 
 @main(

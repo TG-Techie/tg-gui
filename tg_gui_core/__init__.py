@@ -20,17 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# inject a bad value in for tg_gui_std during tg_gui_core startup
+# import guard for tg_gui_std
 import sys
 
-sys.modules["tg_gui_std"] = type(
-    "ImportNotAlloedYet",
+_ImportGuard = type(
+    "ImportNotAllowedYet",
     (),
-    dict(
-        __repr__=lambda self: f"<ImportNotAlloedYet {self._name}>",
-        __init__=lambda self, name: setattr(self, "_name", name),
-    ),
-)("tg_gui_std")
+    {
+        "__repr__": lambda self: f"<ImportNotAlloedYet {self._name}>",
+        "__init__": lambda self, name: setattr(self, "_name", name),
+    },
+)
+sys.modules["tg_gui_platform"] = _ImportGuard("tg_gui_platform")
+sys.modules["tg_gui"] = _ImportGuard("tg_gui")
 
 # -- start exposed api imports ---
 
@@ -106,4 +108,5 @@ from ._shared import (
 )
 
 # un-injct (deject?) the bad import value
-sys.modules.pop("tg_gui_std")
+sys.modules.pop("tg_gui_platform")
+sys.modules.pop("tg_gui")

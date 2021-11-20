@@ -39,6 +39,9 @@ if sys.implementation.name in ("circuitpython", "micropython"):
         (),
         dict(annotations=None),
     )()  # type: ignore
+
+    # patch in the typing module
+    # sys.modules["typing"] = typeing_bypass
 else:
     isoncircuitpython = lambda: False
     from typing import Type
