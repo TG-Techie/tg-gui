@@ -17,9 +17,9 @@ class property:
         self.fget = fget
         self.fset = fset
 
-        if fget is not None:
+        if fget is not None and hasattr(fget, "__name__"):
             self._name = fget.__name__
-        elif fset is not None:
+        elif fset is not None and hasattr(fset, "__name__"):
             self._name = fset.__name__
         else:
             self._name = "<unnamed property>"

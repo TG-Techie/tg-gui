@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, Widget, declarable, isoncircuitpython
+from sys import executable
+from tg_gui_core import Widget, Container, declarable, isoncircuitpython
 from tg_gui_core.container import self as tg_gui_env_self
 
 try:
@@ -32,7 +33,7 @@ if isoncircuitpython():
     from .pure_python_property import property
 
 
-class View(Widget):
+class View(Container):
     raise NotImplementedError
     _declareable_ = False
     _body_fn_: ClassVar[Callable[[], Widget] | Callable[[object], Widget]]
@@ -50,9 +51,12 @@ class View(Widget):
         # _body_fn_ may take either 0 or 1 (global tg-gui self) as an argument
         try:
             return SelfType._body_fn_()
+        except:
+            pass
 
         # this may be written wither with or without an argument for self
-    def _____():
+
+    def _____(self):
         # check that it is a valid property
         assert bodyprop is not View.body, (
             f"{SelfType} must implement an @body property, "

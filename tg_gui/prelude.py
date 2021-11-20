@@ -84,12 +84,14 @@ class default:
 default.screen = _prelude_impl.default_screen
 default.theme = __make_default_theme
 
+# --- tg_gui_core interface ---
 from tg_gui_core import *
 
 
 # --- tg_gui_platform interface ---
 from tg_gui_platform.button import Button
 from tg_gui_platform.label import Label
+from tg_gui_platform import guiexit
 
 # --- tg_gui interface ---
 from .layout import Layout

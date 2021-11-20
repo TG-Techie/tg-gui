@@ -22,11 +22,12 @@
 
 import gc
 from ._shared import uid
-from .container import Widget
+from .base import Widget
+from .container import Container
 from .base import _Screen_
 
 
-class Root(Widget):
+class Root(Container):
 
     _theme_ = None
 
@@ -51,7 +52,7 @@ class Root(Widget):
         self._is_shown = False
 
         self._inst_kwargs = kwargs
-        self._nested_ = []
+        self._nested_: list[Widget] = []
         self._wrapped_widget = None
 
         screen.root = self

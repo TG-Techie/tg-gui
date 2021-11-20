@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-import builtins
+import sys
 
 from ._shared import ConstantGroup, isoncircuitpython
 from .base import Widget, LazyInheritedAttribute, NestingError, InheritedAttribute
@@ -46,7 +46,7 @@ def _search_traverse_up(
     debug_name: str,
 ):
     assert isinstance(widget, Widget)
-    container = widget if isinstance(widget, Widget) else widget._superior_
+    container = widget if isinstance(widget, Container) else widget._superior_
     while not foundit(container):
         prev = container
         container = container._superior_
@@ -71,13 +71,13 @@ app = SpecifierReference(
     check=lambda c: c._is_app_,
 )
 
-# a mapping of what specifiers should be avaible in a container's
-# class body for constructin sub widgets
-_bulitin_tg_specifiers_ = {
-    "self": self,
-    "superior": superior,
-    "app": app,
-}
+# # a mapping of what specifiers should be avaible in a container's
+# # class body for constructin sub widgets
+# _bulitin_tg_specifiers_ = {
+#     "self": self,
+#     "superior": superior,
+#     "app": app,
+# }
 
 # --- metaclass scopeing for specifiers ---
 # will inject a metaclass into
@@ -88,8 +88,13 @@ if not isoncircuitpython():
 
     class _ContainerScopeingMeta(type):
         def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
-            global _bulitin_tg_specifiers_
-            return dict(_bulitin_tg_specifiers_)
+            from . import _bulitin_tg_specifiers_ as tgbuilitns
+
+            return {
+                name: attr
+                for name, attr in tgbuilitns.__dict__.items()
+                if not name.startswith("__")
+            }
 
     _continer_meta_kwarg["metaclass"] = _ContainerScopeingMeta
 
@@ -105,6 +110,15 @@ def declarable(cls: Type["Widget"]) -> Type["Widget"]:
         cls, Widget
     ), f"{cls} does not subclass Container, it must to be @declarable"
     cls._declarable_ = True
+
+    if not isoncircuitpython():
+        mro = cls.mro()[1:]
+
+        class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+            locals().update(cls.__dict__)
+
+        cls = NewCls
+
     return cls
 
 
@@ -192,7 +206,7 @@ class Container(Widget, **_continer_meta_kwarg):
         #     + " see tg_gui_core/container.py for the template"
         # )
         # Tempalte:
-        super(Widget, self)._show_()
+        super()._show_()
         for wid in self._nested_:
             wid._show_()
         self._screen_.on_container_show(self)

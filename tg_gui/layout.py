@@ -20,17 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, Widget, declarable
+from tg_gui_core import Widget, Container, declarable
 
 
 @declarable
-class Layout(Widget):
+class Layout(Container):
     def _build_(self, dim_spec):
-        super(Widget, self)._build_(dim_spec)
+        super(Container, self)._build_(dim_spec)
         self._screen_.on_container_build(self)  # platform tie-in
 
     def _place_(self, pos_spec):
-        super(Widget, self)._place_(pos_spec)
+        super(Container, self)._place_(pos_spec)
 
         if hasattr(self, "_layout_"):
             self._layout_()
@@ -43,7 +43,7 @@ class Layout(Widget):
         self._screen_.on_container_place(self)  # platform tie-in
 
     def _show_(self):
-        super(Widget, self)._show_()
+        super(Container, self)._show_()
         for widget in self._nested_:
             widget._show_()
 

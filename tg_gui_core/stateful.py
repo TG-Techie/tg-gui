@@ -39,7 +39,7 @@ def _not(obj: object) -> bool:
 
 
 class State(Generic[T]):
-    def __init__(self, value: T, *, repr: Callable[["State"], str] = repr) -> None:
+    def __init__(self, value: T, *, repr: Callable[[T], str] = repr) -> None:
         self._id_ = uid()
         self._value = value
 

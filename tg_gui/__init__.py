@@ -4,6 +4,6 @@ import tg_gui_platform
 # --- enviroment fomratting ---
 if isoncircuitpython():
     import builtins
-    import pure_python_property
+    from . import pure_python_property
 
     builtins.property = pure_python_property.property  # type: ignore
