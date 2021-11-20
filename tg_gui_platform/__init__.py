@@ -1,5 +1,5 @@
 from tg_gui_core import *
-from ._platform_impls import _platform_
+from ._platform_impls import _platform_, guiexit
 
 
 # --- start attribute guard ---

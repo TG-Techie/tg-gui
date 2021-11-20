@@ -1,16 +1,17 @@
 {
-  "autorun": true, 
-  "autokill": true, 
   "__env": { "GlobalVarName": "GlobalVarValue" }, 
   "terminals": [
     { 
+      "autorun": false, 
+      "autokill": true, 
       "name": "CirPySyncFiles",
       "description": "sync ./ to CIRCUITPY",
       "icon": "sign-out",
       "focus": false, 
       "commands" : [
-          "notify echo PutRsyncCommandHere",
-          "exit"
+          "notify --run 'rsync -ra --exclude=\".*\" ./ /Volumes/CIRCUITPY'",
+          "if [ $? -eq 0 ]; then; exit; fi"
+          
       ]
     }
   ]
