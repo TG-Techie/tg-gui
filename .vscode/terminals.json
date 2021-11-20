@@ -10,8 +10,8 @@
       "focus": false, 
       "commands" : [
           "notify --run 'rsync -ra --exclude=\".*\" ./ /Volumes/CIRCUITPY'",
-          "if [ $? -eq 0 ]; then; exit; fi"
-          
+          "if [ $? -eq 0 ]; then; exit; fi",
+          "echo \"some error happened, see above\""
       ]
     }
   ]
