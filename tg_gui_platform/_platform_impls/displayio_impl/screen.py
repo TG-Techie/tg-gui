@@ -41,9 +41,7 @@ class Screen(_Screen_):
         print("Current widget tree:")
         self.root._print_tree(fn=lambda w: (w.coord, w.dims, w.isshowing()))
 
-        print("starting loop...")
-        touch_loop = self.touch_loop
-
+        print("setting up recurring updates...")
         now = monotonic_ns()
         updates = sorted(
             (
@@ -52,13 +50,15 @@ class Screen(_Screen_):
             ),
             key=lambda pack: pack[2],
         )
-
         # run each event first
         for (fn, _, _) in updates:
             fn()
 
+        print("starting loop...")
+        touch_loop = self.touch_loop
+        self.display.auto_refresh = False
         while True:
-            self.display.auto_refresh = False
+            self.display.refresh()
             touch_loop.loop()
 
             # run_updates
@@ -75,8 +75,6 @@ class Screen(_Screen_):
 
             for _ in range(rotate):
                 updates.append(updates.pop(0))
-
-            self.display.refresh()
 
     def on_root_set(self, root: Root) -> None:
         pass
