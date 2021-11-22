@@ -260,6 +260,7 @@ class Widget:  # type: ignore
     _coord_: tuple[int, int]
     _rel_coord_: tuple[int, int]
     _phys_coord_: tuple[int, int]
+    _margin_: int
 
     # --- class attr and future work ---
     _screen_: LazyInheritedAttribute[None | _Screen_] = LazyInheritedAttribute(

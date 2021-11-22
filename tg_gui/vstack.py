@@ -1,6 +1,8 @@
 from tg_gui_core import Widget, Container, below, top, SubTheme
 from tg_gui_platform.button import Button
 
+GeneratorType = type(_ for _ in ())
+
 
 class VStack(Container):
 
@@ -12,7 +14,9 @@ class VStack(Container):
         }
     )
 
-    def __init__(self, *widgets, **kwargs):
+    def __init__(self, *widgets: Widget, **kwargs):
+        if len(widgets) == 1 and isinstance(widgets[0], GeneratorType):
+            widgets = tuple(widgets[0])
         super().__init__(**kwargs)
 
         self._widgets = widgets

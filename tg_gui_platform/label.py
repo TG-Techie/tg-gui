@@ -37,7 +37,7 @@ class Label(StyledWidget):
 
     def __init__(self, text: str | State[str], **kwargs) -> None:
         super().__init__(**kwargs)
-        assert isinstance(text, (str, State))
+        assert isinstance(text, (str, State)), f"found {text}"
         self._text = text
 
     def _build_(self, dim_spec: DimensionSpecifier):

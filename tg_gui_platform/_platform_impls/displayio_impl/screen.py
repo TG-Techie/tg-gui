@@ -34,6 +34,7 @@ class Screen(_Screen_):
 
     def run(self):
         assert self.root._native_ is not None
+        self.display.auto_refresh = False
         self.display.show(self.root._native_)
 
         # raise RuntimeError()
@@ -56,7 +57,7 @@ class Screen(_Screen_):
 
         print("starting loop...")
         touch_loop = self.touch_loop
-        self.display.auto_refresh = False
+
         while True:
             self.display.refresh()
             touch_loop.loop()
@@ -72,7 +73,7 @@ class Screen(_Screen_):
                     rotate += 1
                 else:
                     break
-
+            # if len(rotate) != len(updates):
             for _ in range(rotate):
                 updates.append(updates.pop(0))
 

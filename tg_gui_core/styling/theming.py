@@ -141,7 +141,9 @@ class SubTheme(Theme):
             self._configure_for(theme)
 
     def _configure_base_theme_(self, theme: Theme):
-        assert theme is not self
+        # assert theme is not self
+        if theme is self:
+            return
         assert isinstance(theme, Theme)
 
         if self._isconfigured():

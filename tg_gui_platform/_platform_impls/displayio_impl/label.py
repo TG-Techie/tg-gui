@@ -52,10 +52,15 @@ def build(
 
     margin = widget._margin_
 
+    # w, h = (
+    #     native_label.bounding_box[2],
+    #     native_label.bounding_box[3],
+    # )
+
     # print(
     #     widget,
-    #     native_label.bounding_box[2] + margin * 2,
-    #     native_label.bounding_box[3] + margin * 2,
+    #     w / len(widget.text),
+    #     (w, h),
     # ),
     return (
         native,
@@ -78,15 +83,22 @@ def set_size(widget: Label, native: Native, width: int, height: int) -> None:
     size: int
 
     (size, lbl_align) = widget._impl_cache_
+    margin = widget._margin_
 
-    m = widget._margin_
-
-    widw, widh = width - m * 2, height - m * 2
+    widw, widh = width, height
     del width, height  # safety del
 
     _, _, lblw, lblh = native_label.bounding_box
-    lblw = lblw + m * 2
-    lblh = lblh + m * 2
+    lblw *= size
+    lblh *= size
+
+    print(
+        "set_size",
+        widget,
+        lblw / len(widget.text),
+        (lblw, lblh),
+        (widw, widh),
+    )
 
     y = widh // 2
     if lbl_align is align.center:
@@ -98,8 +110,8 @@ def set_size(widget: Label, native: Native, width: int, height: int) -> None:
     else:
         assert False, f"unknown alignment for label {widget}, found {lbl_align}"
 
-    native_label.x = x + m
-    native_label.y = y + m
+    native_label.x = x + margin
+    native_label.y = y + margin
 
 
 def apply_style(
