@@ -18,6 +18,14 @@
             "tooltip": "Sync file to CIRCUITPY"
         },
         {
+            "text": "[$(sign-out)...]",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_ALL",
+            ],
+            "tooltip": "Sync file to CIRCUITPY"
+        },
+        {
             "text": "$(file-symlink-file)",
             "command": "workbench.action",
             "tooltip": "Toggle Zen mode"

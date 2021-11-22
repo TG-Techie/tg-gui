@@ -10,6 +10,12 @@ class Label(StyledWidget):
     _reserve_space_ = True
     _self_sizing_ = property(lambda self: isinstance(self._text, str))
 
+    _default_styling_ = dict(
+        style=dict(color=0xFFFFFF),
+        size=1,
+        align=align.center,
+    )
+
     _stateful_style_attrs_ = {"color": Color}
     _fixed_style_attrs_ = {
         "size": int,

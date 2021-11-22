@@ -14,6 +14,16 @@ class Button(StyledWidget):
     _reserve_space_ = True
     _self_sizing_ = True
 
+    _default_styling_ = dict(
+        # eventaully these will be system colors like color.system_midgrnd
+        style=dict(
+            fill=0x505050, text=0xFFFFFF, active_fill=0x808080, active_text=0xFFFFFF
+        ),
+        radius=100,
+        size=1,
+        fit_to_text=False,
+    )
+
     # user facing style
     _stateful_style_attrs_ = {
         "fill": Color,

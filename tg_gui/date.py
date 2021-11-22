@@ -1,4 +1,4 @@
-from tg_gui_core import State, DerivedState, uid
+from tg_gui_core import State, DerivedState, uid, themedwidget
 from tg_gui_platform.label import Label
 
 import time
@@ -43,7 +43,12 @@ _WEEKDAYS = (
 _SHORTWEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
+@themedwidget
 class Date(Label):
+
+    # _default_styling_ = {}
+    # _default_styling_.update(Label._default_styling_)
+    # _default_styling_.update(fit_to_text=True)
 
     _prev_refresh: ClassVar[struct_time] = time.localtime()
 
@@ -92,20 +97,23 @@ class Date(Label):
             )
 
     @classmethod
-    def dateshort(cls: "Type[Date]") -> "Date":
-        return cls("{monthday:02}{shortmonth:02}{year}")
+    def dateshort(cls: "Type[Date]", **kwargs) -> "Date":
+        return cls("{monthday:02}{shortmonth:02}{year}", **kwargs)
 
     @classmethod
-    def american_date(cls: "Type[Date]") -> "Date":
-        return cls("{month:02}/{monthday:02}/{year}")
+    def american_date(cls: "Type[Date]", **kwargs) -> "Date":
+        return cls("{month:02}/{monthday:02}/{year}", **kwargs)
 
     @classmethod
-    def international_date(cls: "Type[Date]") -> "Date":
-        return cls("{monthday:02}/{month:02}/{year}")
+    def international_date(cls: "Type[Date]", **kwargs) -> "Date":
+        return cls("{monthday:02}/{month:02}/{year}", **kwargs)
 
     @classmethod
-    def time(cls: "Type[Date]", secs=False) -> "Date":
-        return cls("{hours}:{mins}:{secs}" if secs else "{hours}:{mins}")
+    def time(cls: "Type[Date]", secs=False, **kwargs) -> "Date":
+        return cls(
+            "{hours:02}:{mins:02}:{secs:02}" if secs else "{hours:02}:{mins:02}",
+            **kwargs,
+        )
 
     def _derive_new_str(self, *_) -> str:
         # takes any number of args b/c the order is not guaranteed

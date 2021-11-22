@@ -1,4 +1,5 @@
 from .. import uid
+from ..base import Widget
 from .style import Style, _errfmt
 from .styled_widget import StyledWidget
 
@@ -26,11 +27,17 @@ def themedwidget(cls):
     assert cls._self_sizing_ is not None, f"{cls}._self_sizing_ not specified"
 
     Theme._required_styles_ |= {cls}  # add this to Theme's required styles
+
+    if hasattr(cls, "_default_styling_"):
+        assert cls not in Theme._decld_default_styling_dict, cls
+        Theme._decld_default_styling_dict[cls] = cls._default_styling_
+
     return cls
 
 
 class Theme:
     _required_styles_: set[str] = set()
+    _decld_default_styling_dict: dict[Type[Widget], dict[str, Any]] = {}
 
     def get_styling_for(self, cls: Type[StyledWidget]):
         return self._stylings[cls]
@@ -84,7 +91,7 @@ class Theme:
 
             assert len(entry) == (len(fixed) + 1), (
                 f"incorrect number of style attributes given for {style_type},\n"
-                + f"should be {_errfmt(set(['style']) | fixed)},\n"
+                + f"should be {_errfmt(set(['style']) | set(fixed))},\n"
                 + f"found {_errfmt(set(entry))}"
             )
 
