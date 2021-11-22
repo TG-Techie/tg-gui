@@ -13,17 +13,17 @@
             "text": "$(sign-out)",
             "command": "terminals.runTerminalByName",
             "arguments": [
-                "CirPySyncFiles",
+                "CirPySyncFiles"
             ],
-            "tooltip": "Sync file to CIRCUITPY"
+            "tooltip": "Sync gui only file to CIRCUITPY"
         },
         {
             "text": "[$(sign-out)...]",
             "command": "terminals.runTerminalByName",
             "arguments": [
-                "CirPySyncFiles_ALL",
+                "CirPySyncFiles_ALL"
             ],
-            "tooltip": "Sync file to CIRCUITPY"
+            "tooltip": "Sync ALL required file to CIRCUITPY"
         },
         {
             "text": "$(file-symlink-file)",

@@ -52,11 +52,16 @@ def build(
 
     margin = widget._margin_
 
+    # print(
+    #     widget,
+    #     native_label.bounding_box[2] + margin * 2,
+    #     native_label.bounding_box[3] + margin * 2,
+    # ),
     return (
         native,
         (
-            None if is_state else native_label.bounding_box[2] + margin * 2,
-            native_label.bounding_box[3] + margin * 2,
+            int(1.15 * native_label.bounding_box[2] * size) + margin * 2,
+            int(1.15 * native_label.bounding_box[3] * size) + margin * 2,
         ),
     )
 

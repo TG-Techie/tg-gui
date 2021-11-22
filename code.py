@@ -12,7 +12,8 @@ class Test(Layout):
     )
 
     body = VStack(
-        Date.time(size=2, align=align.center),
+        Date.time(secs=True, size=2, align=align.center),
+        Label(Date.secs >> str, size=2),
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),
         Button("done", action=guiexit),

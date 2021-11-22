@@ -3,11 +3,24 @@ from tg_gui_core import _Screen_
 
 import sys
 
-from __feature__ import snake_case, true_property
+from __feature__ import snake_case, true_property  # type: ignore
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
-from PySide6.QtCore import QRect, QPoint, Qt, QSize
+from PySide6.QtCore import QRect, QPoint, Qt, QSize, QTimer
 from PySide6.QtGui import QCloseEvent
+
+
+def _create_timer(fn, period: int) -> QTimer:
+    timer = QTimer()
+
+    def _update_cycle():
+        timer.stop()
+        fn()
+        timer.start(period)
+
+    timer.timeout.connect(_update_cycle)
+    timer.start(period)
+    return timer
 
 
 class Screen(_Screen_):
@@ -17,6 +30,13 @@ class Screen(_Screen_):
         self.native_root = QMainWindow()
 
     def run(self):
+        # setup update functions
+
+        timers = []
+        for fn, period in self._iter_registered_updates_():
+
+            timers.append(_create_timer(fn, int(period * 1000)))
+
         sys.exit(self.app.exec())
 
     def on_root_set(self, root):

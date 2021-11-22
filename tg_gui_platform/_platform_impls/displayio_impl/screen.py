@@ -3,6 +3,7 @@ from tg_gui_core import *
 from tg_gui_core import _Screen_
 
 from .event_loop import EventLoop
+from time import monotonic_ns
 
 import microcontroller
 import sys
@@ -43,21 +44,39 @@ class Screen(_Screen_):
         print("starting loop...")
         touch_loop = self.touch_loop
 
-        done = False
+        now = monotonic_ns()
+        updates = sorted(
+            (
+                [fn, int(period * 1e6), now + int(period * 1e6)]
+                for fn, period in self._iter_registered_updates_()
+            ),
+            key=lambda pack: pack[2],
+        )
+
+        # run each event first
+        for (fn, _, _) in updates:
+            fn()
 
         while True:
+            self.display.auto_refresh = False
             touch_loop.loop()
 
-        # self.root._print_tree(
-        #     fn=lambda w: (
-        #         w.coord,
-        #         w.dims,
-        #         repr(n := w._native_),
-        #         len(n),
-        #         (n.x, n.y),
-        #         n.hidden,
-        #     )
-        # )
+            # run_updates
+            now = monotonic_ns()
+            rotate = 0
+            for (pack, (fn, period, run_next)) in zip(updates, updates):
+
+                if run_next < now:
+                    fn()
+                    pack[2] = now + period
+                    rotate += 1
+                else:
+                    break
+
+            for _ in range(rotate):
+                updates.append(updates.pop(0))
+
+            self.display.refresh()
 
     def on_root_set(self, root: Root) -> None:
         pass

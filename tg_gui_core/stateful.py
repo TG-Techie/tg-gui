@@ -63,7 +63,10 @@ class State(Generic[T]):
         """
         For using states as values in functions, great for button actions.
         """
-        return self.value(self)  # called with self as a `.some_state` doesn't care
+        # print(f" __get__({self}, {owner}, {ownertype})")
+        return (
+            self if owner is None else self.value(self)
+        )  # called with self as a `.some_state` doesn't care
 
     def __set__(self, owner, value: T) -> None:
         """

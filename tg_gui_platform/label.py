@@ -10,6 +10,9 @@ class Label(StyledWidget):
     _reserve_space_ = True
     _self_sizing_ = property(lambda self: isinstance(self._text, str))
 
+    _use_sug_width_ = property(lambda self: isinstance(self._text, str))
+    _use_sug_height_ = True
+
     _default_styling_ = dict(
         style=dict(color=0xFFFFFF),
         size=1,
@@ -27,10 +30,6 @@ class Label(StyledWidget):
     _impl_apply_style_ = _label_impl.apply_style
 
     _set_text_ = _label_impl.set_text
-
-    _use_sug_width_ = _use_sug_height_ = property(
-        lambda self: isinstance(self._text, str)
-    )
 
     @property
     def text(self):

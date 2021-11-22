@@ -1,4 +1,4 @@
-from tg_gui_core import State, DerivedState, uid, themedwidget
+from tg_gui_core import State, DerivedState, uid, themedwidget, _Screen_
 from tg_gui_platform.label import Label
 
 import time
@@ -155,3 +155,9 @@ _date_inst._refresh_time(time.localtime())
 # these should be registed into the event loop for the gui
 refresh_time = _date_inst._refresh_time
 refresh_date = _date_inst._refresh_date
+
+_Screen_._register_recurring_update_(
+    _date_inst,
+    lambda: refresh_time(time.localtime()),
+    1.0,
+)

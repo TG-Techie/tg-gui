@@ -89,6 +89,12 @@ class StyledWidget(Widget):
             sgw if self._use_sug_width_ and sgw is not None else spcw,
             sgh if self._use_sug_height_ and sgh is not None else spch,
         )
+        # print(
+        #     "_build_",
+        #     self,
+        #     f"size={size}",
+        #     (self._use_sug_width_, self._use_sug_height_),
+        # )
         super()._build_(size)
 
         self._impl_set_size_(self._native_, w, h)

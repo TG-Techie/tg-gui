@@ -22,17 +22,29 @@
 
 from __future__ import annotations
 
+
 from ._shared import *
 from .position_specifiers import *
 from .dimension_specifiers import *
 
 
 if not isoncircuitpython():
-    from typing import Protocol, Union, TypeVar, Generic, Any, Callable, NoReturn
+    from typing import (
+        Protocol,
+        Union,
+        TypeVar,
+        Generic,
+        Any,
+        Callable,
+        NoReturn,
+        Iterable,
+        ClassVar,
+    )
 
     if isoncircuitpython():  # hack for circular typing import
         from .root_widget import Root
         from .container import Widget
+        from .stateful import _Identifiable
 
 else:
     from .typing_bypass import Protocol, Union, TypeVar, Generic, Any, Callable  # type: ignore
@@ -137,6 +149,8 @@ class _Screen_:
     default_margin: int
     _id_: int
 
+    _updates: ClassVar[list[tuple[UID, Callable[[], None], float]]] = []
+
     def __init__(self, default_margin=5):
         self._id_ = uid()
         self._root = None
@@ -166,6 +180,26 @@ class _Screen_:
 
     def on_root_set(self, root):
         pass
+
+    @classmethod
+    def _register_recurring_update_(
+        cls: "Type[_Screen_]",
+        owner: _Identifiable,
+        updater: Callable[[], None],
+        interval: float,
+    ) -> None:
+        """
+        :param owner: the widget or Iddentifieable that is adding the upfate
+        :param updater: the update that will be called, must take no arguments
+        :param interval: the minimum amount of time that must pass between calls the the updater
+        """
+        cls._updates.append((owner._id_, updater, interval))
+
+    @classmethod
+    def _iter_registered_updates_(
+        cls: "Type[_Screen_]",
+    ) -> Iterable[tuple[Callable[[], None], float]]:
+        return ((updater, period) for _, updater, period in cls._updates)
 
     # platform tie-in functions
 
