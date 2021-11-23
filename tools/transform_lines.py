@@ -76,3 +76,7 @@ def constify_isoncircuitpython(indentation: int, body: str) -> str:
             '(False and "removed for bytecode optimization")',
         )
     return writeout
+
+
+if __name__ == "__main__":
+    pass  # TODO: add command line interface here
