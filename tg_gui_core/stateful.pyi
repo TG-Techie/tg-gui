@@ -18,12 +18,11 @@ __all__ = (
 )
 
 class State(Generic[T]):
-    Self = Union["State"]  # type: ignore
     def __init__(
         self,
         value: T,
         *,
-        repr: Callable[[Self], str] = repr,
+        repr: Callable[[T], str] = repr,
     ) -> None: ...
     def value(self, reader: _Identifiable) -> T: ...
     def update(self, updater: _Identifiable, value: T) -> None: ...
