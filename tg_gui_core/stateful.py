@@ -29,10 +29,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import *
 
-    Handler = Callable[[T], Any]
 
 T = TypeVar("T")
 S = TypeVar("S")
+
+if TYPE_CHECKING:
+    Handler = Callable[[T], Any]
 
 
 def _not(obj: object) -> bool:

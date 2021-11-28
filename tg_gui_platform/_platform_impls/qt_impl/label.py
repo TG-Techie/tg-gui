@@ -27,7 +27,8 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtGui import QFontMetrics, QFont
 from .shared import to_qt_color, to_qt_font_size, to_alignment_lookup
 
-from __feature__ import snake_case, true_property
+from __feature__ import snake_case, true_property  # type: ignore
+
 
 format_class = lambda cls: cls
 

@@ -38,10 +38,10 @@ class VStack(Container):
         }
     )
 
-    def __init__(self, *widgets: Widget, **kwargs):
+    def __init__(self, *widgets: Widget):
         if len(widgets) == 1 and isinstance(widgets[0], GeneratorType):
             widgets = tuple(widgets[0])
-        super().__init__(**kwargs)
+        super().__init__()
 
         self._widgets = widgets
 

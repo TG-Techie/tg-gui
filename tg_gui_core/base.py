@@ -31,7 +31,18 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
 
+    from typing import *
+
     from .root_widget import Root
+
+    class Identifiable(Protocol):
+        _id_: UID
+
+
+T = TypeVar("T")
+
+
+if TYPE_CHECKING:
 
     InheritedAttribute = Union[
         None,
@@ -39,11 +50,6 @@ if TYPE_CHECKING:
         "LazyInheritedAttribute[Union[T, None]]",
     ]
 
-    class Identifiable(Protocol):
-        _id_: UID
-
-
-T = TypeVar("T")
 
 # --- Exception ("oh crap") types ---
 

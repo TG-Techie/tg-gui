@@ -32,6 +32,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import *
 
+    from .styled_widget import StyledWidget
+
     Styling = Union[Style, Mapping[str, Any]]
     StylingMapping = Mapping[Type[StyledWidget], Styling]
 
@@ -61,7 +63,7 @@ def themedwidget(cls):
 
 class Theme:
     _required_styles_: set[str] = set()
-    _decld_default_styling_dict: dict[Type[Widget], dict[str, Any]] = {}
+    _decld_default_styling_dict: dict[Type[StyledWidget], dict[str, Any]] = {}
 
     def get_styling_for(self, cls: Type[StyledWidget]):
         return self._stylings[cls]
