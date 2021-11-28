@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# explicity not # from __future__ import annotations # yet!
+
 import sys
 
 # import guard for tg_gui_std
@@ -42,6 +44,7 @@ from ._shared import (
     UID,
     clamp,
 )
+
 from .base import (
     Widget,
     color,

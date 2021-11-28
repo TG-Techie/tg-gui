@@ -20,18 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import annotations
+
 from ._shared import uid, UID, isoncircuitpython
 
-if not isoncircuitpython():
-    from typing import Callable, TypeVar, Any, Generic
-else:
-    from .typing_bypass import Callable, TypeVar, Any, Generic  # type: ignore
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import *
+
+    Handler = Callable[[T], Any]
 
 T = TypeVar("T")
-
 S = TypeVar("S")
-
-Handler = Callable[[T], Any]
 
 
 def _not(obj: object) -> bool:
@@ -63,10 +64,8 @@ class State(Generic[T]):
         """
         For using states as values in functions, great for button actions.
         """
-        # print(f" __get__({self}, {owner}, {ownertype})")
-        return (
-            self if owner is None else self.value(self)
-        )  # called with self as a `.some_state` doesn't care
+        # # called with self as a `.some_state` doesn't care
+        return self if owner is None else self.value(self)  # type: ignore
 
     def __set__(self, owner, value: T) -> None:
         """

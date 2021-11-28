@@ -25,24 +25,25 @@ from __future__ import annotations
 import sys
 
 from ._shared import ConstantGroup, isoncircuitpython
-from .base import Widget, LazyInheritedAttribute, NestingError, InheritedAttribute
+from .base import Widget, LazyInheritedAttribute, NestingError
 from .specifiers import SpecifierReference, AttributeSpecifier
 
 # TODO: add app SpecifierReference("app", _find_app_widget)
 
 
-if not isoncircuitpython():
-    from typing import Type, Union, TypeVar, Generic, Callable
-    from .specifiers import AttrSpec
+from typing import TYPE_CHECKING
 
-else:
-    from .typing_bypass import Type, Union, TypeVar, Generic, Callable  # type: ignore
+if TYPE_CHECKING:
+    from typing import Callable, Type
+
+    from .specifiers import AttrSpec
+    from .base import InheritedAttribute
 
 
 def _search_traverse_up(
     attr_spec: AttrSpec,
     widget: Widget,
-    foundit: Callable[["Widget"], bool],
+    foundit: Callable[[Widget], bool],
     debug_name: str,
 ):
     assert isinstance(widget, Widget)
@@ -65,19 +66,7 @@ self = SpecifierReference("self", _search_traverse_up, check=lambda c: c._declar
 # optimization for for ._superior_ up the widget tree
 superior = self._superior_ = AttributeSpecifier(self, "_superior_")  # type: ignore
 
-app = SpecifierReference(
-    "app",
-    _search_traverse_up,
-    check=lambda c: c._is_app_,
-)
-
-# # a mapping of what specifiers should be avaible in a container's
-# # class body for constructin sub widgets
-# _bulitin_tg_specifiers_ = {
-#     "self": self,
-#     "superior": superior,
-#     "app": app,
-# }
+app = SpecifierReference("app", _search_traverse_up, check=lambda c: c._is_app_)
 
 # --- metaclass scopeing for specifiers ---
 # will inject a metaclass into
@@ -139,7 +128,7 @@ def isdeclarable(obj: object) -> bool:
 class Container(Widget, **_continer_meta_kwarg):
     _nested_: list[Widget]
 
-    _declarable_: bool = False
+    _declarable_ = False
 
     _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)  # type: ignore
 

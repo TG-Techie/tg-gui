@@ -19,35 +19,27 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
 from __future__ import annotations
 
 from .base import Widget
-from ._shared import isoncircuitpython
-
 from .dimension_specifiers import DimensionSpecifier
 
-try:
-    assert not isoncircuitpython()  # typing import force error hack
+from typing import TYPE_CHECKING
 
-    from typing import Tuple, Callable, Any, Union
+if TYPE_CHECKING:
+    from typing import Callable, Any, Tuple  # Manual import to avoid Container Conflic
 
     AttrSpec = Tuple[str, ...]
 
-    from .container import Widget
+    from .container import Container
 
     ResolveCheck = Callable[[Widget], bool]
+
     Resolver = Callable[
-        [
-            AttrSpec,
-            Widget,
-            ResolveCheck,
-            str,
-        ],
+        [AttrSpec, Widget, ResolveCheck, str],
         Any,
     ]
-
-except:
-    pass
 
 
 class SpecifierReference:

@@ -23,6 +23,30 @@
 import sys
 
 
+class PassAll:
+    def __init__(self, __name: str, __item, **kwargs: object) -> None:
+        self.__name = __name
+        self.__item = __item
+
+        for attr, obj in kwargs.items():
+            setattr(self, attr, obj)
+
+    def __getitem__(self, *_):
+        return self.__item
+
+    def __repr__(self) -> str:
+        return f"<Bypass '{self.__name}'>"
+
+
+# patch in __future__ bypass
+import builtins
+
+builtins.Generic = PassAll("Generic", object)  # type: ignore
+builtins.TypeVar = lambda *_, **__: object
+
+sys.modules["__future__"] = PassAll("__future__", None, annotations=None)  # type: ignore
+
+
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
     isoncircuitpython = lambda: True
@@ -33,20 +57,14 @@ if sys.implementation.name in ("circuitpython", "micropython"):
     else:
         from random import randint  # type: ignore
 
-    # patch in __future__ bypass
-    sys.modules["__future__"] = type(
-        "__FutureModuleBypass__",
-        (),
-        dict(annotations=None),
-    )()  # type: ignore
+    sys.modules["typing"] = PassAll("typing", None, TYPE_CHECKING=False)  # type: ignore
 
-    # patch in the typing module
-    # sys.modules["typing"] = typeing_bypass
 else:
     isoncircuitpython = lambda: False
     from typing import Type
 
     from random import randint  # type: ignore
+
 
 # --- unique ids ---
 UID = int
