@@ -71,6 +71,7 @@ if sys.implementation.name in ("circuitpython", "micropython"):
 
     sys.modules["typing"] = PassAll("typing", [], TYPE_CHECKING=False)  # type: ignore
 
+    _BracketByPass = PassAll("typing", [object])
 else:
     isoncircuitpython = lambda: False
     from typing import Type

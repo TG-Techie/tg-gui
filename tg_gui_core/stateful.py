@@ -34,14 +34,40 @@ T = TypeVar("T")
 S = TypeVar("S")
 
 if TYPE_CHECKING:
-    Handler = Callable[[T], Any]
+    # Handler = Callable[[T], Any]
+    Handler = Callable[..., Any]
+    # DerivedHandler = Callable[..., Any]
+
+    class Identifiable(Protocol):
+        _id_: UID
+
+    B = TypeVar("B", bound=Hashable)
+
+    class Bindable(Protocol[B]):
+        def value(self, reader: UID | Identifiable) -> B:
+            ...
+
+        def update(self, updater: UID | Identifiable, value: B) -> None:
+            ...
+
+        def _register_handler_(self, key: UID | Identifiable, handler: Handler) -> None:
+            ...
+
+        def _deregister_handler_(self, key: UID | Identifiable) -> None:
+            ...
+
+
+else:
+    from ._shared import _BracketByPass as Bindable
+
+    Identifiable = object
 
 
 def _not(obj: object) -> bool:
     return not obj
 
 
-class State(Generic[T]):
+class State(Bindable[T]):
     def __init__(self, value: T, *, repr: Callable[[T], str] = repr) -> None:
         self._id_ = uid()
         self._value = value
@@ -105,7 +131,7 @@ class State(Generic[T]):
             if key is not excluded_key:
                 handler(value)
 
-    def __rshift__(self, transform: Callable[[T], T]) -> "DerivedState[T, T]":
+    def __rshift__(self, transform: Callable[[T], T]) -> "DerivedState":
         """
         sugar to make derived states clearer to understand
         """
@@ -114,7 +140,7 @@ class State(Generic[T]):
     def __bool__(self):
         raise TypeError(f"`{self}` cannot be cast to a bool, try `{self} >> bool`")
 
-    def __invert__(self) -> "DerivedState[T, bool]":
+    def __invert__(self) -> "DerivedState":
         return DerivedState(self, _not)
 
 
