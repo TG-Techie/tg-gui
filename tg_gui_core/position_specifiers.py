@@ -20,12 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .base import Widget
+
 
 class PositionSpecifier:
     def __init__(self, ref):
         self._ref = ref
 
-    def _calc_coord_(self, inst):
+    def _calc_coord_(self, inst: Widget):
         return (self._calc_x_(inst), self._calc_y_(inst))
 
     def _calc_x_(self, inst):

@@ -22,18 +22,22 @@
 
 # TODO: consider making dim_specs subclasses of spcifiers
 
+from __future__ import annotations
+
 from ._shared import ConstantGroup, isoncircuitpython
 
-if not isoncircuitpython():
-    from typing import Union
-else:
-    from .typing_bypass import Union  # type: ignore
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import *
+
+    from .base import Widget
 
 
 class DimensionSpecifier:
     def _calc_dim_(
-        self, inst
-    ) -> tuple[Union[int, "DimensionSpecifier"], Union[int, "DimensionSpecifier"]]:
+        self, inst: Widget
+    ) -> tuple[int | "DimensionSpecifier", int | "DimensionSpecifier"]:
         raise NotImplementedError("cannot use a bare DimensionSpecifier")
 
 

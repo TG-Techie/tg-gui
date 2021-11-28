@@ -20,11 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import annotations
+
 import gc
 from ._shared import uid
 from .base import Widget
 from .container import Container
 from .base import _Screen_
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .styling import Theme
 
 
 class Root(Container):
@@ -36,7 +43,7 @@ class Root(Container):
         *,
         screen: _Screen_,
         size: tuple[int, int],
-        theme,
+        theme: Theme,
         **kwargs,
     ):
         assert len(size) == 2, f"expected two dimensions found, {size}"
@@ -53,7 +60,7 @@ class Root(Container):
 
         self._inst_kwargs = kwargs
         self._nested_: list[Widget] = []
-        self._wrapped_widget = None
+        self._wrapped_widget: Widget = None  # type: ignore
 
         screen.root = self
 
@@ -77,46 +84,46 @@ class Root(Container):
         return None
 
     @property
-    def wrapped(self):
+    def wrapped(self) -> Widget:
         return self._wrapped_widget
 
-    def isnested(self):
+    def isnested(self) -> bool:
         # since a this is a root it does nto need to be nested,
         #   this returns true indicat the nesting stage is "complete"
         #   for this object, even though no calcuation is needed for it
         return True
 
-    def _std_startup_(self):
+    def _std_startup_(self) -> None:
         # self does not need to be formated as it already has form and position
         self._build_(None)
         self._place_(None)
         gc.collect()
         self._show_()
 
-    def _build_(self, check):
+    def _build_(self, check: None) -> None:
         assert check is None  # exists to ensure proper use
         # print(self, self._wrapped_widget)
         self._screen_.on_widget_build(self)
         self._wrapped_widget._build_(self._size_)
         self._screen_.on_container_build(self)
 
-    def _demolish_(self):
+    def _demolish_(self) -> None:
         self._wrapped_widget._demolish_()
         self._screen_.on_widget_demolish(self)
         self._screen_.on_container_demolish(self)
 
-    def _place_(self, check):
+    def _place_(self, check) -> None:
         assert check is None  # exists to ensure proper use
         # print(self, self._wrapped_widget)
         self._wrapped_widget._place_((0, 0))
 
-    def _pickup_(self):
+    def _pickup_(self) -> None:
         self._wrapped_widget._pickup_()
 
-    def _show_(self):
+    def _show_(self) -> None:
         self._is_shown = True
         self._wrapped_widget._show_()
 
-    def _hide_(self):
+    def _hide_(self) -> None:
         self._is_shown = False
         self._wrapped_widget._hide_()

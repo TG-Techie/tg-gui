@@ -27,36 +27,29 @@ from ._shared import *
 from .position_specifiers import *
 from .dimension_specifiers import *
 
+from typing import TYPE_CHECKING
 
-if not isoncircuitpython():
-    from typing import (
-        Protocol,
-        Union,
-        TypeVar,
-        Generic,
-        Any,
-        Callable,
-        NoReturn,
-        Iterable,
-        ClassVar,
-    )
+if TYPE_CHECKING:
 
-    if isoncircuitpython():  # hack for circular typing import
-        from .root_widget import Root
-        from .container import Widget
-        from .stateful import _Identifiable
+    from typing import *
 
-else:
-    from .typing_bypass import Protocol, Union, TypeVar, Generic, Any, Callable  # type: ignore
+    from .root_widget import Root
 
-# --- type stuff ---
+    class Identifiable(Protocol):
+        _id_: UID
+
+
 T = TypeVar("T")
 
-InheritedAttribute = Union[
-    None,
-    T,
-    "LazyInheritedAttribute[Union[T, None]]",
-]
+
+if TYPE_CHECKING:
+
+    InheritedAttribute = Union[
+        None,
+        T,
+        "LazyInheritedAttribute[Union[T, None]]",
+    ]
+
 
 # --- Exception ("oh crap") types ---
 
@@ -184,7 +177,7 @@ class _Screen_:
     @classmethod
     def _register_recurring_update_(
         cls: "Type[_Screen_]",
-        owner: _Identifiable,
+        owner: Identifiable,
         updater: Callable[[], None],
         interval: float,
     ) -> None:
@@ -251,6 +244,8 @@ class _Screen_:
 class Widget:  # type: ignore
     _id_ = uid()
 
+    _declarable_: ClassVar[bool]
+
     _superior_: Widget
     _native_: Any
 
@@ -260,7 +255,6 @@ class Widget:  # type: ignore
     _coord_: tuple[int, int]
     _rel_coord_: tuple[int, int]
     _phys_coord_: tuple[int, int]
-    _margin_: int
 
     # --- class attr and future work ---
     _screen_: LazyInheritedAttribute[None | _Screen_] = LazyInheritedAttribute(

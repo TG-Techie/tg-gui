@@ -1,3 +1,5 @@
+import tg_gui_core
+
 from tg_gui_core import isoncircuitpython
 import tg_gui_platform
 

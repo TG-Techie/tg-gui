@@ -1,15 +1,41 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2021 Jonah Yolles-Murphy (TG-Techie)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+from __future__ import annotations
+
 from .. import uid
 from ..base import Widget
 from .style import Style, _errfmt
 from .styled_widget import StyledWidget
 
-try:
-    from typing import Mapping, Type, Any, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import *
+
+    from .styled_widget import StyledWidget
 
     Styling = Union[Style, Mapping[str, Any]]
     StylingMapping = Mapping[Type[StyledWidget], Styling]
-except:
-    pass
 
 
 def themedwidget(cls):
@@ -37,7 +63,7 @@ def themedwidget(cls):
 
 class Theme:
     _required_styles_: set[str] = set()
-    _decld_default_styling_dict: dict[Type[Widget], dict[str, Any]] = {}
+    _decld_default_styling_dict: dict[Type[StyledWidget], dict[str, Any]] = {}
 
     def get_styling_for(self, cls: Type[StyledWidget]):
         return self._stylings[cls]
