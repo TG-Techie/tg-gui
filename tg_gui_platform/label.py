@@ -43,10 +43,10 @@ class Label(StyledWidget):
         align=align.center,
     )
 
-    _stateful_style_attrs_ = {"color": Color}
+    _stateful_style_attrs_ = {"color"}
     _fixed_style_attrs_ = {
-        "size": int,
-        "align": align,  # type: ignore
+        "size",
+        "align",
     }
 
     _impl_build_ = _label_impl.build

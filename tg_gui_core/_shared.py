@@ -34,7 +34,7 @@ class PassAll:
         if len(___getitem) == 0:
             pass
         elif len(___getitem) == 1:
-            self.__getitem = ___getitem
+            self.__getitem = ___getitem[0]
 
         for attr, obj in attrs.items():
             setattr(self, attr, obj)

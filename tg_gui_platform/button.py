@@ -25,10 +25,10 @@ from __future__ import annotations
 from tg_gui_core import Specifier, Color, isoncircuitpython, StyledWidget, themedwidget
 from ._platform_impls._platform_ import button as _button_impl
 
-if not isoncircuitpython():
-    from typing import Union, Callable
-else:
-    from tg_gui_core.typing_bypass import Union  # type: ignore
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import *
 
 
 @_button_impl.format_class
@@ -50,15 +50,15 @@ class Button(StyledWidget):
 
     # user facing style
     _stateful_style_attrs_ = {
-        "fill": Color,
-        "text": Color,
-        "active_fill": Color,
-        "active_text": Color,
+        "fill",
+        "text",
+        "active_fill",
+        "active_text",
     }
     _fixed_style_attrs_ = {
-        "radius": int,
-        "size": Union[float, int],  # type: ignore
-        "fit_to_text": bool,
+        "radius",
+        "size",
+        "fit_to_text",
     }
 
     # impl tie-in

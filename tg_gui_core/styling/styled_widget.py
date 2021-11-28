@@ -44,8 +44,8 @@ class StyledWidget(Widget):
     # --- class interface ---
 
     # user facing style
-    _stateful_style_attrs_: ClassVar[set[str] | dict[str, type]]
-    _fixed_style_attrs_: ClassVar[set[str] | dict[str, type]]
+    _stateful_style_attrs_: ClassVar[set[str] | dict[str, Any]]
+    _fixed_style_attrs_: ClassVar[set[str] | dict[str, Any]]
 
     # --- impl tie-in defined in subclass ---
     _impl_build_: ClassVar[Callable]  # type: ignore
