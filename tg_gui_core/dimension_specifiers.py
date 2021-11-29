@@ -24,7 +24,8 @@
 
 from __future__ import annotations
 
-from ._shared import ConstantGroup, isoncircuitpython
+from ._shared import enum_compat, isoncircuitpython
+from enum import Enum, auto
 
 from typing import TYPE_CHECKING
 
@@ -41,15 +42,20 @@ class DimensionSpecifier:
         raise NotImplementedError("cannot use a bare DimensionSpecifier")
 
 
-_operations = ConstantGroup(
-    "operation",
-    ("add", "sub", "rsub", "mul", "floordiv"),
-)
+@enum_compat
+class _operations(Enum):
+    add = auto()
+    sub = auto()
+    rsub = auto()
+    mul = auto()
+    floordiv = auto()
 
-_dimensions = ConstantGroup(
-    "dimension_specifiers",
-    ("horizontal", "vertical"),
-)
+
+@enum_compat
+class _dimensions(Enum):
+    horizontal = auto()
+    vertical = auto()
+
 
 # maually inline this
 def _op_fn(operator):

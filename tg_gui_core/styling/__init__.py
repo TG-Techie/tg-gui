@@ -22,17 +22,17 @@
 
 from __future__ import annotations
 
-from .. import ConstantGroup
+from .._shared import enum_compat
 from .styled_widget import StyledWidget
 from .theming import Theme, SubTheme, themedwidget
 from .style import Style
 from .style import DerivedStyle
 
-align = ConstantGroup(
-    "align",
-    (
-        "leading",
-        "center",
-        "trailing",
-    ),
-)
+from enum import Enum, auto
+
+
+@enum_compat
+class align(Enum):
+    leading = auto()
+    center = auto()
+    trailing = auto()
