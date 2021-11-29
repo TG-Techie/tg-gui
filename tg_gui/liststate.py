@@ -29,43 +29,38 @@ from tg_gui_core import (
     State,
     uid,
     UID,
-    isoncircuitpython,
-    Bindable,
+    enum_compat,
     Identifiable,
+    USE_TYPING,
 )
+
+from enum import Enum, auto
 
 from typing import TYPE_CHECKING
 
-if not isoncircuitpython():
+if USE_TYPING:
     from typing import *
-    from enum import Enum, auto
 
     Handler = Callable[..., None]
 
 T = TypeVar("T")
 
 # --- enums for event types and Iterator internal state ---
-if TYPE_CHECKING or not isoncircuitpython():
-
-    class ListChange(Enum):
-        removed = auto()
-        swapped = auto()
-        reorderafter = auto()
-        inserted = auto()
-
-    class _LSIterMode(Enum):
-        unconfiged = auto()
-        factory = auto()
-        iterator = auto()
 
 
-else:
+@enum_compat
+class ListChange(Enum):
+    removed = auto()
+    swapped = auto()
+    reorderafter = auto()
+    inserted = auto()
 
-    _LSIterMode = ConstantGroup("_LSIterMode", ("unconfiged", "factory", "iterator"))
 
-    ListChange = ConstantGroup(
-        "ListChange", ("removed", "swapped", "reorderafter", "inserted")
-    )
+@enum_compat
+class _LSIterMode(Enum):
+    unconfiged = auto()
+    factory = auto()
+    iterator = auto()
 
 
 class ListState(State, Generic[T]):

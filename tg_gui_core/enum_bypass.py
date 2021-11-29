@@ -22,8 +22,7 @@
 
 # --- easy conversion ---
 #  run this then copy and paste the ConstantGroup(...) call into the ternimal
-# >>> def ConstantGroup(a, s):
-# ...     print(f"@enum_compat\nclass {a}(Enum):\n\t"+'\n\t'.join(f"{n} = auto()" for n in s))
+# >>> def ConstantGroup(a, s): print(f"@enum_compat\nclass {a}(Enum):\n\t"+'\n\t'.join(f"{n} = auto()" for n in s))
 
 
 class Enum:

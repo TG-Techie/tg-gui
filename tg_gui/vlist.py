@@ -24,12 +24,12 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Container, Widget, isoncircuitpython, Constant
-from .liststate import ListState, _ListStateIterator, _LSIterMode
+from tg_gui_core import Container, Widget, USE_TYPING
+from .liststate import ListState, ListChange, _ListStateIterator, _LSIterMode
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING or not isoncircuitpython():
+if USE_TYPING:
     from typing import Generic, TypeVar, Callable, overload, Type, Generator
 
 T = TypeVar("T")
@@ -43,17 +43,17 @@ class VList(Container, Generic[T]):
 
         @overload
         def __init__(
-            cls: Type[VList],
+            self,
             liststate: ListState[T],
             factory: Callable[[T], Widget],
         ) -> None:
             ...
 
         @overload
-        def __init__(cls: Type[VList], __gen: Generator[Widget, None, None]) -> None:
+        def __init__(self, __gen: Generator[Widget, None, None]) -> None:
             ...
 
-        def __init__(cls: Type[VList], *_, **__) -> VList:
+        def __init__(self, *_, **__) -> None:
             raise RuntimeError("this should exist at runtime! ... How did you do this?")
 
     else:
@@ -80,7 +80,7 @@ class VList(Container, Generic[T]):
 
     def _apply_list_change_event(
         self,
-        change: Constant,  # ListChange
+        change: ListChange,
         indices: None | int | tuple[int] = None,
     ) -> None:
         raise NotImplementedError()
