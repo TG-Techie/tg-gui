@@ -24,21 +24,12 @@
 
 from __future__ import annotations
 
-<<<<<<< HEAD
-from tg_gui_core import Container, Widget, isoncircuitpython, Constant
-from .liststate import ListState, _ListStateIterator, _LSIterMode
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING or not isoncircuitpython():
-=======
 from tg_gui_core import Container, Widget, USE_TYPING
 from .liststate import ListState, ListChange, _ListStateIterator, _LSIterMode
 
 from typing import TYPE_CHECKING
 
 if USE_TYPING:
->>>>>>> liststate_rebase
     from typing import Generic, TypeVar, Callable, overload, Type, Generator
 
 T = TypeVar("T")

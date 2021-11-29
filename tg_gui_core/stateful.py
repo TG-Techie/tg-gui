@@ -26,11 +26,7 @@ from ._shared import uid, UID, USE_TYPING
 
 from typing import TYPE_CHECKING
 
-<<<<<<< HEAD
-if not isoncircuitpython():
-=======
 if USE_TYPING:
->>>>>>> liststate_rebase
     from typing import *
 
 if TYPE_CHECKING:
@@ -65,13 +61,8 @@ if TYPE_CHECKING or USE_TYPING:
             ...
 
 
-<<<<<<< HEAD
-elif not TYPE_CHECKING:
-    from ._shared import _BracketByPass as Bindable
-=======
 else:
     from .typing_bypass import Bypass
->>>>>>> liststate_rebase
 
     Bindable = Bypass("Bindable", [object])
     Identifiable = object

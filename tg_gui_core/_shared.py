@@ -26,6 +26,7 @@ import sys
 def enum_compat(cls: type) -> type:
     return cls
 
+
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
     isoncircuitpython = lambda: True
@@ -68,75 +69,3 @@ def uid() -> UID:
 # --- utils ---
 def clamp(lower: int, value: int, upper: int) -> int:
     return min(max(lower, value), upper)
-<<<<<<< HEAD
-
-
-# --- enums... but not enums for now ---
-# TODO: refactor into pigeon enums with sub-typing
-class Constant:
-    def __init__(self, outer, name):
-        self._name = name
-        self._outer = outer
-        self._id = uid()
-
-    def __eq__(self, other):
-        return self._id == other._id if isinstance(other, type(self)) else False
-
-    def __hash__(self):
-        return hash(repr(self))
-
-    def __repr__(self):
-        return f"<Constant {self._outer._name}.{self._name}>"
-
-
-# _ContGroupClassArgs: tuple[Type[type], ...] = (
-#     () if usecircuitpythontyping() else (type,)
-# )  # type: ignore
-
-
-# class ConstantGroup(*_ContGroupClassArgs):  # type: ignore
-
-# from typing import TYPE_CHECKING
-
-# if TYPE_CHECKING or not isoncircuitpython():
-#     from typing import *
-
-#     from enum import Enum, EnumMeta, auto
-
-#     # def ConstantGroup(name, subs) -> Type[Enum]:
-#     #     return type(name, (Enum,), {sub: auto() for sub in subs})
-
-#     class ConstantGroup(type):
-#         def __new__(_, name: str, subs: Iterable[str]):
-#             return type(name, (Enum,), {sub: auto() for sub in subs})
-
-
-# else:
-
-if not isoncircuitpython():
-    from typing import *
-
-
-class ConstantGroup:  # type: ignore
-    Constant: Type[Constant] = Constant
-
-    def __init__(self, name, subs):
-        self._name = name
-        self._subs = subs_dict = {
-            sub_name: Constant(self, sub_name) for sub_name in subs
-        }
-        # TODO: evaluate if this should stay removed to runtime memory...
-        # # optimization for circuitpython to reduce function calls
-        # for name, sub in subs_dict.items():
-        #     setattr(self, name, sub)
-
-    def __repr__(self):
-        return f"<ConstantGroup {self._name}>"
-
-    def __getattr__(self, name: str):
-        if name in self._subs:
-            return self._subs[name]
-        else:
-            raise AttributeError(f"{self} has not attribute .{name}")
-=======
->>>>>>> liststate_rebase
