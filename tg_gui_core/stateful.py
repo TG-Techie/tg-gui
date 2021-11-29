@@ -22,11 +22,15 @@
 
 from __future__ import annotations
 
-from ._shared import uid, UID, isoncircuitpython
+from ._shared import uid, UID, USE_TYPING
 
 from typing import TYPE_CHECKING
 
+<<<<<<< HEAD
 if not isoncircuitpython():
+=======
+if USE_TYPING:
+>>>>>>> liststate_rebase
     from typing import *
 
 if TYPE_CHECKING:
@@ -37,7 +41,7 @@ T = TypeVar("T")
 S = TypeVar("S")
 D = TypeVar("D")
 
-if not isoncircuitpython():
+if TYPE_CHECKING or USE_TYPING:
     # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
     # DerivedHandler = Callable[..., Any]
@@ -61,9 +65,15 @@ if not isoncircuitpython():
             ...
 
 
+<<<<<<< HEAD
 elif not TYPE_CHECKING:
     from ._shared import _BracketByPass as Bindable
+=======
+else:
+    from .typing_bypass import Bypass
+>>>>>>> liststate_rebase
 
+    Bindable = Bypass("Bindable", [object])
     Identifiable = object
 
 

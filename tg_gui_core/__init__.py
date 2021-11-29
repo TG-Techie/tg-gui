@@ -43,13 +43,15 @@ from ._shared import (
     uid,
     UID,
     clamp,
+    isoncircuitpython,
+    enum_compat,
+    USE_TYPING,
 )
 
 from .base import (
     Widget,
     color,
     Color,
-    isoncircuitpython,
     singleinstance,
     application,
     NestingError,
@@ -116,8 +118,7 @@ from .specifiers import (
     specify,
 )
 from ._shared import (
-    ConstantGroup,
-    Constant,
+    enum_compat,
 )
 
 from .styling import (

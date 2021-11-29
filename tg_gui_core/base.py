@@ -29,14 +29,17 @@ from .dimension_specifiers import *
 
 from typing import TYPE_CHECKING
 
-if not isoncircuitpython():
-    from typing import *
+if USE_TYPING:
 
-if TYPE_CHECKING:
-    from .root_widget import Root
+    from typing import *
 
     class Identifiable(Protocol):
         _id_: UID
+
+
+if TYPE_CHECKING:
+
+    from .root_widget import Root
 
 
 T = TypeVar("T")
