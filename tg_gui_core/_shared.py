@@ -38,8 +38,6 @@ if sys.implementation.name in ("circuitpython", "micropython"):
     sys.modules["enum"] = enum_bypass  # type: ignore
 
     enum_compat = enum_bypass.enum_compat
-
-    _BracketByPass = PassAll("typing", [object])
 else:
     isoncircuitpython = lambda: False
     from typing import Type
