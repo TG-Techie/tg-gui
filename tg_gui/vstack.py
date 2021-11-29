@@ -53,8 +53,8 @@ class VStack(Container):
         def __init__(self, widgets: Generator[Widget, None, None]):
             ...
 
-        def __init__(self, *_):
-            pass
+        def __init__(self, *_, **__):
+            raise RuntimeError("this should exist at runtime")
 
     else:
 
