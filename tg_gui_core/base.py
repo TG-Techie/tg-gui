@@ -29,14 +29,17 @@ from .dimension_specifiers import *
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if USE_TYPING:
 
     from typing import *
 
-    from .root_widget import Root
-
     class Identifiable(Protocol):
         _id_: UID
+
+
+if TYPE_CHECKING:
+
+    from .root_widget import Root
 
 
 T = TypeVar("T")

@@ -23,63 +23,61 @@
 from __future__ import annotations
 
 
-from tg_gui_core import Widget, isoncircuitpython, UID
+from tg_gui_core import Widget, UID
 import time
 from time import monotonic_ns
 from micropython import const  # type: ignore
 
 _do_nothing = lambda: None
 
+from typing import TYPE_CHECKING
 
-if not isoncircuitpython():
+if TYPE_CHECKING:
     from typing import Callable, Optional, Protocol
 
     Time = int
     # --- known import fail ---
-    try:  #  typing import hack
-        Point = tuple[int, int]
-        # from .screen import Screen
+    Point = tuple[int, int]
+    # from .screen import Screen
 
-        class Selectable(Widget, Protocol):  # type: ignore
-            def _select_(self) -> None:
-                ...
+    class Selectable(Widget, Protocol):  # type: ignore
+        def _select_(self) -> None:
+            ...
 
-            def _deselect_(self) -> None:
-                ...
+        def _deselect_(self) -> None:
+            ...
 
-        class Pressable(Widget, Protocol):  # type: ignore
-            def _action_(self) -> None:
-                ...
+    class Pressable(Widget, Protocol):  # type: ignore
+        def _action_(self) -> None:
+            ...
 
-        class Updateable(Widget, Protocol):  # type: ignore
-            def _start_update_(self, coord: Point) -> None:
-                ...
+    class Updateable(Widget, Protocol):  # type: ignore
+        def _start_update_(self, coord: Point) -> None:
+            ...
 
-            def _continue_update_(self, coord: Point) -> None:
-                ...
+        def _continue_update_(self, coord: Point) -> None:
+            ...
 
-            def _end_update_(self, coord: Point) -> None:
-                ...
+        def _end_update_(self, coord: Point) -> None:
+            ...
 
-        class EventLoop(Protocol):
-            def wastocuhed(self) -> bool:
-                ...
+    class EventLoop(Protocol):
+        def wastocuhed(self) -> bool:
+            ...
 
-            @property
-            def touchedcoord(self) -> Optional[Point]:
-                ...
+        @property
+        def touchedcoord(self) -> Optional[Point]:
+            ...
 
-            def loop(self) -> None:
-                ...
+        def loop(self) -> None:
+            ...
 
-            def add_widget_if_needed(self, widget: Widget):
-                ...
+        def add_widget_if_needed(self, widget: Widget):
+            ...
 
-            def remove_widget_if_present(self, widget: Widget):
-                ...
+        def remove_widget_if_present(self, widget: Widget):
+            ...
 
-    except:
-        pass
 
 else:
     EventLoop = object  # type:ignore

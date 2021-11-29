@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from ._shared import enum_compat, isoncircuitpython
+from ._shared import enum_compat
 from enum import Enum, auto
 
 from typing import TYPE_CHECKING
