@@ -22,17 +22,17 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, Root, isoncircuitpython
+from tg_gui_core import Widget, Root, isoncircuitpython, USE_TYPING
 from .screen import Screen
 from .event_loop import EventLoop, SinglePointEventLoop
 
-if not isoncircuitpython():
+from typing import TYPE_CHECKING
+
+if USE_TYPING:
     from typing import Callable
 
-    if isoncircuitpython():  # typing import hack
-        from tg_gui_core import Theme
-else:
-    pass
+if TYPE_CHECKING:
+    from tg_gui_core import Theme
 
 from displayio import Display
 

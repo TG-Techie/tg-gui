@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import sys
 
-from ._shared import enum_compat, isoncircuitpython
+from ._shared import enum_compat, USE_TYPING
 from .base import Widget, LazyInheritedAttribute, NestingError
 from .specifiers import SpecifierReference, AttributeSpecifier
 
@@ -73,7 +73,7 @@ app = SpecifierReference("app", _search_traverse_up, check=lambda c: c._is_app_)
 
 # provide a dict to unpack into the
 _continer_meta_kwarg = {}
-if not isoncircuitpython():
+if USE_TYPING:
 
     class _ContainerScopeingMeta(type):
         def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
@@ -89,26 +89,34 @@ if not isoncircuitpython():
 
 
 # --- class tagging tools ---
-def declarable(cls: Type["Widget"]) -> Type["Widget"]:
-    """
-    dcecorator to mark that a contianer is declarable (like layout or Pages).
-    this is used for attr_specs to finf the referenced self in `self.blah`
-    """
-    assert isinstance(cls, type), f"can only decorate classes"
-    assert issubclass(
-        cls, Widget
-    ), f"{cls} does not subclass Container, it must to be @declarable"
-    cls._declarable_ = True
+if TYPE_CHECKING:
 
-    if not isoncircuitpython():
-        mro = cls.mro()[1:]
+    def declarable(cls: Type[Container]) -> Type[Container]:
+        return cls
 
-        class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
-            locals().update(cls.__dict__)
 
-        cls = NewCls
+else:
 
-    return cls
+    def declarable(cls: Type["Widget"]) -> Type["Widget"]:
+        """
+        dcecorator to mark that a contianer is declarable (like layout or Pages).
+        this is used for attr_specs to finf the referenced self in `self.blah`
+        """
+        assert isinstance(cls, type), f"can only decorate classes"
+        assert issubclass(
+            cls, Widget
+        ), f"{cls} does not subclass Container, it must to be @declarable"
+        cls._declarable_ = True
+
+        if USE_TYPING:
+            mro = cls.mro()[1:]
+
+            class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+                locals().update(cls.__dict__)
+
+            cls = NewCls
+
+        return cls
 
 
 def isdeclarable(obj: object) -> bool:
