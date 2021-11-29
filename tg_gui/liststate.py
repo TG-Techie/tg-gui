@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, UID, isoncircuitpython, Bindable, Identifiable
+from tg_gui_core import Widget, State, UID, isoncircuitpython, Bindable, Identifiable
 
 from typing import TYPE_CHECKING
 
@@ -60,18 +60,26 @@ else:
     )
 
 
-class ListState(Bindable[T]):
+class ListState(State, Generic[T]):
 
     _sugar_stack: ClassVar[list[_ListStateIterator[T]]] = []
 
     def __init__(self, ls: list[T]) -> None:
+
+        # sugar guard
+        # an allowed syntax for making a ListState is `State([1, 2, 3])`
+        # when this used .__init__ may be called more than once, to check against is
+        # we guard against this being inited
+        if hasattr(self, "_src"):
+            return
+
         assert isinstance(ls, list)
 
         self._src = ls
         self._registered: dict[UID, Handler] = {}
 
-    def value(self, reader: UID | Identifiable) -> T:
-        raise NotImplementedError()
+    def value(self, reader: UID | Identifiable) -> ListState[T]:
+        return self
 
     def update(self, updater: UID | Identifiable, value: T) -> None:
         raise NotImplementedError()

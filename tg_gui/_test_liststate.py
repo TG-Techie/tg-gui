@@ -77,8 +77,8 @@ def test_iter():
 
     assert expected == actual, f"{expected=} but got {actual=}"
 
-    for index, (ecp, act) in enumerate(zip(expected, items)):
-        assert ecp == act, f"items[{index}] != entries[{index}], {exp} != {act}"
+    for index, (exp, act) in enumerate(zip(expected, items)):
+        assert exp == act, f"items[{index}] != entries[{index}], {exp} != {act}"
 
 
 def test():
