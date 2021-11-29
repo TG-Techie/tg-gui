@@ -37,28 +37,31 @@ if TYPE_CHECKING:
     Styling = Union[Style, Mapping[str, Any]]
     StylingMapping = Mapping[Type[StyledWidget], Styling]
 
+if TYPE_CHECKING:
+    themedwidget = lambda cls: cls
+else:
 
-def themedwidget(cls):
-    """
-    @decorator
-    registers as requiring a style entry in Themes
-    # TODO: consider if this should be a classmethod on theme subclasses
-    """
-    assert issubclass(cls, StyledWidget)
-    assert isinstance(cls._stateful_style_attrs_, (set, dict))
-    assert isinstance(cls._stateful_style_attrs_, (set, dict))
+    def themedwidget(cls):  # type: ignore
+        """
+        @decorator
+        registers as requiring a style entry in Themes
+        # TODO: consider if this should be a classmethod on theme subclasses
+        """
+        assert issubclass(cls, StyledWidget)
+        assert isinstance(cls._stateful_style_attrs_, (set, dict))
+        assert isinstance(cls._stateful_style_attrs_, (set, dict))
 
-    assert cls._offer_priority_ is not None, f"{cls}._offer_priority_ not specified"
-    assert cls._reserve_space_ is not None, f"{cls}._reserve_space_ not specified"
-    assert cls._self_sizing_ is not None, f"{cls}._self_sizing_ not specified"
+        assert cls._offer_priority_ is not None, f"{cls}._offer_priority_ not specified"  # type: ignore
+        assert cls._reserve_space_ is not None, f"{cls}._reserve_space_ not specified"  # type: ignore
+        assert cls._self_sizing_ is not None, f"{cls}._self_sizing_ not specified"  # type: ignore
 
-    Theme._required_styles_ |= {cls}  # add this to Theme's required styles
+        Theme._required_styles_ |= {cls}  # type: ignore # add this to Theme's required styles
 
-    if hasattr(cls, "_default_styling_"):
-        assert cls not in Theme._decld_default_styling_dict, cls
-        Theme._decld_default_styling_dict[cls] = cls._default_styling_
+        if hasattr(cls, "_default_styling_"):
+            assert cls not in Theme._decld_default_styling_dict, cls
+            Theme._decld_default_styling_dict[cls] = cls._default_styling_  # type: ignore
 
-    return cls
+        return cls
 
 
 class Theme:

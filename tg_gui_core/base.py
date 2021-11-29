@@ -29,10 +29,10 @@ from .dimension_specifiers import *
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-
+if not isoncircuitpython():
     from typing import *
 
+if TYPE_CHECKING:
     from .root_widget import Root
 
     class Identifiable(Protocol):

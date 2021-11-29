@@ -26,14 +26,18 @@ from ._shared import uid, UID, isoncircuitpython
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if not isoncircuitpython():
     from typing import *
+
+if TYPE_CHECKING:
+    from .base import Widget
 
 
 T = TypeVar("T")
 S = TypeVar("S")
+D = TypeVar("D")
 
-if TYPE_CHECKING:
+if not isoncircuitpython():
     # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
     # DerivedHandler = Callable[..., Any]
@@ -57,7 +61,7 @@ if TYPE_CHECKING:
             ...
 
 
-else:
+elif not TYPE_CHECKING:
     from ._shared import _BracketByPass as Bindable
 
     Identifiable = object
@@ -88,12 +92,29 @@ class State(Bindable[T]):
     def __repr__(self) -> str:
         return f"<{type(self).__name__}:{self._id_} ({self._repr(self._value)})>"
 
-    def __get__(self, owner, ownertype) -> T:
-        """
-        For using states as values in functions, great for button actions.
-        """
-        # # called with self as a `.some_state` doesn't care
-        return self if owner is None else self.value(self)  # type: ignore
+    if TYPE_CHECKING:
+
+        @overload
+        def __get__(
+            self, owner: None | Type[Widget], ownertype: Type[Widget]
+        ) -> State[T]:
+            ...
+
+        @overload
+        def __get__(self, owner: Widget, ownertype: Type[Widget]) -> T:
+            ...
+
+        def __get__(self, owner, ownertype):
+            pass
+
+    else:
+
+        def __get__(self, owner, ownertype):
+            """
+            For using states as values in functions, great for button actions.
+            """
+            # # called with self as a `.some_state` doesn't care
+            return self if owner is None else self.value(self)
 
     def __set__(self, owner, value: T) -> None:
         """
@@ -109,7 +130,6 @@ class State(Bindable[T]):
             if hasattr(key, "_id_"):
                 key = key._id_
             self._registered[key] = handler
-
         else:
             raise ValueError(f"{self} already has a handler registered for  {key}")
 
@@ -131,7 +151,7 @@ class State(Bindable[T]):
             if key is not excluded_key:
                 handler(value)
 
-    def __rshift__(self, transform: Callable[[T], T]) -> "DerivedState":
+    def __rshift__(self, transform: Callable[[T], D]) -> "DerivedState[T, D]":
         """
         sugar to make derived states clearer to understand
         """
@@ -140,15 +160,15 @@ class State(Bindable[T]):
     def __bool__(self):
         raise TypeError(f"`{self}` cannot be cast to a bool, try `{self} >> bool`")
 
-    def __invert__(self) -> "DerivedState":
+    def __invert__(self) -> "DerivedState[T, bool]":
         return DerivedState(self, _not)
 
 
-class DerivedState(State, Generic[S, T]):
+class DerivedState(State, Generic[S, D]):
     def __init__(
         self,
         states: State[S] | tuple[State[S], ...],
-        fn: Callable[[S], T] | Callable[..., T],
+        fn: Callable[[S], D] | Callable[..., D],
     ) -> None:
         if isinstance(states, State):
             states = (states,)
