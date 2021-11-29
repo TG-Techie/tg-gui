@@ -25,29 +25,58 @@
 from __future__ import annotations
 
 from tg_gui_core import Container, Widget, isoncircuitpython, Constant
-from .liststate import ListState
+from .liststate import ListState, _ListStateIterator, _LSIterMode
 
-# from .liststate import ListState
-if not isoncircuitpython():
-    from typing import Generic, TypeVar, Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING or not isoncircuitpython():
+    from typing import Generic, TypeVar, Callable, overload, Type, Generator
 
 T = TypeVar("T")
 
+GeneratorType = type(_ for _ in ())
+
 
 class VList(Container, Generic[T]):
-    def __init__(
-        self,
-        liststate: ListState[T],
-        model_to_widget: Callable[[T], Widget],
-    ) -> None:
-        self._source = liststate
-        self._model_to_widget = model_to_widget
 
-        self._ids_to_widgets = [
-            (hash(model), model_to_widget(model)) for model in liststate
-        ]
+    if TYPE_CHECKING:
 
-        super().__init__()
+        @overload
+        def __init__(
+            cls: Type[VList],
+            liststate: ListState[T],
+            factory: Callable[[T], Widget],
+        ) -> None:
+            ...
+
+        @overload
+        def __init__(cls: Type[VList], __gen: Generator[Widget, None, None]) -> None:
+            ...
+
+        def __init__(cls: Type[VList], *_, **__) -> VList:
+            raise RuntimeError("this should exist at runtime! ... How did you do this?")
+
+    else:
+
+        def __init__(
+            self,
+            liststate: ListState[T],
+            factory: None | Callable[[T], Widget] = None,
+        ) -> None:
+
+            if isinstance(liststate, GeneratorType) and factory is None:
+                liststate, factory = self._from_genetator(liststate)
+
+            assert factory is not None, f"missing 'factory' (2nd) argument"
+
+            self._source = liststate
+            self._factory = factory
+
+            self._ids_to_widgets = [
+                (hash(model), factory(model)) for model in liststate
+            ]
+
+            super().__init__()
 
     def _apply_list_change_event(
         self,
@@ -55,3 +84,14 @@ class VList(Container, Generic[T]):
         indices: None | int | tuple[int] = None,
     ) -> None:
         raise NotImplementedError()
+
+    @classmethod
+    def _from_genetator(cls: Type[VList], gen: Generator[Widget, None, None]) -> VList:
+
+        factory: _ListStateIterator[T] = ListState.get_last_lsiter_sugar()
+        assert factory._mode is _LSIterMode.unconfiged
+
+        liststate = factory._configure_as_factory_(gen)
+        assert factory._mode is _LSIterMode.factory
+
+        return cls(liststate, factory)

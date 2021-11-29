@@ -24,7 +24,15 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, State, UID, isoncircuitpython, Bindable, Identifiable
+from tg_gui_core import (
+    Widget,
+    State,
+    uid,
+    UID,
+    isoncircuitpython,
+    Bindable,
+    Identifiable,
+)
 
 from typing import TYPE_CHECKING
 
@@ -75,6 +83,9 @@ class ListState(State, Generic[T]):
 
         assert isinstance(ls, list)
 
+        # state interface
+        self._id_ = uid()
+
         self._src = ls
         self._registered: dict[UID, Handler] = {}
 
@@ -94,6 +105,11 @@ class ListState(State, Generic[T]):
     def _deregister_handler_(self, key: UID | Identifiable) -> None:
         key = key if isinstance(key, UID) else key._id_
         self._registered.pop(key, None)
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__}:{self._id_} [...]>"
+
+    # --- ---
 
     # --- sugar and iter ---
     def __iter__(self) -> Iterator[T]:
