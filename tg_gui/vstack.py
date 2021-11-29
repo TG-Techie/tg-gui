@@ -27,6 +27,11 @@ from tg_gui_platform.button import Button
 
 GeneratorType = type(_ for _ in ())
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Generator, overload
+
 
 class VStack(Container):
 
@@ -38,12 +43,27 @@ class VStack(Container):
         }
     )
 
-    def __init__(self, *widgets: Widget):
-        if len(widgets) == 1 and isinstance(widgets[0], GeneratorType):
-            widgets = tuple(widgets[0])
-        super().__init__()
+    if TYPE_CHECKING:
 
-        self._widgets = widgets
+        @overload
+        def __init__(self, *widgets: Widget):
+            ...
+
+        @overload
+        def __init__(self, widgets: Generator[Widget, None, None]):
+            ...
+
+        def __init__(self, *_):
+            pass
+
+    else:
+
+        def __init__(self, *widgets):
+            if len(widgets) == 1 and isinstance(widgets[0], GeneratorType):
+                widgets = tuple(widgets[0])
+            super().__init__()
+
+            self._widgets = widgets
 
     def _on_nest_(self):
         super()._on_nest_()

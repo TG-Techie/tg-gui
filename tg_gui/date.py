@@ -67,7 +67,7 @@ _WEEKDAYS = (
 _SHORTWEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
-@themedwidget
+@themedwidget  # type: ignore
 class Date(Label):
 
     # _default_styling_ = {}
@@ -76,9 +76,15 @@ class Date(Label):
 
     _prev_refresh: ClassVar[struct_time] = time.localtime()
 
-    year, month, weekday = State(0000), State(00), State(0)
-    monthday, yearday = State(00), State(000)
-    hours, mins, secs = State(0), State(0), State(0)
+    year = State(0000)
+    month = State(00)
+    weekday = State(0)
+    monthday = State(00)
+    yearday = State(000)
+
+    hours = State(0)
+    mins = State(0)
+    secs = State(0)
 
     _date_components: ClassVar[dict[str, State]] = {
         # TODO: change the names of the date component dict keys to something a bit clearer

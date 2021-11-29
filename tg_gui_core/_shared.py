@@ -26,6 +26,8 @@ import sys
 def enum_compat(cls: type) -> type:
     return cls
 
+    builtins.Generic = PassAll("Generic", [object])  # type: ignore
+    builtins.TypeVar = lambda *_, **__: object  # type: ignore
 
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
