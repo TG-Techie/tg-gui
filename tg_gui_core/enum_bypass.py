@@ -30,7 +30,7 @@ class Enum:
     def __new__(cls, *_, **__):
         raise TypeError(
             f"Cannot make Enum '{cls.__name__}' instances on circuitpython, "
-            "decorate the class with @enum_compat"
+            + "decorate the class with @enum_compat"
         )
 
     def __init__(self, name: str, autoid: int):
