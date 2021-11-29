@@ -116,8 +116,7 @@ from .specifiers import (
     specify,
 )
 from ._shared import (
-    ConstantGroup,
-    Constant,
+    enum_compat,
 )
 
 from .styling import (
