@@ -58,8 +58,9 @@ if TYPE_CHECKING:
 
 
 else:
-    from ._shared import _BracketByPass as Bindable
+    from .typing_bypass import Bypass
 
+    Bindable = Bypass("Bindable", [object])
     Identifiable = object
 
 
