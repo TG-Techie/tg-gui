@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import sys
 
-from ._shared import ConstantGroup, isoncircuitpython
+from ._shared import enum_compat, isoncircuitpython
 from .base import Widget, LazyInheritedAttribute, NestingError
 from .specifiers import SpecifierReference, AttributeSpecifier
 
@@ -118,7 +118,7 @@ def isdeclarable(obj: object) -> bool:
 
     return (
         isinstance(obj, type)
-        and issubclass(obj, Widget)
+        and issubclass(obj, Container)
         and hasattr(obj, "_declarable_")
         and obj._declarable_  # type: ignore
     )
@@ -133,7 +133,6 @@ class Container(Widget, **_continer_meta_kwarg):
     _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)  # type: ignore
 
     def __init__(self):
-        global Widget
 
         super().__init__(margin=0)
 

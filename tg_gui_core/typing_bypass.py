@@ -14,17 +14,17 @@ class Bypass:
         if len(___getitem) == 0:
             pass
         elif len(___getitem) == 1:
-            self.__getitem = ___getitem[0]
+            self._getitem_return_value___ = ___getitem[0]
 
         for attr, obj in attrs.items():
             setattr(self, attr, obj)
 
     def __getitem__(self, *args):
-        if not hasattr(self, "__getitem"):
+        if not hasattr(self, "_getitem_return_value___"):
             raise TypeError(
                 f"{repr(self)} does not support `{self.__name}[{','.join(repr(arg) for arg in args)}]`"
             )
-        return self.__getitem
+        return self._getitem_return_value___
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} '{self.__name}'>"
@@ -36,6 +36,5 @@ sys.modules["__future__"] = Bypass("__future__", [], annotations=None)  # type: 
 # patch in things the gramar cannot get rid of
 import builtins
 
-builtins.Generic = Bypass("Generic", [object])  # type: ignore
-builtins.TypeVar = lambda *_, **__: object  # type: ignore
-print("hello")
+builtins.Generic = Generic = Bypass("Generic", [object])  # type: ignore
+builtins.TypeVar = TypeVar = lambda *_, **__: object  # type: ignore
