@@ -39,6 +39,7 @@ if sys.implementation.name in ("circuitpython", "micropython"):
 
     enum_compat = enum_bypass.enum_compat
 
+    _BracketByPass = PassAll("typing", [object])
 else:
     isoncircuitpython = lambda: False
     from typing import Type
