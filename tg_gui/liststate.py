@@ -59,14 +59,22 @@ class ListChange(Enum):
 @enum_compat
 class _LSIterMode(Enum):
     unconfiged = auto()
+    # generator state
     factory = auto()
-    iterator = auto()
+    # iterating states
+    iterating = auto()
+    closed = auto()
+
+
+def _liststate_and_factory_from_generator_(
+    gen: Generator[Widget, None, None]
+) -> tuple[ListState[T], ListStateIterator[T]]:
+    lsiter: ListStateIterator[T]
+    lsiter = ListStateIterator._get_last_created_()
+    return lsiter._configure_as_factory_(gen), lsiter
 
 
 class ListState(State, Generic[T]):
-
-    _sugar_stack: ClassVar[list[_ListStateIterator[T]]] = []
-
     def __init__(self, ls: list[T]) -> None:
 
         # sugar guard
@@ -108,74 +116,107 @@ class ListState(State, Generic[T]):
 
     # --- sugar and iter ---
     def __iter__(self) -> Iterator[T]:
-        lsiter = _ListStateIterator(self, self._src)
-        self._push_lsiter_sugar(lsiter)
-        return lsiter
-
-    @classmethod
-    def _push_lsiter_sugar(cls, lsiter: _ListStateIterator[T]) -> None:
-        cls._sugar_stack.append(lsiter)
-
-    @classmethod
-    def _pop_lsiter_sugar(cls, lsiter: _ListStateIterator[T]) -> None:
-        assert len(cls._sugar_stack), len(cls._sugar_stack)
-        assert cls._sugar_stack[-1] is lsiter
-        cls._sugar_stack.pop(-1)
-
-    @classmethod
-    def get_last_lsiter_sugar(cls: Type[ListState]) -> _ListStateIterator[T]:
-        assert len(cls._sugar_stack)
-        return cls._sugar_stack[-1]
-
-    @classmethod
-    def _get_sugar_stack(cls):
-        return cls._sugar_stack
+        return ListStateIterator(self, self._src)
 
 
-class _ListStateIterator(Generic[T]):
+class ListStateIterator(Generic[T]):
+
+    _sugar_stack: ClassVar[list[ListStateIterator[T]]] = []
+
     def __init__(self, liststate: ListState[T], raw_list: list[T]) -> None:
-        self._lsstate: None | ListState[T] = liststate
-        self._raw_list: None | list[T] = raw_list
+        # shared state / resources
+        self._id_ = _id_ = uid()
+        self._repr = f"<{type(self).__name__} {_id_}>"
 
         self._mode = _LSIterMode.unconfiged
-        self._ls_iter: None | Iterator[T] = None
-        self._generator: None | Generator[Widget, None, None] = None
-        self._factory_queue: None | list[T] = None
+
+        self._source_state = liststate
+        self._raw_list = raw_list
+
+        self._add_to_sugar()
+
+        # _LSIterMode.iterator internal State (reserves memory)
+        self._raw_iter: Iterator[T] = None  # type: ignore
+
+        # _LSIterMode.factory internal State (reserves memory)
+        self._gen: Generator[Widget, None, None] = None  # type: ignore
+        self._gen_queue: list[T] = None  # type: ignore
+
+    def isconfiged(self) -> bool:
+        return self._mode is not _LSIterMode.unconfiged
+
+    def isfactory(self) -> bool:
+        return self._mode is _LSIterMode.factory
+
+    def isiterating(self) -> bool:
+        return self._mode is _LSIterMode.iterating
+
+    def ifclosed(self) -> bool:
+        return self._mode is _LSIterMode.closed
+
+    def __repr__(self) -> str:
+        mode = self._mode
+        title = f"{type(self).__name__}:{self._id_} "
+
+        if mode is _LSIterMode.unconfiged:
+            return f"<{title}>"
+        elif mode in {
+            _LSIterMode.iterating,
+            _LSIterMode.closed,
+        }:
+            ls = f"[{type(self._source_state).__name__}:{self._source_state._id_}]"
+            if mode is _LSIterMode.iterating:
+                return f"<{title} over {ls}>"
+            elif mode is _LSIterMode.closed:
+                return f"<{title} closed iterator over {ls}>"
+            else:
+                assert False, "unreachable"
+        elif mode is _LSIterMode.factory:
+            return f"<{title} as factory>"
+        else:
+            assert False, "unreachable"
 
     def __iter__(self):
         return self
 
     def __next__(self):
+
         if self._mode is _LSIterMode.unconfiged:
             self._configure_as_iter_()
 
-        if self._mode is _LSIterMode.factory:
-            assert len(self._factory_queue)
-            return self._factory_queue.pop(0)
-        elif self._mode is _LSIterMode.iterator:
-            assert self._ls_iter is not None
-            try:
-                return next(self._ls_iter)
-            except StopIteration as err:
-                self.__dict__.clear()
-                raise err
-        else:
-            assert False, "unreachable"
+        mode = self._mode
 
-    def _configure_as_iter_(self):
+        if mode is _LSIterMode.factory:
+            assert len(self._gen_queue)
+            return self._gen_queue.pop(0)
+
+        elif mode is _LSIterMode.iterating:
+            assert self._raw_iter is not None
+            try:
+                return next(self._raw_iter)
+            except StopIteration:
+                self._mode = _LSIterMode.closed
+                raise StopIteration
+
+        elif mode is _LSIterMode.closed:
+            raise StopIteration
+
+        else:
+            assert False, f"unreachable, {mode}"
+
+    def _configure_as_iter_(self) -> None:
         assert (
             self._mode is _LSIterMode.unconfiged
         ), f"cannot re-configure, is already configured as {self._mode}"
-        assert self._raw_list is not None
 
-        self._mode = _LSIterMode.iterator
+        self._mode = _LSIterMode.iterating
+        self._assert_claim_sugar()
+        # self._open_as_iterator()
 
-        # setup internal state
-        self._ls_iter = iter(self._raw_list)
-
-        # clear dependencies
-        self._raw_list = None
-        self._lsstate._pop_lsiter_sugar(self)
+        # setup the internal state
+        # once an iterator over is it created a reference to the base list is not needed
+        self._raw_iter = iter(self._raw_list)
+        self._raw_list = None  # type: ignore
 
     def _configure_as_factory_(
         self, gen: Generator[Widget, None, None]
@@ -183,32 +224,57 @@ class _ListStateIterator(Generic[T]):
         assert (
             self._mode is _LSIterMode.unconfiged
         ), f"cannot re-configure, is already configured as {self._mode}"
-        assert self._lsstate is not None
-
+        assert self._source_state is not None
+        # sugar and mode
         self._mode = _LSIterMode.factory
-
+        self._assert_claim_sugar()
         # setup the internal state
-        self._generator = gen
-        self._factory_queue = []
+        self._gen = gen
+        self._gen_queue = []
 
-        # remove from suagr stack
-        self._lsstate._pop_lsiter_sugar(self)
+        # clear dependency, references to these are not needed
+        source = self._source_state
+        self._raw_list = None  # type: ignore
+        self._source_state = None  # type: ignore
 
-        # clear dependencies
-        lsstate = self._lsstate
-        self._raw_list = None
-
-        return lsstate
+        return source
 
     def _process_model_(self, model: T) -> Widget:
         assert (
             self._mode is _LSIterMode.factory
         ), f"{self} is configures as {self._mode}, cannot be used for model processing"
-        assert self._factory_queue is not None
-        assert self._generator is not None
 
-        self._factory_queue.append(model)
-        return next(self._generator)
+        self._gen_queue.append(model)
+        return next(self._gen)
 
-    def __call__(self, model: T) -> Widget:
-        return self._process_model_(model)
+    if TYPE_CHECKING:
+
+        def __call__(self, model: T) -> Widget:
+            return self._process_model_(model)
+
+    else:
+        __call__ = _process_model_
+
+    def _add_to_sugar(self) -> None:
+        self._sugar_stack.append(self)
+
+    def _assert_claim_sugar(self) -> None:
+        assert len(
+            self._sugar_stack
+        ), f"[sugar error] ListStateIterator stack already empty"
+
+        top = self._sugar_stack.pop(-1)
+
+        assert top._id_ == self._id_, (
+            "[sugar error] stack corrupted, "
+            + f"expected {self} on top but found {top}"
+        )
+
+    @classmethod
+    def _get_last_created_(cls) -> ListStateIterator:
+        assert len(cls._sugar_stack), "no new ListStateIterators"
+        return cls._sugar_stack[-1]
+
+    def __del__(self):
+        if self._mode is _LSIterMode.iterating:
+            self._close_as_iterator()

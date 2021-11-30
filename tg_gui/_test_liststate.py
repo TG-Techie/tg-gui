@@ -22,7 +22,7 @@
 
 from typing import *
 
-from .liststate import ListState, _ListStateIterator, _LSIterMode
+from .liststate import ListState, ListStateIterator, _LSIterMode
 
 from tg_gui_platform.label import Label
 from tg_gui_core import Widget
@@ -35,15 +35,11 @@ def foe_VList__new__(
 ) -> tuple[ListState[T], Callable[[T], Widget]]:
     # this assumes that the type dispatch for the different types of __new__ inputs is already handled
 
-    assert (length := len(ListState._get_sugar_stack())) == 1, length
+    assert (length := len(ListStateIterator._sugar_stack)) == 1, length  # type: ignore
 
-    factory: _ListStateIterator[T] = ListState.get_last_lsiter_sugar()
-    assert factory._mode is _LSIterMode.unconfiged
+    liststate, factory = ListState[T]._get_from_generator_(gen)
 
-    liststate = factory._configure_as_factory_(gen)
-    assert factory._mode is _LSIterMode.factory
-
-    assert (length := len(ListState._get_sugar_stack())) == 0, length
+    assert (length := len(ListStateIterator._sugar_stack)) == 0, length  # type: ignore
 
     return (liststate, factory)
 
@@ -62,7 +58,7 @@ def test_factory():
     assert ls is entries, f"{ls=}, {entries=}"
     assert callable(factory)
     if not TYPE_CHECKING:
-        assert isinstance(factory, _ListStateIterator), factory
+        assert isinstance(factory, ListStateIterator), factory
 
     lbl = factory(1)
     assert isinstance(lbl, Label)
