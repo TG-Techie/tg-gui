@@ -26,18 +26,9 @@ from ._shared import uid, UID, USE_TYPING
 
 from typing import TYPE_CHECKING
 
-if USE_TYPING:
+if TYPE_CHECKING or USE_TYPING:
     from typing import *
 
-if TYPE_CHECKING:
-    from .base import Widget
-
-
-T = TypeVar("T")
-S = TypeVar("S")
-D = TypeVar("D")
-
-if TYPE_CHECKING or USE_TYPING:
     # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
     # DerivedHandler = Callable[..., Any]
@@ -64,8 +55,11 @@ if TYPE_CHECKING or USE_TYPING:
 else:
     from .typing_bypass import Bypass
 
-    Bindable = Bypass("Bindable", [object])
-    Identifiable = object
+    Bindable = Bypass("Bindable", type)
+
+T = TypeVar("T")
+S = TypeVar("S")
+D = TypeVar("D")
 
 
 def _not(obj: object) -> bool:
