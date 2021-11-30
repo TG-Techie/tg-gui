@@ -29,11 +29,6 @@ from typing import TYPE_CHECKING
 if USE_TYPING:
     from typing import *
 
-
-T = TypeVar("T")
-S = TypeVar("S")
-
-if TYPE_CHECKING:
     # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
     # DerivedHandler = Callable[..., Any]
@@ -60,8 +55,10 @@ if TYPE_CHECKING:
 else:
     from .typing_bypass import Bypass
 
-    Bindable = Bypass("Bindable", [object])
-    Identifiable = object
+    Bindable = Bypass("Bindable", type)
+
+T = TypeVar("T")
+S = TypeVar("S")
 
 
 def _not(obj: object) -> bool:
