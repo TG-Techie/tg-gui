@@ -31,6 +31,7 @@ from tg_gui_core import (
     UID,
     enum_compat,
     Identifiable,
+    Bindable,
     USE_TYPING,
 )
 
@@ -40,8 +41,6 @@ from typing import TYPE_CHECKING
 
 if USE_TYPING:
     from typing import *
-
-    Handler = Callable[..., None]
 
 T = TypeVar("T")
 
@@ -66,6 +65,12 @@ class _LSIterMode(Enum):
     closed = auto()
 
 
+if USE_TYPING:
+    # Callable[[ListChange, Union[None, int, tuple[int, int]]], None]
+    ChangePayload = Union[None, int, tuple[int, int]]
+    Handler = Callable[[ListChange, ChangePayload], None]
+
+
 def _liststate_and_factory_from_generator_(
     gen: Generator[Widget, None, None]
 ) -> tuple[ListState[T], ListStateIterator[T]]:
@@ -74,7 +79,7 @@ def _liststate_and_factory_from_generator_(
     return lsiter._configure_as_factory_(gen), lsiter
 
 
-class ListState(State, Generic[T]):
+class ListState(State, Generic[T], Bindable["ListState[T]"]):
     def __init__(self, ls: list[T]) -> None:
 
         # sugar guard
@@ -96,7 +101,7 @@ class ListState(State, Generic[T]):
         return self
 
     def update(self, updater: UID | Identifiable, value: T) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError("... working on it")
 
     def _register_handler_(self, key: UID | Identifiable, handler: Handler) -> None:
         key_src = key
@@ -111,6 +116,19 @@ class ListState(State, Generic[T]):
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__}:{self._id_} [...]>"
+
+    def _alert_on_change(
+        self,
+        change: ListChange,
+        payload: ChangePayload,
+        excluded: UID | Identifiable,
+    ):
+        excluded = excluded if isinstance(excluded, UID) else Identifiable._id_
+
+        for key, handler in self._registered.items():
+            if key == excluded:
+                continue
+            handler(change, payload)
 
     # --- ---
 
