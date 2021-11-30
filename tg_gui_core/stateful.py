@@ -29,14 +29,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING or USE_TYPING:
     from typing import *
 
-<<<<<<< Updated upstream
-=======
-
-T = TypeVar("T")
-S = TypeVar("S")
-
-if TYPE_CHECKING:
->>>>>>> Stashed changes
     # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
     # DerivedHandler = Callable[..., Any]
