@@ -205,8 +205,14 @@ class ListStateIterator(Generic[T]):
         mode = self._mode
 
         if mode is _LSIterMode.factory:
-            assert len(self._gen_queue)
-            return self._gen_queue.pop(0)
+            if len(self._gen_queue) == 1:
+                return self._gen_queue.pop(0)
+            elif len(self._gen_queue) == 0:
+                raise StopIteration(
+                    f"cannot iterate over a liststate as a factory, tried to iter over {self}"
+                )
+            else:
+                raise RuntimeError(f"internal list state error in {self}")
 
         elif mode is _LSIterMode.iterating:
             assert self._raw_iter is not None
