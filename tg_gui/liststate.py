@@ -151,7 +151,7 @@ class ListStateIterator(Generic[T]):
     def isiterating(self) -> bool:
         return self._mode is _LSIterMode.iterating
 
-    def ifclosed(self) -> bool:
+    def isclosed(self) -> bool:
         return self._mode is _LSIterMode.closed
 
     def __repr__(self) -> str:
