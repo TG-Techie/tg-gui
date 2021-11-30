@@ -25,7 +25,7 @@
 from __future__ import annotations
 
 from tg_gui_core import Container, Widget, USE_TYPING
-from .liststate import ListState, ListChange, _ListStateIterator, _LSIterMode
+from .liststate import ListState, ListChange, _liststate_and_factory_from_generator_
 
 from typing import TYPE_CHECKING
 
@@ -65,7 +65,8 @@ class VList(Container, Generic[T]):
         ) -> None:
 
             if isinstance(liststate, GeneratorType) and factory is None:
-                liststate, factory = self._from_genetator(liststate)
+                gen = liststate
+                liststate, factory = _liststate_and_factory_from_generator_(gen)
 
             assert factory is not None, f"missing 'factory' (2nd) argument"
 
@@ -84,14 +85,3 @@ class VList(Container, Generic[T]):
         indices: None | int | tuple[int] = None,
     ) -> None:
         raise NotImplementedError()
-
-    @classmethod
-    def _from_genetator(cls: Type[VList], gen: Generator[Widget, None, None]) -> VList:
-
-        factory: _ListStateIterator[T] = ListState.get_last_lsiter_sugar()
-        assert factory._mode is _LSIterMode.unconfiged
-
-        liststate = factory._configure_as_factory_(gen)
-        assert factory._mode is _LSIterMode.factory
-
-        return cls(liststate, factory)

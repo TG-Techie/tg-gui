@@ -23,10 +23,6 @@
 import sys
 
 
-def enum_compat(cls: type) -> type:
-    return cls
-
-
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
     isoncircuitpython = lambda: True
@@ -42,6 +38,8 @@ if sys.implementation.name in ("circuitpython", "micropython"):
 else:
     USE_TYPING = True
     isoncircuitpython = lambda: False
+
+    enum_compat = lambda cls: cls
 
 
 # --- unique ids ---
