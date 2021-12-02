@@ -46,6 +46,31 @@ T = TypeVar("T")
 
 # --- enums for event types and Iterator internal state ---
 
+if TYPE_CHECKING:
+    changes = lambda *args: (lambda fn: fn)
+else:
+
+    def changes(*managers: ContextManager):
+        def decorate(fn):
+            def wrapped_fn(*args, **kwargs):
+                for mngr in managers:
+                    mngr.__enter__()
+
+                try:
+                    ret = fn(*args, **kwargs)
+                except BaseException as bxpt:
+                    for mngr in managers:
+                        mngr.__exit__(type(bxpt), bxpt, None)
+                    raise bxpt
+                finally:
+                    for mngr in managers:
+                        mngr.__exit__(None, None)
+                    return ret
+
+            return wrapped_fn
+
+        return decorate
+
 
 @enum_compat
 class ListChange(Enum):
@@ -86,13 +111,14 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         # an allowed syntax for making a ListState is `State([1, 2, 3])`
         # when this used .__init__ may be called more than once, to check against is
         # we guard against this being inited
-        if hasattr(self, "_source"):
+        if "_source" in self.__dict__:
             return
 
         assert isinstance(ls, list)
 
         # state interface
         self._id_ = uid()
+        self._change_guard = 0
 
         self._source = ls
         self._registered: dict[UID, Handler] = {}
@@ -132,8 +158,8 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
     def _alert_on_change(
         self,
-        change: ListChange,
-        payload: ChangePayload,
+        # change: ListChange,
+        # payload: ChangePayload,
         excluded: UID | Identifiable,
     ):
         excluded = excluded if isinstance(excluded, UID) else Identifiable._id_
@@ -141,7 +167,8 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         for key, handler in self._registered.items():
             if key == excluded:
                 continue
-            handler(change, payload)
+            handler()
+            # handler(change, payload)
 
     # --- list interface and updates ---
 
@@ -149,65 +176,74 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
     # extend          index           insert          pop
     # remove          reverse         sort
 
-    def append(self, value: T) -> None:
-        dest_index = len(self._source)
-        self._source.append(value)
-        self._alert_on_change(ListChange.insert, dest_index)
+    # def append(self, value: T) -> None:
+    #     self._change_guard()
+    #     dest_index = len(self._source)
+    #     self._source.append(value)
+    #     self._alert_on_change(ListChange.insert, dest_index)
 
-    def clear(self) -> None:
-        self._source.clear()
-        self._alert_on_change(ListChange.refresh)
+    # def clear(self) -> None:
+    #     self._change_guard()
+    #     self._source.clear()
+    #     self._alert_on_change(ListChange.refresh)
 
-    def count(self, value: T) -> int:
-        return self._source.count(value)
+    # def count(self, value: T) -> int:
+    #     return self._source.count(value)
 
-    def extend(self, iterable: Iterable[T]) -> None:
-        source = self._source
-        initial = len(source)
-        source.extend(iterable)
-        # TODO: figure out how to make this only partial
-        self._alert_on_change(ListChange.refresh, None)
+    # def extend(self, iterable: Iterable[T]) -> None:
+    #     self._change_guard()
+    #     source = self._source
+    #     initial = len(source)
+    #     source.extend(iterable)
+    #     # TODO: figure out how to make this only partial
+    #     self._alert_on_change(ListChange.refresh, None)
 
-    def index(self, value: T) -> int:
-        return self._source.index(value)
+    # def index(self, value: T) -> int:
+    #     return self._source.index(value)
 
-    def insert(self, index: int, value: T) -> None:
-        index = index % len(self._source)
-        self._source.insert(index, value)
-        self._alert_on_change(ListChange.insert, index)
+    # def insert(self, index: int, value: T) -> None:
+    #     self._change_guard()
+    #     index = index % len(self._source)
+    #     self._source.insert(index, value)
+    #     self._alert_on_change(ListChange.insert, index)
 
-    def pop(self, index: None | int = None) -> T:
-        if index is None:
-            raise ValueError(
-                ".pop() missing argument 'index' "
-                + "(if that's and issue ... please get over it)"
-            )
+    # def pop(self, index: None | int = None) -> T:
+    #     self._change_guard()
+    #     if index is None:
+    #         raise ValueError(
+    #             ".pop() missing argument 'index' "
+    #             + "(if that's and issue ... please get over it)"
+    #         )
 
-        index = index % len(self._source)
-        self._source.pop(index)
-        self._alert_on_change(ListChange.pop, index)
+    #     index = index % len(self._source)
+    #     self._source.pop(index)
+    #     self._alert_on_change(ListChange.pop, index)
 
-    def remove(self, value: T) -> None:
-        self.pop(self._source.index(value))
+    # def remove(self, value: T) -> None:
+    #     self._change_guard()
+    #     self.pop(self._source.index(value))
 
-    def reverse(self) -> None:
-        self._source.reverse()
-        self._alert_on_change(ListChange.refresh, None)
+    # def reverse(self) -> None:
+    #     self._change_guard()
+    #     self._source.reverse()
+    #     self._alert_on_change(ListChange.refresh, None)
 
-    def sort(self, **kwargs) -> None:
-        self._source.sort(**kwargs)
-        self._alert_on_change(ListChange.refresh, None)
+    # def sort(self, **kwargs) -> None:
+    #     self._change_guard()
+    #     self._source.sort(**kwargs)
+    #     self._alert_on_change(ListChange.refresh, None)
 
-    def __setitem__(self, __idx: int, value: T) -> None:
-        index = __idx % len(self._src)
-        self._source[index] = value
-        self._alert_on_change(ListChange.changed, index)
+    # def __setitem__(self, __idx: int, value: T) -> None:
+    #     self._change_guard()
+    #     index = __idx % len(self._src)
+    #     self._source[index] = value
+    #     self._alert_on_change(ListChange.changed, index)
 
-    def __getitem__(self, __idx_slc: int | slice) -> T:
-        return self._source.__getitem__(__idx_slc)
+    # def __getitem__(self, __idx_slc: int | slice) -> T:
+    #     return self._source.__getitem__(__idx_slc)
 
-    def __len__(self) -> int:
-        return len(self._source)
+    # def __len__(self) -> int:
+    #     return len(self._source)
 
     # --- iter, sugar, and extended functionality ---
 
@@ -219,6 +255,26 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
     def iter(self, reversed: bool = False) -> Iterator[T]:
         return reversed(self._source) if reversed else iter(self._source)
+
+    def __enter__(self) -> ListState:
+        self._change_guard += 1
+
+    def __exit__(
+        self, errtype: None | Type[BaseException], exeption: None | BaseException
+    ) -> None:
+        next_guard = self._change_guard - 1
+        if next_guard == 0:
+            self._alert_on_change()
+        self._change_guard = next_guard
+
+    def __getattr__(self, name: str) -> Any:
+        if self._change_guard == 0:
+            raise RuntimeError(
+                f"{self} not used in change, use `with {self}: ...` or "
+                + f"decorate the method with `@changes({self})`"
+            )
+        else:
+            return getattr(self._source, name)
 
 
 class ListStateIterator(Generic[T]):
