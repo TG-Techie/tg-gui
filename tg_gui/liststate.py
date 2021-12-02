@@ -92,14 +92,6 @@ else:
 
 
 @enum_compat
-class ListChange(Enum):
-    pop = auto()  # index
-    insert = auto()  # index
-    refresh = auto()  # None
-    changed = auto()  # index
-
-
-@enum_compat
 class _LSIterMode(Enum):
     unconfiged = auto()
     # generator state
@@ -110,9 +102,8 @@ class _LSIterMode(Enum):
 
 
 if USE_TYPING:
-    # Callable[[ListChange, Union[None, int, tuple[int, int]]], None]
     ChangePayload = Union[None, int, tuple[int, int]]
-    Handler = Callable[[ListChange, ChangePayload], None]
+    Handler = Callable[..., None]
 
 
 def _liststate_and_factory_from_generator_(
@@ -217,6 +208,15 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
     # --- iter, sugar, and extended functionality ---
 
+    def __getitem__(self, spec):
+        return self._source[spec]
+
+    def index(self, value: T) -> int:
+        return self._source.index(value)
+
+    def count(self, value: T) -> int:
+        return self._source.count(value)
+
     def __iter__(self) -> Iterator[T]:
         return ListStateIterator(self, self._source)
 
@@ -245,14 +245,28 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
         assert self._change_nesting >= 0, self._change_nesting
 
-    # def __getattr__(self, name: str) -> Any:
-    #     if self._change_guard == 0:
-    #         raise RuntimeError(
-    #             f"{self} not used in change, use `with {self}: ...` or "
-    #             + f"decorate the method with `@changes({self})`"
-    #         )
-    #     else:
-    #         return getattr(self._source, name)
+    # --- user warning ---
+    _disallowed_methods = (
+        "append",
+        "clear",
+        "copy",
+        "extend",
+        "insert",
+        "pop",
+        "remove",
+        "reverse",
+        "sort",
+    )
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._disallowed_methods:
+            raise TypeError(
+                f"cannot use .{name}(...) on a list state ({self}) outside of a change "
+                + "context, use a `with <list state>:` statement or "
+                + "`@changes(<list state>)` decorator"
+            )
+        else:
+            object.__getattr__(self, name)
 
 
 class ListStateIterator(Generic[T]):
