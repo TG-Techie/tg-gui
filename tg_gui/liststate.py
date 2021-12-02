@@ -49,10 +49,10 @@ T = TypeVar("T")
 
 @enum_compat
 class ListChange(Enum):
-    removed = auto()
-    swapped = auto()
-    reorderafter = auto()
-    inserted = auto()
+    pop = auto()  # index
+    insert = auto()  # index
+    refresh = auto()  # None
+    changed = auto()  # index
 
 
 @enum_compat
@@ -86,7 +86,7 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         # an allowed syntax for making a ListState is `State([1, 2, 3])`
         # when this used .__init__ may be called more than once, to check against is
         # we guard against this being inited
-        if hasattr(self, "_src"):
+        if hasattr(self, "_source"):
             return
 
         assert isinstance(ls, list)
@@ -94,8 +94,21 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         # state interface
         self._id_ = uid()
 
-        self._src = ls
+        self._source = ls
         self._registered: dict[UID, Handler] = {}
+
+    def __get__(self, owner, ownertype) -> T:
+        return self
+
+    def __set__(self, owner, value: T) -> None:
+        """
+        For using states as values in functions, great for button actions.
+        """
+        if value is self:
+            raise NotImplementedError
+            self._alert_on_change(ListChange.reorderafter, NOne)
+
+        raise NotImplementedError
 
     def value(self, reader: UID | Identifiable) -> ListState[T]:
         return self
@@ -130,21 +143,94 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
                 continue
             handler(change, payload)
 
-    # --- ---
+    # --- list interface and updates ---
 
-    # --- sugar and iter ---
+    # append          clear           copy            count
+    # extend          index           insert          pop
+    # remove          reverse         sort
+
+    def append(self, value: T) -> None:
+        dest_index = len(self._source)
+        self._source.append(value)
+        self._alert_on_change(ListChange.insert, dest_index)
+
+    def clear(self) -> None:
+        self._source.clear()
+        self._alert_on_change(ListChange.refresh)
+
+    def count(self, value: T) -> int:
+        return self._source.count(value)
+
+    def extend(self, iterable: Iterable[T]) -> None:
+        source = self._source
+        initial = len(source)
+        source.extend(iterable)
+        # TODO: figure out how to make this only partial
+        self._alert_on_change(ListChange.refresh, None)
+
+    def index(self, value: T) -> int:
+        return self._source.index(value)
+
+    def insert(self, index: int, value: T) -> None:
+        index = index % len(self._source)
+        self._source.insert(index, value)
+        self._alert_on_change(ListChange.insert, index)
+
+    def pop(self, index: None | int = None) -> T:
+        if index is None:
+            raise ValueError(
+                ".pop() missing argument 'index' "
+                + "(if that's and issue ... please get over it)"
+            )
+
+        index = index % len(self._source)
+        self._source.pop(index)
+        self._alert_on_change(ListChange.pop, index)
+
+    def remove(self, value: T) -> None:
+        self.pop(self._source.index(value))
+
+    def reverse(self) -> None:
+        self._source.reverse()
+        self._alert_on_change(ListChange.refresh, None)
+
+    def sort(self, **kwargs) -> None:
+        self._source.sort(**kwargs)
+        self._alert_on_change(ListChange.refresh, None)
+
+    def __setitem__(self, __idx: int, value: T) -> None:
+        index = __idx % len(self._src)
+        self._source[index] = value
+        self._alert_on_change(ListChange.changed, index)
+
+    def __getitem__(self, __idx_slc: int | slice) -> T:
+        return self._source.__getitem__(__idx_slc)
+
+    def __len__(self) -> int:
+        return len(self._source)
+
+    # --- iter, sugar, and extended functionality ---
+
     def __iter__(self) -> Iterator[T]:
-        return ListStateIterator(self, self._src)
+        return ListStateIterator(self, self._source)
+
+    def __reversed__(self) -> Iterator[T]:
+        return ListStateIterator(self, self._source, reversed=True)
+
+    def iter(self, reversed: bool = False) -> Iterator[T]:
+        return reversed(self._source) if reversed else iter(self._source)
 
 
 class ListStateIterator(Generic[T]):
 
     _sugar_stack: ClassVar[list[ListStateIterator[T]]] = []
 
-    def __init__(self, liststate: ListState[T], raw_list: list[T]) -> None:
+    def __init__(
+        self, liststate: ListState[T], raw_list: list[T], reversed: bool = False
+    ) -> None:
         # shared state / resources
         self._id_ = _id_ = uid()
-        self._repr = f"<{type(self).__name__} {_id_}>"
+        self._reversed = reversed
 
         self._mode = _LSIterMode.unconfiged
 
@@ -183,6 +269,7 @@ class ListStateIterator(Generic[T]):
             _LSIterMode.closed,
         }:
             ls = f"[{type(self._source_state).__name__}:{self._source_state._id_}]"
+            ls = f"reversed({ls})" if self._reversed else ls
             if mode is _LSIterMode.iterating:
                 return f"<{title} over {ls}>"
             elif mode is _LSIterMode.closed:
@@ -239,7 +326,9 @@ class ListStateIterator(Generic[T]):
 
         # setup the internal state
         # once an iterator over is it created a reference to the base list is not needed
-        self._raw_iter = iter(self._raw_list)
+        self._raw_iter = (
+            reversed(self._raw_list) if self._reversed else iter(self._raw_list)
+        )
         self._raw_list = None  # type: ignore
 
     def _configure_as_factory_(
@@ -249,6 +338,15 @@ class ListStateIterator(Generic[T]):
             self._mode is _LSIterMode.unconfiged
         ), f"cannot re-configure, is already configured as {self._mode}"
         assert self._source_state is not None
+
+        if not self._reversed:
+            # TODO: should iterators close on errors?
+            # self._mode = _LSIterMode.closed
+            raise SyntaxError(
+                "Cannot use `reversed(...)` on a ListState in a generator context. "
+                + "ie, cannot use List(... for a, b in reversed(<some_list_state>))"
+            )
+
         # sugar and mode
         self._mode = _LSIterMode.factory
         self._assert_claim_sugar()
