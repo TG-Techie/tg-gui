@@ -52,20 +52,39 @@ else:
 
     def changes(*managers: ContextManager):
         def decorate(fn):
-            def wrapped_fn(*args, **kwargs):
-                for mngr in managers:
-                    mngr.__enter__()
+            if len(managers) == 0:
 
-                try:
-                    ret = fn(*args, **kwargs)
-                except BaseException as bxpt:
-                    for mngr in managers:
-                        mngr.__exit__(type(bxpt), bxpt, None)
-                    raise bxpt
-                finally:
-                    for mngr in managers:
-                        mngr.__exit__(None, None)
-                    return ret
+                def wrapped_fn(*args, __mngr: ContextManager = managers[0], **kwargs):
+                    __mngr.__enter__()
+                    try:
+                        ret = fn(*args, **kwargs)
+                    except Exception as expt:
+                        __mngr.__exit__(type(expt), expt)
+                        raise expt
+                    else:
+                        __mngr.__exit__(None, None)
+                        return ret
+
+            else:
+
+                def wrapped_fn(
+                    *args,
+                    __changes_managers___: tuple[ContextManager] = managers,
+                    **kwargs,
+                ):
+                    for mngr in __changes_managers___:
+                        mngr.__enter__()
+
+                    try:
+                        ret = fn(*args, **kwargs)
+                    except Exception as expt:
+                        for mngr in __changes_managers___:
+                            mngr.__exit__(type(expt), expt)
+                        raise expt
+                    else:
+                        for mngr in __changes_managers___:
+                            mngr.__exit__(None, None)
+                        return ret
 
             return wrapped_fn
 
@@ -118,13 +137,27 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
         # state interface
         self._id_ = uid()
-        self._change_guard = 0
+        self._change_nesting: int = 0
+        self._change_guard: set[Identifiable] = set()
 
-        self._source = ls
+        self._source: list[T] = ls
+        # self._static_souce: None | tuple[T] = tuple(ls)
         self._registered: dict[UID, Handler] = {}
 
-    def __get__(self, owner, ownertype) -> T:
-        return self
+    def __get__(self, owner, ownertype) -> list[T] | ListState[T]:
+        # print(f"{self}.__get__({owner}, {ownertype})")
+        if owner is None:
+            return self
+        else:
+            if self._change_nesting == 0:
+                return self
+                # return self._static_souce
+                # raise RuntimeError(
+                #     "list states cannot be mutated outside of a mutating context, "
+                #     + "use `with <list state>: ...` or `@changes(<list state>)`"
+                # )
+            self._change_guard.add(self)
+            return self._source
 
     def __set__(self, owner, value: T) -> None:
         """
@@ -132,7 +165,6 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         """
         if value is self:
             raise NotImplementedError
-            self._alert_on_change(ListChange.reorderafter, NOne)
 
         raise NotImplementedError
 
@@ -158,92 +190,30 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
 
     def _alert_on_change(
         self,
-        # change: ListChange,
-        # payload: ChangePayload,
-        excluded: UID | Identifiable,
+        excluded: None | UID | Identifiable | Iterable[None | UID | Identifiable],
     ):
-        excluded = excluded if isinstance(excluded, UID) else Identifiable._id_
+        if not isinstance(excluded, (tuple, list, set)):
+            assert (
+                excluded is None
+                or isinstance(excluded, UID)
+                or hasattr(excluded, "_id_")
+            ), (
+                "exlcuded= must be a (None, UID, Identifiable) or a "
+                + f"(list, tuple, or set) of those, found {excluded}"
+            )
+            excluded = (excluded,)
+
+        excluded: set[UID] = set(
+            (ext if ext is None or isinstance(ext, UID) else ext._id_)
+            for ext in excluded
+            if ext is not None
+        )
 
         for key, handler in self._registered.items():
-            if key == excluded:
+            if key in excluded:
                 continue
             handler()
             # handler(change, payload)
-
-    # --- list interface and updates ---
-
-    # append          clear           copy            count
-    # extend          index           insert          pop
-    # remove          reverse         sort
-
-    # def append(self, value: T) -> None:
-    #     self._change_guard()
-    #     dest_index = len(self._source)
-    #     self._source.append(value)
-    #     self._alert_on_change(ListChange.insert, dest_index)
-
-    # def clear(self) -> None:
-    #     self._change_guard()
-    #     self._source.clear()
-    #     self._alert_on_change(ListChange.refresh)
-
-    # def count(self, value: T) -> int:
-    #     return self._source.count(value)
-
-    # def extend(self, iterable: Iterable[T]) -> None:
-    #     self._change_guard()
-    #     source = self._source
-    #     initial = len(source)
-    #     source.extend(iterable)
-    #     # TODO: figure out how to make this only partial
-    #     self._alert_on_change(ListChange.refresh, None)
-
-    # def index(self, value: T) -> int:
-    #     return self._source.index(value)
-
-    # def insert(self, index: int, value: T) -> None:
-    #     self._change_guard()
-    #     index = index % len(self._source)
-    #     self._source.insert(index, value)
-    #     self._alert_on_change(ListChange.insert, index)
-
-    # def pop(self, index: None | int = None) -> T:
-    #     self._change_guard()
-    #     if index is None:
-    #         raise ValueError(
-    #             ".pop() missing argument 'index' "
-    #             + "(if that's and issue ... please get over it)"
-    #         )
-
-    #     index = index % len(self._source)
-    #     self._source.pop(index)
-    #     self._alert_on_change(ListChange.pop, index)
-
-    # def remove(self, value: T) -> None:
-    #     self._change_guard()
-    #     self.pop(self._source.index(value))
-
-    # def reverse(self) -> None:
-    #     self._change_guard()
-    #     self._source.reverse()
-    #     self._alert_on_change(ListChange.refresh, None)
-
-    # def sort(self, **kwargs) -> None:
-    #     self._change_guard()
-    #     self._source.sort(**kwargs)
-    #     self._alert_on_change(ListChange.refresh, None)
-
-    # def __setitem__(self, __idx: int, value: T) -> None:
-    #     self._change_guard()
-    #     index = __idx % len(self._src)
-    #     self._source[index] = value
-    #     self._alert_on_change(ListChange.changed, index)
-
-    # def __getitem__(self, __idx_slc: int | slice) -> T:
-    #     return self._source.__getitem__(__idx_slc)
-
-    # def __len__(self) -> int:
-    #     return len(self._source)
 
     # --- iter, sugar, and extended functionality ---
 
@@ -257,24 +227,32 @@ class ListState(State, Generic[T], Bindable["ListState[T]"]):
         return reversed(self._source) if reversed else iter(self._source)
 
     def __enter__(self) -> ListState:
-        self._change_guard += 1
+        # print(f"{self}.__enter__()")
+        self._change_nesting += 1
+        return self._source
 
-    def __exit__(
-        self, errtype: None | Type[BaseException], exeption: None | BaseException
-    ) -> None:
-        next_guard = self._change_guard - 1
-        if next_guard == 0:
-            self._alert_on_change()
-        self._change_guard = next_guard
+    def __exit__(self, *_) -> None:
+        # print(f"{self}.__exit__{_}")
 
-    def __getattr__(self, name: str) -> Any:
-        if self._change_guard == 0:
-            raise RuntimeError(
-                f"{self} not used in change, use `with {self}: ...` or "
-                + f"decorate the method with `@changes({self})`"
-            )
-        else:
-            return getattr(self._source, name)
+        assert self._change_nesting, f"internal error or incorrect use of {self}"
+
+        self._change_nesting -= 1
+
+        if self._change_nesting == 0:
+            # self._static_souce = tuple(self._source)
+            self._alert_on_change(excluded=self._change_guard)
+            self._change_guard.clear()
+
+        assert self._change_nesting >= 0, self._change_nesting
+
+    # def __getattr__(self, name: str) -> Any:
+    #     if self._change_guard == 0:
+    #         raise RuntimeError(
+    #             f"{self} not used in change, use `with {self}: ...` or "
+    #             + f"decorate the method with `@changes({self})`"
+    #         )
+    #     else:
+    #         return getattr(self._source, name)
 
 
 class ListStateIterator(Generic[T]):
