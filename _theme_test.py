@@ -205,17 +205,25 @@ class Widget:
         #     len(extras := set(styleattrs) - set(self._build_style_attrs_)) == 0
         # ), f"extra keyword argument{'s'*bool(len(extras) > 1)} {', '.join(name+'=' for name in extras)}"
 
-        self._build_attrs_ = {
+        self._build_attrs_ = buildatters = {
             name: styleattrs[name]
             for name in styleattrs
             if self._allows_themed_build_attr_(name)
         }
 
-        self._stateful_attrs_ = {
+        self._stateful_attrs_ = statefulattrs = {
             name: styleattrs[name]
             for name in styleattrs
-            if self._allows_themed_stateful_attr_()(name)
+            if self._allows_themed_stateful_attr_(name)
         }
+
+        assert (
+            len(overlap := set(buildatters) & set(statefulattrs)) == 0
+        ), f"conflicting themedattribute for arguments {overlap}... How!?"
+
+        assert (
+            len(extra := set(styleattrs) - set(buildatters) - set(statefulattrs)) == 0
+        ), f"extra styles {extra}"
 
         self._superior_ = None
         self._theme_ = None
@@ -243,18 +251,18 @@ class Theme:
         __source: dict[
             Type["Widget"],
             tuple[
-                None | dict[str, Any],
-                None | dict[str, Any],
+                dict[str, Any],
+                dict[str, Any],
             ],
         ],
     ) -> None:
 
         assert (
             len(missing := set(self._required_) - set(__source)) == 0
-        ), f"missing styles for {missing}"
+        ), f"missing style_attrs for {missing}"
         assert (
-            len(extras := set(__source) - set(self._required_)) == 0
-        ), f"extras styles {extras}"
+            len(extra := set(__source) - set(self._required_)) == 0
+        ), f"extra style_attrs {extra}"
 
         self._source = __source
 
@@ -286,21 +294,16 @@ class Theme:
 
         attrs = pack[1] if is_stateful else pack[0]
 
-        if attrs is None:
-            kind = "stateful" if is_stateful else "build"
-            wid_dbg_str = (
-                "" if debug_widget is None else f"(from widget {debug_widget})"
-            )
-            raise ResolutionError(
-                f"{self} has no {kind} entry for {widcls} {wid_dbg_str}"
-            )
-
         value = attrs.get(name, _NotFound)
         if value is not _NotFound:
             return value
         else:
             kind = "stateful" if is_stateful else "build"
-            wid_dbg_str = "" if debug_widget is None else f"on {debug_widget}"
+            wid_dbg_str = (
+                f"on widget of type {widcls}"
+                if debug_widget is None
+                else f" on {debug_widget}"
+            )
             raise ResolutionError(
                 f"cannot resolve themed {kind} attribute .{name} {wid_dbg_str}"
             )
@@ -353,7 +356,7 @@ class Root(Container):
         {
             Widget: (
                 dict(_margin_=5),
-                None,
+                {},
             ),
             Text: (
                 dict(fit=True, size=LabelSize.normal),
@@ -361,7 +364,7 @@ class Root(Container):
             ),
             Label: (
                 dict(size=LabelSize.large),
-                None,
+                {},
             ),
         }
     )
