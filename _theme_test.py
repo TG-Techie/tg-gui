@@ -143,9 +143,7 @@ class Widget:
 
     _superior_: Optional["Widget"]
 
-    _theme_: ClassVar[InheritedAttribute["Theme"]] = LazyInheritedAttribute(
-        "_theme_", None
-    )
+    _theme_: InheritedAttribute["Theme"] = LazyInheritedAttribute("_theme_", None)
 
     _fixed_style_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {
         "_margin_": int
