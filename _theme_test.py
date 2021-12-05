@@ -60,7 +60,7 @@ class LazyInheritedAttribute(Generic[T]):
         assert hasattr(owner, privname), (
             f"`{owner}.{self._attrname}` attribute not initialized, "
             + f"inherited `{type(owner).__name__}.{self._attrname}` attributes must be "
-            + f"initialized to the inital `{self._initial}` or some other value"
+            + f"initialized to the inital `{self._initial}` or some value"
         )
 
         privattr = getattr(owner, privname)
@@ -199,7 +199,7 @@ class Widget:
     }
     _stateful_styled_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {}
 
-    def __init__(self, **styleattrs) -> None:
+    def __init__(self, _margin_: None | int = None, **styleattrs) -> None:
 
         # assert (  # that there are not extra keywords
         #     len(extras := set(styleattrs) - set(self._build_style_attrs_)) == 0
@@ -227,6 +227,7 @@ class Widget:
 
         self._superior_ = None
         self._theme_ = None
+
         super().__init__()
 
     @classmethod
@@ -238,6 +239,8 @@ class Widget:
     def _allows_themed_stateful_attr_(cls, name: str) -> bool:
         return isinstance(getattr(cls, name, None), ThemedStatefulAttribute)
 
+class StyledWidget(Widget):
+
 
 class Theme:
     _required_: set[Type["Widget"]] = {Widget}
@@ -248,7 +251,9 @@ class Theme:
 
     def __init__(
         self,
-        __source: dict[
+        *,
+        margin:int,
+        styling: dict[
             Type["Widget"],
             tuple[
                 dict[str, Any],
@@ -258,13 +263,14 @@ class Theme:
     ) -> None:
 
         assert (
-            len(missing := set(self._required_) - set(__source)) == 0
+            len(missing := set(self._required_) - set(styling)) == 0
         ), f"missing style_attrs for {missing}"
         assert (
-            len(extra := set(__source) - set(self._required_)) == 0
+            len(extra := set(styling) - set(self._required_)) == 0
         ), f"extra style_attrs {extra}"
 
-        self._source = __source
+        self._margin_ = margin
+        self._source = styling
 
     def getbuildattr(
         self, widcls: Type[Widget], name: str, debug_widget: None | Widget
@@ -353,7 +359,8 @@ class Container(Widget):
 class Root(Container):
 
     _theme_ = Theme(
-        {
+        margin=5, 
+        styling={
             Widget: (
                 dict(_margin_=5),
                 {},
