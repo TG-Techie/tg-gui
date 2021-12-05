@@ -77,8 +77,10 @@ class Date(Label):
     # _default_styling_.update(Label._default_styling_)
     # _default_styling_.update(fit_to_text=True)
 
+    # for internal use when updating the state objects
     _prev_refresh: ClassVar[struct_time] = time.localtime()
 
+    # publicly exposed state
     year, month, weekday = State(0000), State(00), State(0)
     monthday, yearday = State(00), State(000)
     hour24, min, sec = State(0), State(0), State(0)
@@ -136,16 +138,14 @@ class Date(Label):
 
         self._format_src = format
 
-        # # find which date components this
-        # self._components = comps = {
-        #     name: cmp for name, cmp in self._date_components.items() if name in format
-        # }
-        deps = tuple(
+        dependencies = tuple(
             cmp for name, cmp in self._date_components.items() if name in format
         )
 
         self._inst_state = state = (
-            DerivedState(deps, self._derive_new_str) if len(deps) else None
+            DerivedState(dependencies, self._derive_new_str)
+            if len(dependencies)
+            else None
         )
 
         if format == "":
