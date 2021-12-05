@@ -14,11 +14,12 @@ class Test(Layout):
     body = VStack(
         VStack(
             Label(
-                Date.secs >> f"example {i}: {{}}".format,
+                Date.sec >> f"example {i}: {{}}".format,
                 size=2,
             )
             for i in range(3)
         ),
+        Date("{hour}:{sec}"),
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),
         Button("done", action=guiexit),
