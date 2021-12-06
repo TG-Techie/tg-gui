@@ -109,13 +109,13 @@ class ThemedAttribute:
     _attr_may_be_stateful: ClassVar[bool]
 
     name: str
-    widtype: Type["Widget"]
+    widtype: Type["StyledWidget"]
     allowed: type | tuple[type, ...] = object
 
     def __init__(
         self,
         name: str,
-        widtype: Type["Widget"],
+        widtype: Type["StyledWidget"],
         allowed: type | tuple[type, ...] = object,
     ) -> None:
         assert (
@@ -123,9 +123,11 @@ class ThemedAttribute:
         ), f"cannot init a non-subclasses ThemedAttribute"
         self.name = name
         self.widtype = widtype
+        assert issubclass(widtype, StyledWidget)
+
         self.allowed = allowed
 
-    def __get__(self, owner: None | "Widget", ownertype: Type["Widget"]):
+    def __get__(self, owner: None | "StyledWidget", ownertype: Type["StyledWidget"]):
         if owner is None:
             return self
         assert owner is not None
@@ -133,7 +135,9 @@ class ThemedAttribute:
         name = self.name
         maybe_stateful = self._attr_may_be_stateful
 
-        inst_attr_dict = owner._styled_attrs_ if maybe_stateful else owner._build_attrs_
+        inst_attr_dict = (
+            owner._stateful_attrs_ if maybe_stateful else owner._build_attrs_
+        )
         attr = inst_attr_dict.get(name, _NotFound)
 
         if attr is _NotFound:
@@ -167,10 +171,33 @@ class ThemedStatefulAttribute(ThemedBuildAttribute):
 # if not TYPE_CHECKING:
 def themedwidget(widcls: "Type['Widget']") -> "Type['Widget']":
 
-    for attr, allowed in widcls._build_style_attrs_.items():
+    assert issubclass(
+        widcls, StyledWidget
+    ), f"{widcls} does not subclass {StyledWidget}, cannot use @themedwidget on non-styled widget"
+
+    buildattrs = widcls._build_style_attrs_
+    statefulattrs = widcls._stateful_style_attrs_
+
+    assert buildattrs not in (
+        matched_build_conflict:= cls if (buildattrs is cls._build_style_attrs_) else False for cls in Theme._required_
+    ), (
+        f"{widcls} missing the ._build_style_attrs_ class attribute, "
+        + "@themedwidget classes require ._build_style_attrs_ attrs spec. "
+        + f"(ie found a dict that belonges to {matched_build_conflict})"
+    )
+
+    assert not any(
+         matched_stateful_conflict:= cls if (statefulattrs is cls._stateful_style_attrs_) else False for cls in Theme._required_
+    ), (
+        f"{widcls} missing the ._stateful_style_attrs_ class attribute, "
+        + "@themedwidget classes require ._stateful_style_attrs_  attrs spec. "
+        + f"(ie found a dict that belonges to {matched_stateful_conflict})"
+    )
+
+    for attr, allowed in buildattrs.items():
         setattr(widcls, attr, ThemedBuildAttribute(attr, widcls, allowed))
 
-    for attr, allowed in widcls._stateful_styled_attrs_.items():
+    for attr, allowed in statefulattrs.items():
         setattr(widcls, attr, ThemedStatefulAttribute(attr, widcls, allowed))
 
     Theme._required_.add(widcls)
@@ -194,17 +221,37 @@ class Widget:
 
     _theme_: InheritedAttribute["Theme"] = LazyInheritedAttribute("_theme_", None)
 
-    _build_style_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {
-        "_margin_": int
-    }
-    _stateful_styled_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {}
-
     def __init__(self, _margin_: None | int = None, **styleattrs) -> None:
 
         # assert (  # that there are not extra keywords
         #     len(extras := set(styleattrs) - set(self._build_style_attrs_)) == 0
         # ), f"extra keyword argument{'s'*bool(len(extras) > 1)} {', '.join(name+'=' for name in extras)}"
 
+        
+
+        self._superior_ = None
+        self._theme_ = None
+        self._margin_ = None
+
+        super().__init__()
+
+    @classmethod
+    def _allows_themed_build_attr_(cls, name: str) -> bool:
+        descriptor = getattr(cls, name, None)
+        return isinstance(descriptor, ThemedBuildAttribute)
+
+    @classmethod
+    def _allows_themed_stateful_attr_(cls, name: str) -> bool:
+        return isinstance(getattr(cls, name, None), ThemedStatefulAttribute)
+
+
+class StyledWidget(Widget):
+
+    _build_style_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {}
+    _stateful_style_attrs_: ClassVar[dict[str, type | tuple[type, ...]]] = {}
+
+    def __init__(self, _margin_:None|int=None, **styleattrs) -> None:
+        
         self._build_attrs_ = buildatters = {
             name: styleattrs[name]
             for name in styleattrs
@@ -225,25 +272,10 @@ class Widget:
             len(extra := set(styleattrs) - set(buildatters) - set(statefulattrs)) == 0
         ), f"extra styles {extra}"
 
-        self._superior_ = None
-        self._theme_ = None
-
-        super().__init__()
-
-    @classmethod
-    def _allows_themed_build_attr_(cls, name: str) -> bool:
-        descriptor = getattr(cls, name, None)
-        return isinstance(descriptor, ThemedBuildAttribute)
-
-    @classmethod
-    def _allows_themed_stateful_attr_(cls, name: str) -> bool:
-        return isinstance(getattr(cls, name, None), ThemedStatefulAttribute)
-
-class StyledWidget(Widget):
-
+        super().__init__(_margin_=_margin_)
 
 class Theme:
-    _required_: set[Type["Widget"]] = {Widget}
+    _required_: set[Type["StyledWidget"]] = set()
 
     # defaults = {
     #     Widget: {"__margin__": 5},
@@ -252,9 +284,9 @@ class Theme:
     def __init__(
         self,
         *,
-        margin:int,
+        margin: int,
         styling: dict[
-            Type["Widget"],
+            Type["StyledWidget"],
             tuple[
                 dict[str, Any],
                 dict[str, Any],
@@ -262,29 +294,34 @@ class Theme:
         ],
     ) -> None:
 
-        assert (
-            len(missing := set(self._required_) - set(styling)) == 0
-        ), f"missing style_attrs for {missing}"
+        
         assert (
             len(extra := set(styling) - set(self._required_)) == 0
         ), f"extra style_attrs {extra}"
 
+        assert (
+            len(missing := set(self._required_) - set(styling)) == 0
+        ), f"missing style_attrs for {missing}"
+
         self._margin_ = margin
         self._source = styling
 
+        # TODO: assert self._check_styles()
+
+
     def getbuildattr(
-        self, widcls: Type[Widget], name: str, debug_widget: None | Widget
+        self, widcls: Type[StyledWidget], name: str, debug_widget: None | Widget
     ):
         return self._get_attr(widcls, name, False, debug_widget=debug_widget)
 
     def getstatefulattr(
-        self, widcls: Type[Widget], name: str, debug_widget: None | Widget
+        self, widcls: Type[StyledWidget], name: str, debug_widget: None | Widget
     ):
         return self._get_attr(widcls, name, True, debug_widget=debug_widget)
 
     def _get_attr(
         self,
-        widcls: Type[Widget],
+        widcls: Type[StyledWidget],
         name: str,
         is_stateful: bool,
         debug_widget: None | Widget,
@@ -315,14 +352,14 @@ class Theme:
             )
 
 
-themedwidget(Widget)
+themedwidget(StyledWidget)
 
 
 @themedwidget
-class Text(Widget):
+class Text(StyledWidget):
 
     _build_style_attrs_ = {"fit": bool, "size": LabelSize}
-    _styled_attrs_ = {"color": Color}
+    _stateful_style_attrs_ = {"color": Color}
 
     def __init__(self, text: str, **attrs) -> None:
         self._text = text
@@ -335,6 +372,7 @@ class Text(Widget):
 @themedwidget
 class Label(Text):
     _build_style_attrs_ = {"size": LabelSize}
+    _stateful_style_attrs_ = {}
 
     def __init__(self, text: str, **attrs) -> None:
         assert "\n" not in text, f"labels may only by one line, "
@@ -359,12 +397,9 @@ class Container(Widget):
 class Root(Container):
 
     _theme_ = Theme(
-        margin=5, 
+        margin=5,
         styling={
-            Widget: (
-                dict(_margin_=5),
-                {},
-            ),
+            StyledWidget: ( {},   {} ),
             Text: (
                 dict(fit=True, size=LabelSize.normal),
                 dict(color=0xFFFFFF),
@@ -373,7 +408,7 @@ class Root(Container):
                 dict(size=LabelSize.large),
                 {},
             ),
-        }
+        },
     )
 
     def __init__(self, wid: Widget) -> None:
