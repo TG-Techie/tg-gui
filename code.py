@@ -1,23 +1,15 @@
 from tg_gui.prelude import *
 
 
-@main(screen := default.screen(), default.theme())
+@main(screen := default.screen(), default.theme(), _startup=__name__ == "__main__")
 @application
 class Test(Layout):
 
-    _theme_ = SubTheme(
-        {
-            Button: dict(size=2),
-        }
-    )
+    _theme_ = SubTheme({Button: dict(size=2)})
 
     body = VStack(
         VStack(
-            Label(
-                Date.secs >> f"example {i}: {{}}".format,
-                size=2,
-            )
-            for i in range(3)
+            Label(Date.secs >> f"example {i}: {{}}".format, size=2) for i in range(3)
         ),
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),

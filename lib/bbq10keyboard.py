@@ -62,29 +62,29 @@ _REG_FRQ = const(0x07)  # poll freq cfg
 _REG_RST = const(0x08)  # reset
 _REG_FIF = const(0x09)  # fifo
 
-_WRITE_MASK      = const(1 << 7)
+_WRITE_MASK = const(1 << 7)
 
-CFG_OVERFLOW_ON  = const(1 << 0)
+CFG_OVERFLOW_ON = const(1 << 0)
 CFG_OVERFLOW_INT = const(1 << 1)
 CFG_CAPSLOCK_INT = const(1 << 2)
-CFG_NUMLOCK_INT  = const(1 << 3)
-CFG_KEY_INT      = const(1 << 4)
-CFG_PANIC_INT    = const(1 << 5)
+CFG_NUMLOCK_INT = const(1 << 3)
+CFG_KEY_INT = const(1 << 4)
+CFG_PANIC_INT = const(1 << 5)
 
-INT_OVERFLOW     = const(1 << 0)
-INT_CAPSLOCK     = const(1 << 1)
-INT_NUMLOCK      = const(1 << 2)
-INT_KEY          = const(1 << 3)
-INT_PANIC        = const(1 << 4)
+INT_OVERFLOW = const(1 << 0)
+INT_CAPSLOCK = const(1 << 1)
+INT_NUMLOCK = const(1 << 2)
+INT_KEY = const(1 << 3)
+INT_PANIC = const(1 << 4)
 
-KEY_CAPSLOCK     = const(1 << 5)
-KEY_NUMLOCK      = const(1 << 6)
-KEY_COUNT_MASK   = const(0x1F)
+KEY_CAPSLOCK = const(1 << 5)
+KEY_NUMLOCK = const(1 << 6)
+KEY_COUNT_MASK = const(0x1F)
 
-STATE_IDLE       = const(0)
-STATE_PRESS      = const(1)
+STATE_IDLE = const(0)
+STATE_PRESS = const(1)
 STATE_LONG_PRESS = const(2)
-STATE_RELEASE    = const(3)
+STATE_RELEASE = const(3)
 
 
 class BBQ10Keyboard:

@@ -31,12 +31,15 @@ from .base import _Screen_
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .styling import Theme
+    from .theming import Theme
 
 
 class Root(Container):
+    @property
+    def _theme_(self):
+        raise TypeError(f"Root Widgets are not themed")
 
-    _theme_ = None
+    _screen_ = None
 
     def __init__(
         self,
@@ -54,7 +57,7 @@ class Root(Container):
 
         self._size_ = size
         self._native_ = None
-        self._theme_ = theme
+        # self._theme_ = theme
 
         self._is_shown = False
 

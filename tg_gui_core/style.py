@@ -22,7 +22,9 @@
 
 from __future__ import annotations
 
-from .. import Widget, State, DerivedState, uid
+from ._shared import uid
+from .base import Widget
+from .stateful import State, DerivedState
 
 
 _errfmt = lambda items: "{" + (", ".join(str(item) for item in items)) + "}"

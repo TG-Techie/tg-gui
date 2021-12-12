@@ -70,6 +70,7 @@ class LazyInheritedAttribute(Generic[T]):
 
             self._climb_stack.append(owner)
 
+            # recursive call (may push to the climb stack)
             heirattr = getattr(owner._superior_, self._attrname, self._climb_sentinel)
 
             if heirattr is self._climb_sentinel:
@@ -82,6 +83,7 @@ class LazyInheritedAttribute(Generic[T]):
 
             if heirattr is not self._initial:
                 setattr(owner, privname, heirattr)
+            
             return heirattr
 
     def __set__(self, owner, value) -> None:
@@ -234,15 +236,6 @@ class Widget:
         self._margin_ = None
 
         super().__init__()
-
-    @classmethod
-    def _allows_themed_build_attr_(cls, name: str) -> bool:
-        descriptor = getattr(cls, name, None)
-        return isinstance(descriptor, ThemedBuildAttribute)
-
-    @classmethod
-    def _allows_themed_stateful_attr_(cls, name: str) -> bool:
-        return isinstance(getattr(cls, name, None), ThemedStatefulAttribute)
 
 
 class StyledWidget(Widget):

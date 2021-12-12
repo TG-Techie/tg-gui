@@ -29,6 +29,17 @@ from .dimension_specifiers import *
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING or USE_TYPING:
+    __all__ = (
+        "InheritedAttribute",
+        "LazyInheritedAttribute",
+        "Widget",
+        "application",
+        "Color",
+        "color",
+        "_Screen_",
+    )
+
 if USE_TYPING:
 
     from typing import *
@@ -40,37 +51,20 @@ if USE_TYPING:
 if TYPE_CHECKING:
 
     from .root_widget import Root
+    from .container import Container
 
 
 T = TypeVar("T")
 
 
 if TYPE_CHECKING:
-
     InheritedAttribute = Union[
         None,
         T,
         "LazyInheritedAttribute[Union[T, None]]",
     ]
 
-
 # --- Exception ("oh crap") types ---
-
-
-class NestingError(RuntimeError):
-    pass
-
-
-class PlacementError(RuntimeError):
-    pass
-
-
-class RenderError(RuntimeError):
-    pass
-
-
-def singleinstance(cls):
-    return cls()
 
 
 def application(cls):
@@ -79,6 +73,9 @@ def application(cls):
 
 
 class LazyInheritedAttribute(Generic[T]):
+    _climb_stack: list["Widget"] = []
+    _climb_sentinel = object()
+
     def __init__(self, attrname: str, initial: T) -> None:
         # TODO: add doc string to decribe the funcitonality
         self._attrname = attrname
@@ -89,19 +86,43 @@ class LazyInheritedAttribute(Generic[T]):
         return f"<InheritedAttribute: .{self._attrname}>"
 
     def __get__(self, owner: "Widget", ownertype: Type[object]) -> T:
+        if owner is None:
+            return self
+
         privname = self._priv_attrname
+
+        # check that this attribute was initialized to the initial value in
+        # the object's constructor, this is to enforce good behanvior
         assert hasattr(owner, privname), (
             f"`{owner}.{self._attrname}` attribute not initialized, "
             + f"inherited `{type(owner).__name__}.{self._attrname}` attributes must be "
-            + f"initialized to the inital `{self._initial}` or some other value"
+            + f"initialized to the inital `{self._initial}` or some value"
         )
+
         privattr = getattr(owner, privname)
+        print(self, owner, privattr)
         if privattr is not self._initial:  # normal get behavior
             return privattr
         else:  # get the inherited attribute
-            heirattr = getattr(owner._superior_, self._attrname)
+
+            self._climb_stack.append(owner)
+
+            heirattr = getattr(owner._superior_, self._attrname, self._climb_sentinel)
+
+            if heirattr is self._climb_sentinel:
+                raise AttributeError(
+                    f"unable to inherit .{self._attrname} attribute on {self._climb_stack[0]},"
+                    + f"\nclimbed up {self._climb_stack}"
+                )
+            else:
+                self._climb_stack.pop(-1)
+
+            print(f"{heirattr=}")
             if heirattr is not self._initial:
                 setattr(owner, privname, heirattr)
+                assert getattr(owner, privattr) is heirattr
+
+            print(self, owner, privattr)
             return heirattr
 
     def __set__(self, owner, value) -> None:
@@ -249,7 +270,7 @@ class Widget:  # type: ignore
 
     _declarable_: ClassVar[bool]
 
-    _superior_: Widget
+    _superior_: Container
     _native_: Any
 
     _size_: tuple[int, int]
@@ -260,13 +281,14 @@ class Widget:  # type: ignore
     _phys_coord_: tuple[int, int]
 
     # --- class attr and future work ---
-    _screen_: LazyInheritedAttribute[None | _Screen_] = LazyInheritedAttribute(
+    _screen_: InheritedAttribute[None | _Screen_] = LazyInheritedAttribute(
         "_screen_", None
     )
+
     _is_app_ = False
 
     # --- body ---
-    def __init__(self, *, margin: int | None = None):
+    def __init__(self, *, _margin_: None | int = None):
         global Widget
         self._id_ = uid()
 
@@ -282,7 +304,7 @@ class Widget:  # type: ignore
         self._phys_coord_ = None  # type: ignore
 
         self._is_shown = False
-        self._margin_spec = margin
+        self._margin_spec = _margin_
 
     dims = property(lambda self: self._size_)
     width = property(lambda self: self._size_[0])

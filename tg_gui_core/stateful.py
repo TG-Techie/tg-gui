@@ -51,7 +51,6 @@ if USE_TYPING:
         def _deregister_handler_(self, key: UID | Identifiable) -> None:
             ...
 
-
 else:
     from .typing_bypass import Bypass
 

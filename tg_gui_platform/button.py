@@ -22,7 +22,13 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Specifier, Color, isoncircuitpython, StyledWidget, themedwidget
+from tg_gui_core import (
+    Specifier,
+    Color,
+    StyledWidget,
+    themedwidget,
+    StyleSpec,
+)
 from ._platform_impls._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
@@ -49,16 +55,16 @@ class Button(StyledWidget):
     )
 
     # user facing style
-    _stateful_style_attrs_ = {
-        "fill",
-        "text",
-        "active_fill",
-        "active_text",
+    _build_style_attrs_: StyleSpec = {
+        "radius": int,
+        "size": int,
+        "fit_to_text": bool,
     }
-    _fixed_style_attrs_ = {
-        "radius",
-        "size",
-        "fit_to_text",
+    _stateful_style_attrs_: StyleSpec = {
+        "fill": Color,
+        "text": Color,
+        "active_fill": Color,
+        "active_text": Color,
     }
 
     # impl tie-in

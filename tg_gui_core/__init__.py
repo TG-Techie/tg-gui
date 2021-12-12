@@ -52,11 +52,7 @@ from .base import (
     Widget,
     color,
     Color,
-    singleinstance,
     application,
-    NestingError,
-    PlacementError,
-    RenderError,
 )
 
 from .stateful import (
@@ -121,15 +117,10 @@ from ._shared import (
     enum_compat,
 )
 
-from .styling import (
-    align,
-    StyledWidget,
-    Theme,
-    SubTheme,
-    Style,
-    DerivedStyle,
-    themedwidget,
-)
+from .styled_widget import StyledWidget, themedwidget, StyleSpec
+from .theming import Theme, SubTheme, align
+from .style import Style, DerivedStyle
+
 
 # un-inject (deject?) the bad import value
 # sys.modules.pop("tg_gui_platform")

@@ -146,7 +146,7 @@ class Adafruit_STMPE610:
         )
 
     def read_data(self):
-        """Request next stored reading - return tuple containing  (x,y,pressure) """
+        """Request next stored reading - return tuple containing  (x,y,pressure)"""
         d_1 = self._read_byte(0xD7)
         d_2 = self._read_byte(0xD7)
         d_3 = self._read_byte(0xD7)

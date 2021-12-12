@@ -67,7 +67,7 @@ _WEEKDAYS = (
 _SHORTWEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
-@themedwidget
+# not themed since is a special label # @themedwidget
 class Date(Label):
 
     # _default_styling_ = {}
