@@ -87,6 +87,11 @@ class LazyInheritedAttribute(Generic[T]):
         return f"<InheritedAttribute: .{self._attrname}>"
 
     def __get__(self, owner: "Widget", ownertype: Type[object]) -> T:
+        """
+        Make sure the attribute is set on the owner before it is retrieved.
+        This makes sure the memory for that attribute is allocated in the init method (this is a circuitpython safeguard)
+        """
+
         if owner is None:
             return self
 
