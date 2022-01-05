@@ -1,7 +1,11 @@
 from tg_gui.prelude import *
 
 
-@main(screen := default.screen(), default.theme(), _startup=__name__ == "__main__")
+@main(
+    screen := default.screen(),
+    default.theme(),
+    _startup=__name__ == "__main__",
+)
 @application
 class Test(Layout):
 

@@ -72,9 +72,10 @@ class Button(StyledWidget):
     _impl_set_size_ = _button_impl.set_size
     _impl_apply_style_ = _button_impl.apply_style
 
-    _use_sug_width_ = property(
-        lambda self: self._theme_.get_styling_for(Button)["fit_to_text"]
-    )
+    @property
+    def _use_sug_width_(self) -> bool:
+        return self._theme_.getattr(type(self), "fit_to_text")
+
     _use_sug_height_ = True
 
     text = property(lambda self: self._text)

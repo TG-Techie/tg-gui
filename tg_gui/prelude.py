@@ -45,30 +45,21 @@ def __make_default_theme() -> Theme:
         return Theme(
             margin=5,
             styling={
-                StyledWidget: dict(
-                    fixed={},
-                    stateful={},
-                ),
+                StyledWidget: dict(),
                 Button: dict(
                     # eventaully these will be system colors like color.system_midgrnd
-                    fixed=dict(
-                        radius=100,
-                        size=1,
-                        fit_to_text=False,
-                    ),
-                    stateful=dict(
-                        fill=0x505050,
-                        text=0xFFFFFF,
-                        active_fill=0x808080,
-                        active_text=0xFFFFFF,
-                    ),
+                    radius=100,
+                    size=1,
+                    fit_to_text=False,
+                    fill=0x505050,
+                    text=0xFFFFFF,
+                    active_fill=0x808080,
+                    active_text=0xFFFFFF,
                 ),
                 Label: dict(
-                    style=dict(color=0xFFFFFF),
-                    fixed=dict(
-                        size=1,
-                        align=align.center,
-                    ),
+                    color=0xFFFFFF,
+                    size=1,
+                    align=align.center,
                 ),
             },
         )

@@ -63,7 +63,8 @@ if TYPE_CHECKING:
         T,
         "LazyInheritedAttribute[Union[T, None]]",
     ]
-
+else:
+    InheritedAttribute = object
 # --- Exception ("oh crap") types ---
 
 
@@ -93,6 +94,7 @@ class LazyInheritedAttribute(Generic[T]):
 
         # check that this attribute was initialized to the initial value in
         # the object's constructor, this is to enforce good behanvior
+
         assert hasattr(owner, privname), (
             f"`{owner}.{self._attrname}` attribute not initialized, "
             + f"inherited `{type(owner).__name__}.{self._attrname}` attributes must be "
@@ -100,7 +102,7 @@ class LazyInheritedAttribute(Generic[T]):
         )
 
         privattr = getattr(owner, privname)
-        print(self, owner, privattr)
+
         if privattr is not self._initial:  # normal get behavior
             return privattr
         else:  # get the inherited attribute
@@ -117,12 +119,10 @@ class LazyInheritedAttribute(Generic[T]):
             else:
                 self._climb_stack.pop(-1)
 
-            print(f"{heirattr=}")
             if heirattr is not self._initial:
                 setattr(owner, privname, heirattr)
-                assert getattr(owner, privattr) is heirattr
+                assert getattr(owner, privname) is heirattr
 
-            print(self, owner, privattr)
             return heirattr
 
     def __set__(self, owner, value) -> None:
@@ -266,9 +266,7 @@ class _Screen_:
 
 
 class Widget:  # type: ignore
-    _id_ = uid()
-
-    _declarable_: ClassVar[bool]
+    _id_: UID
 
     _superior_: Container
     _native_: Any
@@ -280,12 +278,14 @@ class Widget:  # type: ignore
     _rel_coord_: tuple[int, int]
     _phys_coord_: tuple[int, int]
 
+    # --- class flags ---
+    _is_app_: ClassVar[bool] = False
+    _declarable_: ClassVar[bool]
+
     # --- class attr and future work ---
     _screen_: InheritedAttribute[None | _Screen_] = LazyInheritedAttribute(
         "_screen_", None
     )
-
-    _is_app_ = False
 
     # --- body ---
     def __init__(self, *, _margin_: None | int = None):
@@ -347,7 +347,7 @@ class Widget:  # type: ignore
         return self._is_shown
 
     def __repr__(self):
-        return f"<{type(self).__name__} {self._id_}>"
+        return f"<{type(self).__name__} {self._id_ if hasattr(self, '_id_') else 'at '+str(id(self))}>"
 
     def __get__(self, owner, ownertype=None):
         """
