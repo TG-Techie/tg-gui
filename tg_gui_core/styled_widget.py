@@ -95,17 +95,17 @@ class StyledWidget(Widget):
 
     def _build_(self, dim_spec):
 
-        print(self, self._theme_)
+        # print(self, self._theme_)
 
-        print(self._all_style_attr_names_)
+        # print(self._all_style_attr_names_)
         attrs = {
             name: getattr(self, name)
             for name in self._all_style_attr_names_
             if self._allows_themed_build_attr_(name)
         }
-        print(attrs)
+        # print(attrs)
 
-        print(self._impl_build_, type(self)._impl_build_.__module__)
+        # print(self._impl_build_, type(self)._impl_build_.__module__)
         self._native_, suggested_size = self._impl_build_(**attrs)
 
         spcw, spch = self._specify_dim_spec(dim_spec)

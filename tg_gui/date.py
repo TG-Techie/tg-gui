@@ -85,6 +85,7 @@ class Date(Label):
         "year": year,
         "month": month,
         "weekday": weekday,
+        "day": monthday,
         "monthday": monthday,
         "yearday": yearday,
         "hours": hours,

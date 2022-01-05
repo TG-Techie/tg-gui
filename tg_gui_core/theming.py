@@ -92,7 +92,7 @@ class ThemedAttribute:
             theme = owner._superior_._theme_
             assert theme is not None
             attr = theme.getattr(
-                type(owner),
+                self.widtype,  # type(owner),
                 name,
                 _debug_widget=owner,
             )
@@ -172,6 +172,7 @@ class Theme:
         _debug_widget: None | Widget = None,
         _return_guard: bool = False,
     ) -> Any:
+        assert isinstance(widgetcls, type)
 
         attrs = self._source.get(widgetcls, _NotFound)
 
@@ -182,8 +183,8 @@ class Theme:
             else:
                 raise ResolutionError(
                     f"{self} has no entry for {widgetcls} at "
-                    + ("unknown" if _debug_widget is None else _debug_widget)
-                    + ", is it themed?"
+                    + ("unknown" if _debug_widget is None else str(_debug_widget))
+                    + f" for the .{name} attribute, is it themed?"
                 )
 
         # otherwise, get the attribute internally (w/ return guard)
@@ -214,7 +215,6 @@ class Theme:
             len(extra := set(styling) - set(cls._required_)) == 0
         ), f"extra style_attrs {extra}"
 
-        print(cls, cls._check_for_missing)
         if cls._check_for_missing:
 
             assert (
@@ -249,11 +249,9 @@ class SubTheme(Theme):
         super_widget = widget
         super_theme = widget._theme_
         while super_theme is self:
-            print("$$", super_widget, super_theme)
             super_widget = super_widget._superior_
             super_theme = super_widget._theme_
         else:
-            print("$!", super_theme)
             assert super_theme is not self
             return super_widget, super_theme
 

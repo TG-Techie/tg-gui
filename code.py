@@ -9,11 +9,17 @@ from tg_gui.prelude import *
 @application
 class Test(Layout):
 
-    _theme_ = SubTheme({Button: dict(size=2)})
+    _theme_ = SubTheme(
+        {
+            Button: dict(size=2),
+            Label: dict(size=2),
+        }
+    )
 
     body = VStack(
         VStack(
-            Label(Date.secs >> f"example {i}: {{}}".format, size=2) for i in range(3)
+            Label("date:"),
+            Date("{year}-{month}-{day}"),
         ),
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),
