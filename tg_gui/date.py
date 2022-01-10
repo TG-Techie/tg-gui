@@ -65,6 +65,9 @@ _WEEKDAYS = (
     "Sunday",
 )
 _SHORTWEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+# fmt: off
+_24TO12HOUR =  (12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+# fmt: on
 
 
 # not themed since is a special label # @themedwidget
@@ -74,11 +77,21 @@ class Date(Label):
     # _default_styling_.update(Label._default_styling_)
     # _default_styling_.update(fit_to_text=True)
 
+    # for internal use when updating the state objects
     _prev_refresh: ClassVar[struct_time] = time.localtime()
 
+    # publicly exposed state
     year, month, weekday = State(0000), State(00), State(0)
     monthday, yearday = State(00), State(000)
-    hours, mins, secs = State(0), State(0), State(0)
+    hour24, min, sec = State(0), State(0), State(0)
+
+    hour12 = DerivedState(hour24, lambda h: _24TO12HOUR[h])
+
+    # TODO: # FUTURE: make hout dependent on the system to dispatch to hour12 or hour 24
+    is_24_hour = State(True)
+    hour = hour24
+    # is_24_hour = State("<hooked into system or platform>")
+    # hour = DeriourvedState((is_24hour, hour24, hour12))
 
     _date_components: ClassVar[dict[str, State]] = {
         # TODO: change the names of the date component dict keys to something a bit clearer
@@ -88,29 +101,52 @@ class Date(Label):
         "day": monthday,
         "monthday": monthday,
         "yearday": yearday,
-        "hours": hours,
-        "mins": mins,
-        "secs": secs,
+        "hour": hour,
+        "hour12": hour12,
+        "hour24": hour24,
+        "min": min,
+        "sec": sec,
         "monthname": DerivedState(month, lambda m: _MONTHS[((m + 1) % 13) - 1]),
-        "shortmonth": DerivedState(month, lambda m: _MONTHS[((m + 1) % 13) - 1][0:3]),
+        "monthshort": DerivedState(month, lambda m: _MONTHS[((m + 1) % 13) - 1][0:3]),
         "dayname": DerivedState(weekday, lambda w: _WEEKDAYS[w]),
-        "shortyear": DerivedState(year, lambda y: y % 100),
+        "dayshort": DerivedState(weekday, lambda w: _SHORTWEEKDAYS[w]),
+        "yearshort": DerivedState(year, lambda y: y % 100),
     }
+
+    shared_replacements = (
+        ("{year}", "{year:04}"),
+        ("{min}", "{min:02}"),
+        ("{sec}", "{sec:02}"),
+        ("{yearshort}", "{yearshort:02}"),
+        ("{hour24}", "{hour24:02}"),
+        ("{hour12}", "{hour12: 2}"),
+        ("{hourdelim}", ":"),
+    )
+
+    replacements_hour24 = (
+        ("{hour}", "{hour24:02}"),
+        ("{monthday}", "{monthday:02}"),
+        ("{hourdelim}", "h"),
+    )
+
+    replacements_12hour = (
+        ("{hour}", "{hour12: 2}"),
+        ("{monthday}", "{monthday: 2}"),
+        ("{hourdelim}", ":"),
+    )
 
     def __init__(self, format: str, **kwargs) -> None:
 
         self._format_src = format
 
-        # # find which date components this
-        # self._components = comps = {
-        #     name: cmp for name, cmp in self._date_components.items() if name in format
-        # }
-        deps = tuple(
+        dependencies = tuple(
             cmp for name, cmp in self._date_components.items() if name in format
         )
 
         self._inst_state = state = (
-            DerivedState(deps, self._derive_new_str) if len(deps) else None
+            DerivedState(dependencies, self._derive_new_str)
+            if len(dependencies)
+            else None
         )
 
         if format == "":
@@ -136,13 +172,23 @@ class Date(Label):
     @classmethod
     def time(cls: "Type[Date]", secs=False, **kwargs) -> "Date":
         return cls(
-            "{hours:02}:{mins:02}:{secs:02}" if secs else "{hours:02}:{mins:02}",
+            "{hour}:{mins}:{secs:02}" if secs else "{hours:02}:{mins:02}",
             **kwargs,
         )
 
     def _derive_new_str(self, *_) -> str:
         # takes any number of args b/c the order is not guaranteed
         format = self._format_src
+
+        # add default formatting when no :_x fromatters are supplied
+        for patrn, repl in (
+            self.replacements_hour24 if self.is_24_hour else self.replacements_12hour
+        ):
+            format = format.replace(patrn, repl)
+
+        for patrn, repl in self.shared_replacements:
+            format = format.replace(patrn, repl)
+
         return format.format(
             **{
                 name: state.value(self)
@@ -154,9 +200,9 @@ class Date(Label):
     def _refresh_time(self, now: struct_time) -> None:
 
         # if is 24 hour time:
-        self.hours = now.tm_hour
-        self.mins = now.tm_min
-        self.secs = now.tm_sec
+        self.hour24 = now.tm_hour
+        self.min = now.tm_min
+        self.sec = now.tm_sec
 
         if type(self)._prev_refresh.tm_hour > now.tm_hour:
             self._refresh_date(now)

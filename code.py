@@ -21,6 +21,7 @@ class Test(Layout):
             Label("date:"),
             Date("{year}-{month}-{day}"),
         ),
+        Date("{hour}:{sec}"),
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),
         Button("done", action=guiexit),
