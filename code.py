@@ -6,6 +6,7 @@ if isoncircuitpython():
     print(gc.mem_free())
 
 
+<<<<<<< Updated upstream
 @main(
     screen := default.screen(),
     default.theme(),
@@ -24,6 +25,18 @@ class Test(Layout):
         Date.dateshort(),
         Date.time(secs=True),
         Button("hello", action=self.say("hi")),
+=======
+@main(screen := default.screen(), default.theme())
+@application
+class Test(Layout):
+
+    _theme_ = SubTheme({Button: dict(size=2)})
+
+    body = VStack(
+        Button("hello", action=self.say("hello")),
+        Button("goodbye", action=self.say("bye!")),
+        Button("done", action=guiexit),
+>>>>>>> Stashed changes
     )
     # body = VStack(
     #     VStack(
