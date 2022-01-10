@@ -22,13 +22,13 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, Container, below, top, SubTheme
+from tg_gui_core import Widget, Container, below, top, left, rightof, SubTheme
 from tg_gui_platform.button import Button
 
 GeneratorType = type(_ for _ in ())
 
 
-class VStack(Container):
+class _LayoutStack(Container):
 
     _theme_ = SubTheme(
         {
@@ -65,24 +65,7 @@ class VStack(Container):
             ),
         )
 
-        remaining_count = len(sorted_widgets)
-        remainging_reserved_count = sum(
-            1 if wid._reserve_space_ else 0 for wid in sorted_widgets
-        )
-
-        width, remaining_space = suggested
-
-        for widget in reversed(sorted_widgets):
-            if remainging_reserved_count > 0:
-                offer = remaining_space // remainging_reserved_count
-                widget._build_((width, offer))
-                remaining_space -= widget.height
-            else:
-                widget._build_((width, remaining_space // remaining_count))
-            remainging_reserved_count -= 1
-            remaining_count -= 1
-
-        self._build_exactly_(width, sum(wid.height for wid in sorted_widgets))
+        self._build_stack(suggested, sorted_widgets)
 
     def _place_(self, pos_spec):
 
@@ -91,10 +74,62 @@ class VStack(Container):
         # put the first widget at teh top thern stack them below that
         wid_iter = iter(self._nested_)
         previous = next(wid_iter)
-        previous._place_(top)
+        previous._place_(self._place_start)
 
         for widget in wid_iter:
-            widget._place_(below(previous))
+            widget._place_(self._place_spec(previous))
             previous = widget
 
         self._screen_.on_container_place(self)  # platform tie-in
+
+
+class VStack(_LayoutStack):
+    _place_start = top
+    _place_spec = below
+
+    def _build_stack(self, suggested: tuple[int, int], widgets: list[Widget]):
+
+        remaining_count = len(widgets)
+        remaining_reserved_count = sum(
+            1 if wid._reserve_space_ else 0 for wid in widgets
+        )
+
+        width, remaining_space = suggested
+
+        for widget in reversed(widgets):
+            if remaining_reserved_count > 0:
+                offer = remaining_space // remaining_reserved_count
+                widget._build_((width, offer))
+                remaining_space -= widget.height
+            else:
+                widget._build_((width, remaining_space // remaining_count))
+            remaining_reserved_count -= 1
+            remaining_count -= 1
+
+        self._build_exactly_(width, sum(wid.height for wid in widgets))
+
+
+class HStack(_LayoutStack):
+    _place_start = left
+    _place_spec = rightof
+
+    def _build_stack(self, suggested: tuple[int, int], widgets: list[Widget]):
+
+        remaining_count = len(widgets)
+        remaining_reserved_count = sum(
+            1 if wid._reserve_space_ else 0 for wid in widgets
+        )
+
+        remaining_space, height = suggested
+
+        for widget in reversed(widgets):
+            if remaining_reserved_count > 0:
+                offer = remaining_space // remaining_reserved_count
+                widget._build_((offer, height))
+                remaining_space -= widget.width
+            else:
+                widget._build_((remaining_space // remaining_count, height))
+            remaining_reserved_count -= 1
+            remaining_count -= 1
+
+        self._build_exactly_(sum(wid.width for wid in widgets), height)

@@ -123,6 +123,6 @@ from tg_gui_platform import guiexit
 
 # --- tg_gui interface ---
 from .layout import Layout
-from .vstack import VStack
+from .layoutstacks import VStack, HStack
 
 from .date import Date

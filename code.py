@@ -16,14 +16,14 @@ class Test(Layout):
     _theme_ = SubTheme(
         {
             Button: dict(size=2),
-            Label: dict(size=2),
+            Label: dict(size=3),
         },
     )
 
-    body = VStack(
-        Button("hello", action=self.say("hello")),
-        Button("goodbye", action=self.say("bye!")),
-        Button("done", action=guiexit),
+    body = HStack(
+        Date("{hour}"),
+        Label(":"),
+        Date("{min}"),
     )
 
     def _layout_(self):
