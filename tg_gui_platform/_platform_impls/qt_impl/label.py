@@ -61,7 +61,7 @@ def set_size(widget, native: QLabel, width: int, height: int) -> None:
 
 def apply_style(widget, native, *, color):
     native.style_sheet = sheet = (
-        "QLabel {" f"color:{to_qt_color(color)}; {widget._impl_cache_}" "}"
+        "QLabel {" + f"color:{to_qt_color(color)}; {widget._impl_cache_}" + "}"
     )
 
 
