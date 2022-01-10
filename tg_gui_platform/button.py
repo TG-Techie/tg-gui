@@ -29,7 +29,7 @@ from tg_gui_core import (
     themedwidget,
     StyleSpec,
 )
-from ._platform_impls._platform_ import button as _button_impl
+from .platform._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
 
