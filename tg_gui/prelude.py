@@ -42,29 +42,29 @@ def __make_default_theme() -> Theme:
     if __default_theme_inst is not None:
         dflt_theme = __default_theme_inst
     else:
-        # default_stylings = {
-        #     Button: dict(
-        #         # eventaully these will be system colors like color.system_midgrnd
-        #         style=dict(
-        #             fill=0x505050,
-        #             text=0xFFFFFF,
-        #             active_fill=0x808080,
-        #             active_text=0xFFFFFF,
-        #         ),
-        #         radius=100,
-        #         size=1,
-        #         fit_to_text=False,
-        #     ),
-        #     Label: dict(
-        #         style=dict(color=0xFFFFFF),
-        #         size=1,
-        #         align=align.center,
-        #     ),
-        # }
+        return Theme(
+            margin=5,
+            styling={
+                StyledWidget: dict(),
+                Button: dict(
+                    # eventaully these will be system colors like color.system_midgrnd
+                    radius=100,
+                    size=1,
+                    fit_to_text=False,
+                    fill=0x505050,
+                    text=0xFFFFFF,
+                    active_fill=0x808080,
+                    active_text=0xFFFFFF,
+                ),
+                Label: dict(
+                    color=0xFFFFFF,
+                    size=1,
+                    align=align.center,
+                ),
+            },
+        )
 
-        # default_stylings[Date] = default_stylings[Label]
-
-        __default_theme_inst = dflt_theme = Theme(Theme._decld_default_styling_dict)
+        # __default_theme_inst = dflt_theme = Theme(Theme._decld_default_styling_dict)
 
     return dflt_theme
 
@@ -73,6 +73,7 @@ def main(
     screen: Screen,
     theme: Theme,
     size: None | tuple[int, int] = None,
+    _startup: bool = True,
 ) -> Callable[[Widget], Widget]:
 
     rootwid = Root(
@@ -88,7 +89,8 @@ def main(
     def _main_startup(wid: Widget) -> Widget:
         assert wid._is_app_ is True
         ret = rootwid(wid)
-        rootwid._std_startup_()
+        if _startup:
+            rootwid._std_startup_()
         return ret
 
     return _main_startup

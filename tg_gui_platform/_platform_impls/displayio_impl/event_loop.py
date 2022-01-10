@@ -78,7 +78,6 @@ if TYPE_CHECKING:
         def remove_widget_if_present(self, widget: Widget):
             ...
 
-
 else:
     EventLoop = object  # type:ignore
 

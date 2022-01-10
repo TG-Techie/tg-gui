@@ -60,4 +60,5 @@ sys.modules["__future__"] = Bypass("__future__", [], annotations=None)  # type: 
 import builtins
 
 builtins.Generic = Generic = Bypass("Generic", type)  # type: ignore
+builtins.Union = Union = Bypass("Union", type)  # type: ignore
 builtins.TypeVar = TypeVar = lambda *_, **__: object  # type: ignore

@@ -25,7 +25,7 @@ from __future__ import annotations
 import sys
 
 from ._shared import enum_compat, USE_TYPING
-from .base import Widget, LazyInheritedAttribute, NestingError
+from .base import Widget, LazyInheritedAttribute
 from .specifiers import SpecifierReference, AttributeSpecifier
 
 # TODO: add app SpecifierReference("app", _find_app_widget)
@@ -52,7 +52,7 @@ def _search_traverse_up(
         prev = container
         container = container._superior_
         if container is None:
-            raise NestingError(
+            raise AttributeError(
                 f"unable to find outer {debug_name} that {widget} is used in"
             )
     return container
@@ -91,32 +91,33 @@ if USE_TYPING:
 # --- class tagging tools ---
 if TYPE_CHECKING:
 
-    def declarable(cls: Type[Container]) -> Type[Container]:
-        return cls
+    from .theming import Theme
 
 
-else:
+def declarable(cls: Type["Widget"]) -> Type["Widget"]:
+    """
+    dcecorator to mark that a contianer is declarable (like layout or Pages).
+    this is used for attr_specs to finf the referenced self in `self.blah`
+    """
+    assert isinstance(cls, type), f"can only decorate classes"
+    assert issubclass(
+        cls, Widget
+    ), f"{cls} does not subclass Container, it must to be @declarable"
+    cls._declarable_ = True
 
-    def declarable(cls: Type["Widget"]) -> Type["Widget"]:
-        """
-        dcecorator to mark that a contianer is declarable (like layout or Pages).
-        this is used for attr_specs to finf the referenced self in `self.blah`
-        """
-        assert isinstance(cls, type), f"can only decorate classes"
-        assert issubclass(
-            cls, Widget
-        ), f"{cls} does not subclass Container, it must to be @declarable"
-        cls._declarable_ = True
+    if USE_TYPING:
+        mro = cls.mro()[1:]
 
-        if USE_TYPING:
-            mro = cls.mro()[1:]
+        class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+            locals().update(cls.__dict__)
 
-            class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
-                locals().update(cls.__dict__)
+        cls = NewCls
 
-            cls = NewCls
+    return cls
 
-        return cls
+
+if TYPE_CHECKING:
+    declarable = lambda cls: cls
 
 
 def isdeclarable(obj: object) -> bool:
@@ -138,17 +139,24 @@ class Container(Widget, **_continer_meta_kwarg):
 
     _declarable_ = False
 
-    _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)  # type: ignore
+    _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
 
     def __init__(self):
 
-        super().__init__(margin=0)
+        super().__init__(_margin_=0)
 
         self._theme_ = None
         self._nested_ = []
 
     def _on_nest_(self):
         super()._on_nest_()
+        if not (theme := self._theme_)._is_linked_():
+            theme._link_on_nest_(self)
+
+    def _on_unnest_(self):
+        self._theme_._unlink_on_unnest_(self)
+        self._theme_ = None  # "un-inherit" the theme
+        super()._on_unnest_()
 
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:

@@ -32,13 +32,13 @@ if sys.implementation.name in ("circuitpython", "micropython"):
     isoncircuitpython = lambda: True
     USE_TYPING = False
 
-    from . import typing_bypass
-    from . import enum_bypass
+    from . import typing_bypass as _typing_bypass
+    from . import enum_bypass as _enum_bypass
 
-    sys.modules["typing"] = typing_bypass  # type: ignore
-    sys.modules["enum"] = enum_bypass  # type: ignore
+    sys.modules["typing"] = _typing_bypass  # type: ignore
+    sys.modules["enum"] = _enum_bypass  # type: ignore
 
-    enum_compat = enum_bypass.enum_compat
+    enum_compat = _enum_bypass.enum_compat
 else:
     USE_TYPING = True
     isoncircuitpython = lambda: False

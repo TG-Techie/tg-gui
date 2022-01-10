@@ -257,7 +257,7 @@ class LabelBase(Group):
             self._y_offset = self._ascent // 2
 
     def _get_ascent_descent(self) -> Tuple[int, int]:
-        """ Private function to calculate ascent and descent font values """
+        """Private function to calculate ascent and descent font values"""
         if hasattr(self.font, "ascent") and hasattr(self.font, "descent"):
             return self.font.ascent, self.font.descent
 

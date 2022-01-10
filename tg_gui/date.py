@@ -70,7 +70,7 @@ _24TO12HOUR =  (12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 
 # fmt: on
 
 
-@themedwidget
+# not themed since is a special label # @themedwidget
 class Date(Label):
 
     # _default_styling_ = {}
@@ -98,6 +98,7 @@ class Date(Label):
         "year": year,
         "month": month,
         "weekday": weekday,
+        "day": monthday,
         "monthday": monthday,
         "yearday": yearday,
         "hour": hour,
