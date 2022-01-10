@@ -139,20 +139,16 @@ class Theme:
     def _is_linked_(self) -> bool:
         return self._is_linked
 
-    def _link_on_nest_(self, widget: StyledWidget) -> None:
-        assert self._is_linked is False, f"{self} is already linked"
+    def _link_to_widget_(self, widget: StyledWidget) -> None:
 
-        # climb the widget tree to find the nearest theme above this one
-        superior_widget = widget
-        superior_theme = widget._theme_
-        while superior_theme is self:
-            superior_widget = superior_widget._superior_
-            superior_theme = superior_widget._theme_
-        else:
-            self._superior_theme_ = superior_theme
+        if self._is_linked:
+            raise RuntimeError(
+                f"Theme {self._id_} is already linked to widget {self._linked_widget_id_}"
+            )
 
-        self._is_linked = True
+        self._superior_theme_ = None
         self._linked_widget_id_ = widget._id_
+        self._is_linked = True
 
     def _unlink_on_unnest_(self, widget: StyledWidget) -> None:
         self._required_.remove(widget)
@@ -244,20 +240,25 @@ class SubTheme(Theme):
 
         super().__init__(margin=None, styling=styling)
 
-    def _find_superior(self, widget: StyledWidget) -> None | tuple[Widget, Theme]:
+    def _link_to_widget_(self, widget: StyledWidget) -> None:
 
-        super_widget = widget
-        super_theme = widget._theme_
-        while super_theme is self:
-            super_widget = super_widget._superior_
-            super_theme = super_widget._theme_
+        assert self._is_linked is False, f"{self} is already linked"
+
+        # climb the widget tree to find the nearest theme above this one
+        superior_widget = widget
+        superior_theme = widget._theme_
+        while superior_theme is self:
+            superior_widget = superior_widget._superior_
+            if superior_widget is None:
+                raise ResolutionError(
+                    f"unable to find super theme for {self} from {widget}"
+                )
+            superior_theme = superior_widget._theme_
         else:
-            assert super_theme is not self
-            return super_widget, super_theme
+            self._superior_theme_ = superior_theme
 
-    def getmargin(self, widget: Widget) -> int:
-        return self._find_super_theme().getmargin(widget)
-        # return widget._superior_._theme_.getmargin(widget)
+        self._is_linked = True
+        self._linked_widget_id_ = widget._id_
 
     def getattr(
         self,

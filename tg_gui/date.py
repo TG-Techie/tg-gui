@@ -25,6 +25,8 @@ from __future__ import annotations
 from tg_gui_core import State, DerivedState, uid, themedwidget, _Screen_
 from tg_gui_platform.label import Label
 
+from tg_gui_core import isoncircuitpython
+
 import time
 from time import struct_time
 
@@ -159,7 +161,7 @@ class Date(Label):
 
     @classmethod
     def dateshort(cls: "Type[Date]", **kwargs) -> "Date":
-        return cls("{monthday:02}{shortmonth:02}{year}", **kwargs)
+        return cls("{monthday:02}{monthshort}{year}", **kwargs)
 
     @classmethod
     def american_date(cls: "Type[Date]", **kwargs) -> "Date":
@@ -172,7 +174,7 @@ class Date(Label):
     @classmethod
     def time(cls: "Type[Date]", secs=False, **kwargs) -> "Date":
         return cls(
-            "{hour}:{mins}:{secs:02}" if secs else "{hours:02}:{mins:02}",
+            "{hour:02}:{min:02}:{sec:02}" if secs else "{hour:02}:{min:02}",
             **kwargs,
         )
 
@@ -189,13 +191,37 @@ class Date(Label):
         for patrn, repl in self.shared_replacements:
             format = format.replace(patrn, repl)
 
-        return format.format(
-            **{
-                name: state.value(self)
-                for name, state in self._date_components.items()
-                if name in format
-            }
-        )
+        values = {
+            name: state.value(self)
+            for name, state in self._date_components.items()
+            if name in format
+        }
+
+        # if not isoncircuitpython():
+        return format.format(**values)
+        # else:
+
+        #     sections = format.split("{")
+        #     if format.startswith("{"):
+        #         sections.pop(0)
+
+        #     outstr = ""
+        #     for s in sections:
+        #         if ":" in s:
+        #             f = s.split(":")
+
+        #             src = "{:" + (":".join(f[1:]))
+        #         else:
+        #             f = s.split("}")
+
+        #             src = "{" + ("}".join(f[1:]))
+
+        #         print(src, f[0], values[f[0]])
+
+        #         outstr += src.format(values[f[0]])
+
+        #     print(outstr)
+        #     return outstr
 
     def _refresh_time(self, now: struct_time) -> None:
 

@@ -10,20 +10,44 @@
             "tooltip": "CircuitPython Commands"
         },
         {
-            "text": "$(sign-out)",
-            "command": "terminals.runTerminalByName",
-            "arguments": [
-                "CirPySyncFiles"
-            ],
-            "tooltip": "Sync gui only file to CIRCUITPY"
-        },
-        {
-            "text": "[$(sign-out)...]",
+            "text": "All$(sign-out)",
             "command": "terminals.runTerminalByName",
             "arguments": [
                 "CirPySyncFiles_ALL"
             ],
             "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "GUI$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_GUI"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "Code$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_CODE"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "Sys$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_SYS"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "Lib$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_LIB"
+            ],
+            "tooltip": "Sync gui only file to CIRCUITPY"
         },
         {
             "text": "$(file-symlink-file)",

@@ -52,9 +52,9 @@ def __make_default_theme() -> Theme:
                     size=1,
                     fit_to_text=False,
                     fill=0x505050,
-                    text=0xFFFFFF,
+                    color=0xFFFFFF,
                     active_fill=0x808080,
-                    active_text=0xFFFFFF,
+                    active_color=0xFFFFFF,
                 ),
                 Label: dict(
                     color=0xFFFFFF,

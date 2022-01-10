@@ -27,6 +27,8 @@ from tg_gui_core import *
 from tg_gui_core import _Screen_
 
 from .event_loop import EventLoop
+
+from gc import collect as gc_collect
 from time import monotonic_ns
 
 import microcontroller
@@ -68,13 +70,15 @@ class Screen(_Screen_):
 
         print("setting up recurring updates...")
         now = monotonic_ns()
+        sort = lambda pack: pack[2]
         updates = sorted(
             (
-                [fn, int(period * 1e6), now + int(period * 1e6)]
+                [fn, int(period * 1e9), now + int(period * 1e6)]
                 for fn, period in self._iter_registered_updates_()
             ),
-            key=lambda pack: pack[2],
+            key=sort,
         )
+
         # run each event first
         for (fn, _, _) in updates:
             fn()
@@ -83,6 +87,7 @@ class Screen(_Screen_):
         touch_loop = self.touch_loop
 
         while True:
+            gc_collect()
             self.display.refresh()
             touch_loop.loop()
 
@@ -97,9 +102,11 @@ class Screen(_Screen_):
                     rotate += 1
                 else:
                     break
-            # if len(rotate) != len(updates):
-            for _ in range(rotate):
-                updates.append(updates.pop(0))
+
+            updates.sort(key=sort)
+            # # if len(rotate) != len(updates):
+            # for _ in range(rotate):
+            #     updates.append(updates.pop(0))
 
     def on_root_set(self, root: Root) -> None:
         pass

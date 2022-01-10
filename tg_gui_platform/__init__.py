@@ -23,7 +23,7 @@
 # explicitly not # from __future__ import annotations
 
 from tg_gui_core import *
-from ._platform_impls import _platform_, guiexit
+from .platform import _platform_, guiexit
 
 
 # --- start attribute guard ---

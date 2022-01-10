@@ -11,10 +11,10 @@ _supported_desktop_impl_names = ("cpython",)
 
 
 if isoncircuitpython():
-    from . import displayio_impl as _platform_  # type: ignore
+    import tg_gui_platform_displayio as _platform_  # type: ignore
     from supervisor import reload as guiexit
 elif _python_impl_name in _supported_desktop_impl_names:
-    from . import qt_impl as _platform_  # type: ignore
+    import tg_gui_platform_qt as _platform_  # type: ignore
     from sys import exit as guiexit
 else:
     raise NotImplementedError(

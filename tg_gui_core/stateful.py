@@ -26,7 +26,7 @@ from ._shared import uid, UID, USE_TYPING
 
 from typing import TYPE_CHECKING
 
-if USE_TYPING:
+if TYPE_CHECKING or USE_TYPING:
     from typing import *
 
     # Handler = Callable[[T], Any]
@@ -55,6 +55,7 @@ else:
     from .typing_bypass import Bypass
 
     Bindable = Bypass("Bindable", type)
+    Identifiable = None
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -139,6 +140,13 @@ class State(Bindable[T]):
 
     def __invert__(self) -> "DerivedState":
         return DerivedState(self, _not)
+
+    @classmethod
+    def fromstate(cls, state: State[T]) -> State[T]:
+        assert (
+            cls is State
+        ), f"`fromstate` is only for use with `State`, not {cls.__name__}"
+        return cls(state._value, repr=state._repr)
 
 
 class DerivedState(State, Generic[S, T]):
