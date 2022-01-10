@@ -1,11 +1,21 @@
+import gc
+
+
 from tg_gui.prelude import *
 
+if isoncircuitpython():
+    gc.collect()
+    print(gc.mem_free())
 
-@main(
+
+m = main(
     screen := default.screen(),
     default.theme(),
     _startup=__name__ == "__main__",
 )
+
+
+@m
 @application
 class Test(Layout):
 
@@ -39,12 +49,18 @@ class Test(Layout):
         print(msg)
 
 
-if __name__ == "__main__":
-    import gc
+if isoncircuitpython():
+    gc.collect()
+    print(gc.mem_free())
 
-    screen._register_recurring_update_(
-        screen,
-        lambda: print(gc.mem_free()),
-        5.0,
-    )
+
+if __name__ == "__main__":
+
+    if isoncircuitpython():
+        screen._register_recurring_update_(
+            screen,
+            lambda: print(gc.mem_free()),
+            5.0,
+        )
+
     screen.run()
