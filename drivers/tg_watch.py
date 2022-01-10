@@ -20,7 +20,7 @@ i2c = board.I2C()
 # --- display ---
 
 
-_backlight = pwmio.PWMOut(board.BACKLIGHT, frequency=200, duty_cycle=0)
+_backlight = pwmio.PWMOut(board.BACKLIGHT, frequency=200, duty_cycle=0)  # type: ignore[attr-defined]
 
 LOWER_OFFSET = 0.2
 
@@ -36,9 +36,9 @@ def backlight(value: None | float = None):
 display = displayio.Display(
     _display_bus := displayio.FourWire(
         spi,
-        command=board.TFT_DC,
-        chip_select=board.TFT_CS,
-        reset=board.TFT_RST,
+        command=board.TFT_DC,  # type: ignore[attr-defined]
+        chip_select=board.TFT_CS,  # type: ignore[attr-defined]
+        reset=board.TFT_RST,  # type: ignore[attr-defined]
         baudrate=1000_000_000,
     ),
     # source: https://github.com/adafruit/Adafruit_CircuitPython_ST7789
@@ -62,8 +62,7 @@ display = displayio.Display(
 display.show(displayio.Group())
 display.refresh()
 
-
-backlight(0.5)
+backlight(1)
 
 # --- touch ---
 
@@ -71,7 +70,7 @@ _touchscreen = Adafruit_FocalTouch(
     i2c,
     # commented b/c lib waits forever # irq_pin=digitalio.DigitalInOut(board.CTP_INT),
 )
-_touchscreen_reset = digitalio.DigitalInOut(board.CTP_RST)
+_touchscreen_reset = digitalio.DigitalInOut(board.CTP_RST)  # type: ignore[attr-defined]
 _touchscreen_reset.switch_to_output()
 
 

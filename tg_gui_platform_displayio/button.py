@@ -84,15 +84,7 @@ def build(
     :return: a tuple of the native widget and suggested size
     """
     native = Group()
-    print(
-        widget,
-        type(widget),
-        widget.text,
-        type(widget.text),
-        widget._text,
-        type(widget._text),
-        widget._id_,
-    )
+
     label = Label(font=FONT, x=0, y=0, text=widget.text, scale=size)
     native.append(label)
 

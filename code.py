@@ -6,27 +6,25 @@ if isoncircuitpython():
     print(gc.mem_free())
 
 
-@main(screen := default.screen(), default.theme())
+@main(
+    screen := default.screen(),
+    default.theme(),
+)
 @application
 class Test(Layout):
 
-    _theme_ = SubTheme({Button: dict(size=2)})
+    _theme_ = SubTheme(
+        {
+            Button: dict(size=2),
+            Label: dict(size=2),
+        },
+    )
 
     body = VStack(
         Button("hello", action=self.say("hello")),
         Button("goodbye", action=self.say("bye!")),
         Button("done", action=guiexit),
     )
-    # body = VStack(
-    #     VStack(
-    #         Label("date:"),
-    #         Date("{year}-{month}-{day}"),
-    #     ),
-    #     Date("{hour}:{sec}"),
-    #     Button("hello", action=self.say("hello")),
-    #     Button("goodbye", action=self.say("bye!")),
-    #     Button("done", action=guiexit),
-    # )
 
     def _layout_(self):
         self.body(center, self.dims)
