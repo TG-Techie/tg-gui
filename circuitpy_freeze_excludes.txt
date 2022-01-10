@@ -1,0 +1,7 @@
+# these top level modules are excluded from freezing
+tg_gui_platform_qt
+tg_gui_platform_spec
+drivers
+lib
+_theme_test.py
+code.py

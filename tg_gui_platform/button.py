@@ -29,7 +29,7 @@ from tg_gui_core import (
     themedwidget,
     StyleSpec,
 )
-from ._platform_impls._platform_ import button as _button_impl
+from .platform._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
 
@@ -47,7 +47,10 @@ class Button(StyledWidget):
     _default_styling_ = dict(
         # eventaully these will be system colors like color.system_midgrnd
         style=dict(
-            fill=0x505050, text=0xFFFFFF, active_fill=0x808080, active_text=0xFFFFFF
+            fill=0x505050,
+            color=0xFFFFFF,
+            active_fill=0x808080,
+            active_color=0xFFFFFF,
         ),
         radius=100,
         size=1,
@@ -62,10 +65,14 @@ class Button(StyledWidget):
     }
     _stateful_style_attrs_: StyleSpec = {
         "fill": Color,
-        "text": Color,
+        "color": Color,
         "active_fill": Color,
-        "active_text": Color,
+        "active_color": Color,
     }
+
+    @property
+    def text(self) -> str:
+        return self._text
 
     # impl tie-in
     _impl_build_ = _button_impl.build
@@ -77,8 +84,6 @@ class Button(StyledWidget):
         return self._theme_.getattr(type(self), "fit_to_text")
 
     _use_sug_height_ = True
-
-    text = property(lambda self: self._text)
 
     def __init__(
         self,

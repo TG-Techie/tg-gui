@@ -151,7 +151,7 @@ class Container(Widget, **_continer_meta_kwarg):
     def _on_nest_(self):
         super()._on_nest_()
         if not (theme := self._theme_)._is_linked_():
-            theme._link_on_nest_(self)
+            theme._link_to_widget_(self)
 
     def _on_unnest_(self):
         self._theme_._unlink_on_unnest_(self)

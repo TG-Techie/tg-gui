@@ -28,5 +28,61 @@
           "echo \"some error happened, see above\""
       ]
     }
+    ,
+    { 
+      "autorun": false, 
+      "autokill": true, 
+      "name": "CirPySyncFiles_CODE",
+      "description": "sync ./ to CIRCUITPY",
+      "icon": "sign-out",
+      "focus": false, 
+      "commands" : [
+          "notify --run 'rsync ./code.py /Volumes/CIRCUITPY/code.py'",
+          "if [ $? -eq 0 ]; then; exit; fi",
+          "echo \"some error happened, see above\""
+      ]
+    }
+    ,
+    { 
+      "autorun": false, 
+      "autokill": true, 
+      "name": "CirPySyncFiles_GUI",
+      "description": "sync ./ to CIRCUITPY",
+      "icon": "sign-out",
+      "focus": false, 
+      "commands" : [
+          "notify --run 'rsync -ra --exclude=\".*\" --exclude=\"__pycache__\" ./tg_gui* /Volumes/CIRCUITPY/'",
+          "if [ $? -eq 0 ]; then; exit; fi",
+          "echo \"some error happened, see above\""
+      ]
+    }
+    ,
+    { 
+      "autorun": false, 
+      "autokill": true, 
+      "name": "CirPySyncFiles_SYS",
+      "description": "sync ./ to CIRCUITPY",
+      "icon": "sign-out",
+      "focus": false, 
+      "commands" : [
+        "notify --run 'rsync -ra --exclude=\".*\" --exclude=\"__pycache__\" --exclude=\"tg_gui*\" --exclude=\"lib\" ./ /Volumes/CIRCUITPY'",
+        "if [ $? -eq 0 ]; then; exit; fi",
+          "echo \"some error happened, see above\""
+      ]
+    }
+    ,
+    { 
+      "autorun": false, 
+      "autokill": true, 
+      "name": "CirPySyncFiles_LIB",
+      "description": "sync ./ to CIRCUITPY",
+      "icon": "sign-out",
+      "focus": false, 
+      "commands" : [
+        "notify --run 'rsync -ra --exclude=\".*\" --exclude=\"__pycache__\" ./lib /Volumes/CIRCUITPY'",
+        "if [ $? -eq 0 ]; then; exit; fi",
+          "echo \"some error happened, see above\""
+      ]
+    }
   ]
 }
