@@ -5,5 +5,5 @@
         "flip_x": true,
         "coords": [200, 3800, 3500, 400],
     },
-    "display": {"driver": "ILI9341", "rotation": 0, "size": [320, 240]},
+    "display": {"driver": "ST7789", "rotation": 0, "size": [320, 240]}
 }

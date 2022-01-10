@@ -84,7 +84,15 @@ def build(
     :return: a tuple of the native widget and suggested size
     """
     native = Group()
-
+    print(
+        widget,
+        type(widget),
+        widget.text,
+        type(widget.text),
+        widget._text,
+        type(widget._text),
+        widget._id_,
+    )
     label = Label(font=FONT, x=0, y=0, text=widget.text, scale=size)
     native.append(label)
 
@@ -147,9 +155,9 @@ def apply_style(
     native: Native,
     *,
     fill: Color,
-    text: Color,
+    color: Color,
     active_fill: Color,
-    active_text: Color,
+    active_color: Color,
 ) -> None:
     """
     formats the native widget with style attribute given.
@@ -159,7 +167,7 @@ def apply_style(
     :param **style_attrs: the stateful style attributes being applied
     :return: None
     """
-    widget._impl_cache_ = cache = ((fill, text), (active_fill, active_text))
+    widget._impl_cache_ = cache = ((fill, color), (active_fill, active_color))
 
     assert len(native) == 2, len(native)
 

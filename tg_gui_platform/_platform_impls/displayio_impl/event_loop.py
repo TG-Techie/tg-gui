@@ -219,8 +219,9 @@ class SinglePointEventLoop(EventLoop):
         self._last_coord = coord
         self._was_touched = is_touched
 
-        del self._coord
-        del self._is_touched
+        # # safety del
+        # del self._coord
+        # del self._is_touched
 
     def _touch_down(self) -> None:
         coord = self._coord

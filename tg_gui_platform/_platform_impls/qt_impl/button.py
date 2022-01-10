@@ -78,9 +78,9 @@ def apply_style(
     native: Native,
     *,
     fill: Color,
-    text: Color,
+    color: Color,
     active_fill: Color,
-    active_text: Color,
+    active_color: Color,
 ):
     imple_str = widget._impl_cache_
     if isinstance(imple_str, tuple):
@@ -89,9 +89,9 @@ def apply_style(
 
     native.style_sheet = sheet = (
         "QPushButton {"
-        f"background-color: {to_qt_color(fill)}; color: {to_qt_color(text)}; {imple_str}"
+        f"background-color: {to_qt_color(fill)}; color: {to_qt_color(color)}; {imple_str}"
         "} QPushButton:pressed {"
-        f"background-color: {to_qt_color(active_fill)}; color: {to_qt_color(active_text)};"
+        f"background-color: {to_qt_color(active_fill)}; color: {to_qt_color(active_color)};"
         "}"
     )
 

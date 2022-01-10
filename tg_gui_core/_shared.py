@@ -29,7 +29,10 @@ def enum_compat(cls: type) -> type:
 
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
-    isoncircuitpython = lambda: True
+
+    def isoncircuitpython():
+        return True
+
     USE_TYPING = False
 
     from . import typing_bypass as _typing_bypass
@@ -41,7 +44,9 @@ if sys.implementation.name in ("circuitpython", "micropython"):
     enum_compat = _enum_bypass.enum_compat
 else:
     USE_TYPING = True
-    isoncircuitpython = lambda: False
+
+    def isoncircuitpython():
+        return False
 
 
 # --- unique ids ---
