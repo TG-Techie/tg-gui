@@ -26,6 +26,14 @@
             "tooltip": "Sync ALL required file to CIRCUITPY"
         },
         {
+            "text": "Code$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_CODE"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
             "text": "Sys$(sign-out)",
             "command": "terminals.runTerminalByName",
             "arguments": [

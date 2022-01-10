@@ -1,6 +1,4 @@
 import gc
-
-
 from tg_gui.prelude import *
 
 if isoncircuitpython():
@@ -8,14 +6,10 @@ if isoncircuitpython():
     print(gc.mem_free())
 
 
-m = main(
+@main(
     screen := default.screen(),
     default.theme(),
-    _startup=__name__ == "__main__",
 )
-
-
-@m
 @application
 class Test(Layout):
 
@@ -60,7 +54,7 @@ if __name__ == "__main__":
         screen._register_recurring_update_(
             screen,
             lambda: print(gc.mem_free()),
-            5.0,
+            10.0,
         )
 
     screen.run()
