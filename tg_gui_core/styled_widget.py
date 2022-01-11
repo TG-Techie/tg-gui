@@ -61,7 +61,10 @@ class StyledWidget(Widget):
     _impl_set_size_: ClassVar[Callable]  # type: ignore
     _impl_apply_style_: ClassVar[Callable]  # type: ignore
 
-    _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
+    # _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
+    @property
+    def _theme_(self) -> Theme:
+        return self._superior_._theme_
 
     def __init__(self, style=None, _margin_=None, **kwargs):
 
@@ -87,7 +90,7 @@ class StyledWidget(Widget):
 
         self._build_attrs_ = buildatters
         self._stateful_attrs_ = statefulattrs
-        self._theme_ = None
+        # self._theme_ = None
 
         self._impl_cache_ = None
 

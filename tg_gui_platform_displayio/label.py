@@ -47,7 +47,8 @@ def build(
     widget: Label,
     *,
     size: float | int,
-    align: align,  # type: ignore
+    align: align,
+    fit_to: bool | str,
 ) -> tuple[Group, SizeHint]:
 
     assert isinstance(size, int), (
@@ -60,9 +61,13 @@ def build(
     LabelType: Type[LabelBase] = BitmapLabel if is_state else GlyphLabel
     kwargs = {"save_text": False} if is_state else {}
 
+    # print(
+    #     widget,
+    #     widget.text,
+    # )
     native_label: LabelBase = LabelType(
         font=FONT,
-        text=widget.text,
+        text=fit_to if isinstance(fit_to, str) else widget.text,
         scale=size,
         **kwargs,
     )
@@ -114,13 +119,7 @@ def set_size(widget: Label, native: Group, width: int, height: int) -> None:
     lblw *= size
     lblh *= size
 
-    print(
-        "set_size",
-        widget,
-        lblw / len(widget.text),
-        (lblw, lblh),
-        (widw, widh),
-    )
+    # print("set_size", widget, lblw / len(widget.text), (lblw, lblh), (widw, widh))
 
     y = widh // 2
     if lbl_align is align.center:

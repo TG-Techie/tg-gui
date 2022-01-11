@@ -226,6 +226,7 @@ class SinglePointEventLoop(EventLoop):
     def _touch_down(self) -> None:
         coord = self._coord
         # scan thought all pointable.selectable widgets then the actionable ones
+        selectable = None
         for selectable in self._selectbles_.values():
             # if the point being touched is in the widget
             if has_phys_coord_in(selectable, coord):
@@ -235,13 +236,14 @@ class SinglePointEventLoop(EventLoop):
                 break
 
         # scan the actionables
+        pressable = None
         for pressable in self._pressables_.values():
             if has_phys_coord_in(pressable, coord):
                 self._pressable = pressable
                 break
         # else:
         #     pressable = None # type: ignore , here for filtering out buts
-
+        updateable = None
         for updateable in self._updateables_.values():
             if has_phys_coord_in(selectable, coord, _print=True):
                 updateable._start_update_(adjust_phys_to_rel(selectable, coord))
