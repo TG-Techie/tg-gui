@@ -25,7 +25,6 @@ from __future__ import annotations
 from ._shared import uid, UID, enum_compat, USE_TYPING
 from .base import Widget
 from .style import Style, _errfmt
-from .root_widget import Root
 
 from enum import Enum, auto
 
@@ -130,11 +129,15 @@ class Theme:
         self._superior_theme_: None | Theme = None
         self._linked_widget_id_: None | UID = None
 
-    def __get__(self, owner, ownertype):
-        return self
+    # def __get__(self, owner, ownertype):
+    #     return self
 
-    def __set__(self, owner, value):
-        assert value is None
+    # def __set__(self, owner, value):
+    #     if owner is None:
+    #         raise TypeError
+    #         assert value is None
+    #     else:
+    #         self.__dict__["_theme_"] = owner
 
     def _is_linked_(self) -> bool:
         return self._is_linked

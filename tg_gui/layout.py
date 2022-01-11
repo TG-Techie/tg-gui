@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 
-from tg_gui_core import Widget, Container, declarable
+from tg_gui_core import Container, declarable
 
 
 @declarable
@@ -38,7 +38,9 @@ class Layout(Container):
         if hasattr(self, "_layout_"):
             self._layout_()
         elif hasattr(self, "_any_"):
-            print(f"WARNING: the _any_ will be depricated soon, use _layout_ instead")
+            print(
+                f"WARNING: ._any_(...) for layout will be depricated soon, use ._layout_(...) instead"
+            )
             self._any_()
         else:
             raise RuntimeError(f"{self} has no ._layout_ method, define one")

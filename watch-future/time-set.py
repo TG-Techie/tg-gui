@@ -11,7 +11,7 @@ if isoncircuitpython():
     default.theme(),
 )
 @application
-class Test(View):
+class Test(Layout):
 
     _theme_ = SubTheme(
         {
@@ -20,15 +20,24 @@ class Test(View):
         },
     )
 
-    body = lambda: VStack(
-        # Button("hello!", action=self.say("hello!")),
-        Date("{hour}:{min}", size=6, fit_to=True),
-        Date("{dayshort} {monthday} {monthshort}", size=3, fit_to=True),
-        Date("{sec}"),
+    body = VStack(
+        HStack(
+            Date("{hour}"),
+            Label(":"),
+            Date("{min}"),
+            theme={Label: dict(size=6, fit_to=True)},
+        ),
+        HStack(
+            Date("{dayshort}"),
+            Date("{monthday}"),
+            Date("{monthshort}"),
+            theme={Label: dict(size=3, fit_to=True)},
+        ),
+        align=align.leading,
     )
 
-    # def _layout_(self):
-    #     self.body(center, self.dims)
+    def _layout_(self):
+        self.body(center, self.dims)
 
     def say(self, msg: str) -> None:
         print(msg)

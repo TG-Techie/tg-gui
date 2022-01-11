@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import builtins
 
 if TYPE_CHECKING:
     from typing import *
@@ -68,3 +69,7 @@ class property:
 
     # circuitpython compatiblity guard (for future features)
     __set_name__ = object()
+
+
+orig_property = builtins.property
+builtins.property = property
