@@ -22,7 +22,18 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, Container, below, top, left, rightof, SubTheme
+from tg_gui_core import (
+    Widget,
+    Container,
+    center,
+    top,
+    bottom,
+    left,
+    right,
+    below,
+    rightof,
+    SubTheme,
+)
 from tg_gui_platform.button import Button
 
 GeneratorType = type(_ for _ in ())
@@ -30,18 +41,24 @@ GeneratorType = type(_ for _ in ())
 
 class _LayoutStack(Container):
 
-    _theme_ = SubTheme(
-        {
-            Button: dict(
-                fit_to_text=False,
-            ),
-        }
-    )
+    # _theme_ = SubTheme(
+    #     {
+    #         Button: dict(
+    #             fit_to_text=False,
+    #         ),
+    #     }
+    # )
 
-    def __init__(self, *widgets: Widget):
+    @property
+    def _reserve_space_(self):
+        print(self, self._widgets)
+        return any(wid._reserve_space_ for wid in self._nested_)
+
+    def __init__(self, *widgets: Widget, **kwargs):
         if len(widgets) == 1 and isinstance(widgets[0], GeneratorType):
             widgets = tuple(widgets[0])
-        super().__init__()
+
+        super().__init__(**kwargs)
 
         self._widgets = widgets
 
@@ -106,7 +123,10 @@ class VStack(_LayoutStack):
             remaining_reserved_count -= 1
             remaining_count -= 1
 
-        self._build_exactly_(width, sum(wid.height for wid in widgets))
+        self._build_exactly_(
+            max(wid.width for wid in widgets),
+            sum(wid.height for wid in widgets),
+        )
 
 
 class HStack(_LayoutStack):
@@ -132,4 +152,7 @@ class HStack(_LayoutStack):
             remaining_reserved_count -= 1
             remaining_count -= 1
 
-        self._build_exactly_(sum(wid.width for wid in widgets), height)
+        self._build_exactly_(
+            sum(wid.width for wid in widgets),
+            max(wid.height for wid in widgets),
+        )

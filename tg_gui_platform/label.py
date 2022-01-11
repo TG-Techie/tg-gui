@@ -34,16 +34,14 @@ class Label(StyledWidget):
     _reserve_space_ = True
     _self_sizing_ = property(lambda self: isinstance(self._text, str))
 
-    _use_sug_width_ = property(
-        lambda self: isinstance(self._text, str) and self.fit_to is None
-    )
+    _use_sug_width_ = property(lambda self: isinstance(self._text, str) or self.fit_to)
     _use_sug_height_ = True
 
     _default_styling_ = dict(
         style=dict(color=0xFFFFFF),
         size=1,
         align=align.center,
-        fit_to=None,
+        fit_to=False,
     )
 
     _stateful_style_attrs_ = {
@@ -52,7 +50,7 @@ class Label(StyledWidget):
     _build_style_attrs_ = {
         "size": int,
         "align": align,
-        "fit_to": (bool, int, type(None)),
+        "fit_to": (bool, str),
     }
 
     _impl_build_ = _label_impl.build

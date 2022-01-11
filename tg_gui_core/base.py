@@ -429,7 +429,7 @@ class Widget:  # type: ignore
         else:
             spec = dim_spec
 
-        assert isinstance(spec, tuple), f"self={self}, tuple={tuple}"
+        assert isinstance(spec, tuple), f"self={self}, spec={spec}"
 
         width, height = spec
         if isinstance(width, DimensionSpecifier):

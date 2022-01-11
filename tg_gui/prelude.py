@@ -42,7 +42,7 @@ def __make_default_theme() -> Theme:
     if __default_theme_inst is not None:
         dflt_theme = __default_theme_inst
     else:
-        return Theme(
+        dflt_theme = Theme(
             margin=5,
             styling={
                 StyledWidget: dict(),
@@ -60,6 +60,7 @@ def __make_default_theme() -> Theme:
                     color=0xFFFFFF,
                     size=1,
                     align=align.center,
+                    fit_to=False,
                 ),
             },
         )
@@ -123,6 +124,8 @@ from tg_gui_platform import guiexit
 
 # --- tg_gui interface ---
 from .layout import Layout
-from .layoutstacks import VStack, HStack
+from .layoutstack import VStack, HStack
 
 from .date import Date
+
+from .view import View

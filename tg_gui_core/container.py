@@ -28,6 +28,8 @@ from ._shared import enum_compat, USE_TYPING
 from .base import Widget, LazyInheritedAttribute
 from .specifiers import SpecifierReference, AttributeSpecifier
 
+from .theming import SubTheme, Theme
+
 # TODO: add app SpecifierReference("app", _find_app_widget)
 
 
@@ -139,13 +141,21 @@ class Container(Widget, **_continer_meta_kwarg):
 
     _declarable_ = False
 
-    _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
+    # _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
+    @property
+    def _theme_(self) -> Theme:
+        # print(self, self._theme)
+        if self._theme is not None:
+            return self._theme
+        else:
+            return self._superior_._theme_
 
-    def __init__(self):
+    def __init__(self, theme: Theme = None):
 
         super().__init__(_margin_=0)
-
-        self._theme_ = None
+        # print(self, theme, self._theme_)
+        # print(self, type(self)._theme_)
+        self._theme = None if theme is None else SubTheme(theme)
         self._nested_ = []
 
     def _on_nest_(self):
