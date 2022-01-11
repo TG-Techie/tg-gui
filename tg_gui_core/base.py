@@ -70,6 +70,7 @@ else:
 
 def application(cls):
     cls._is_app_ = True
+    print(cls)
     return cls()
 
 

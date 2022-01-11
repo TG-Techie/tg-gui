@@ -32,22 +32,13 @@ if TYPE_CHECKING:
     from typing import *
 
 
-# yes these should be the same but in case an implementation doesn't do that
-LambdaType = type(lambda: None)
-
-
-@type
-def FuntionType():
-    pass
-
-
 @declarable
 class View(Layout):
 
     body: ClassVar[Callable[[], Widget]]
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(View, self).__init__(**kwargs)
 
         self._widget = self._chek_and_make_body()
 
@@ -64,7 +55,7 @@ class View(Layout):
             raise AttributeError(f"{cls} must define a body property")
 
         if callable(cls.body):
-            if isinstance(cls.body, (LambdaType, FuntionType)):
+            if callable(cls.body) and not isinstance(cls.body, Widget):
                 return cls.body()
             elif isinstance(cls.body, Widget):
                 raise TypeError(

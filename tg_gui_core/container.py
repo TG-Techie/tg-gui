@@ -107,13 +107,13 @@ def declarable(cls: Type["Widget"]) -> Type["Widget"]:
     ), f"{cls} does not subclass Container, it must to be @declarable"
     cls._declarable_ = True
 
-    if USE_TYPING:
-        mro = cls.mro()[1:]
+    # if USE_TYPING:
+    #     mro = cls.mro()[1:]
 
-        class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
-            locals().update(cls.__dict__)
+    #     class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+    #         locals().update(cls.__dict__)
 
-        cls = NewCls
+    #     cls = NewCls
 
     return cls
 

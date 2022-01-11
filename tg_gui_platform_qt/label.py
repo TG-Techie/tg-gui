@@ -33,8 +33,8 @@ from __feature__ import snake_case, true_property  # type: ignore
 format_class = lambda cls: cls
 
 
-def build(widget, *, size, align):
-    native = QLabel(widget.text)
+def build(widget, *, size, align, fit_to: bool | str):
+    native = QLabel(fit_to if isinstance(fit_to, str) else widget.text)
 
     native.alignment = to_alignment_lookup[align]
     native.style_sheet = (
