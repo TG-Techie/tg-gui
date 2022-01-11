@@ -43,25 +43,24 @@ def __make_default_theme() -> Theme:
         dflt_theme = __default_theme_inst
     else:
         dflt_theme = Theme(
-            margin=5,
-            styling={
-                StyledWidget: dict(),
-                Button: dict(
+            {
+                StyledWidget: {},
+                Button: {
                     # eventaully these will be system colors like color.system_midgrnd
-                    radius=100,
-                    size=1,
-                    fit_to_text=False,
-                    fill=0x505050,
-                    color=0xFFFFFF,
-                    active_fill=0x808080,
-                    active_color=0xFFFFFF,
-                ),
-                Label: dict(
-                    color=0xFFFFFF,
-                    size=1,
-                    align=align.center,
-                    fit_to=False,
-                ),
+                    Button.radius: 100,
+                    Button.size: 1,
+                    Button.fit_to_text: False,
+                    Button.fill: 0x505050,
+                    Button.foreground: 0xFFFFFF,
+                    Button.active_fill: 0x808080,
+                    Button.active_color: 0xFFFFFF,
+                },
+                Label: {
+                    Label.foreground: 0xFFFFFF,
+                    Label.size: 1,
+                    Label.align: align.center,
+                    Label.fit_to: False,
+                },
             },
         )
 

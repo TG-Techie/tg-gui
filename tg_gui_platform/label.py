@@ -28,7 +28,16 @@ from .platform._platform_ import label as _label_impl
 
 
 @_label_impl.format_class
-@themedwidget
+@themedwidget(
+    buildattrs={
+        "size": int,
+        "align": align,
+        "fit_to": (bool, str),
+    },
+    statefulattrs={
+        "foreground": Color,
+    },
+)
 class Label(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True
@@ -37,26 +46,10 @@ class Label(StyledWidget):
     _use_sug_width_ = property(lambda self: isinstance(self._text, str) or self.fit_to)
     _use_sug_height_ = True
 
-    _default_styling_ = dict(
-        style=dict(color=0xFFFFFF),
-        size=1,
-        align=align.center,
-        fit_to=False,
-    )
-
-    _stateful_style_attrs_ = {
-        "color": Color,
-    }
-    _build_style_attrs_ = {
-        "size": int,
-        "align": align,
-        "fit_to": (bool, str),
-    }
-
+    # impl tie-in
     _impl_build_ = _label_impl.build
     _impl_set_size_ = _label_impl.set_size
     _impl_apply_style_ = _label_impl.apply_style
-
     _set_text_ = _label_impl.set_text
 
     @property

@@ -117,9 +117,10 @@ from ._shared import (
     enum_compat,
 )
 
-from .styled_widget import StyledWidget, themedwidget, StyleSpec
-from .theming import Theme, SubTheme, align
-from .style import Style, DerivedStyle
+from .styled_widget import StyledWidget, align
+from .theming import Theme, SubTheme, themedwidget
+
+# from .style import Style, DerivedStyle
 
 
 # un-inject (deject?) the bad import value

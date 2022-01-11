@@ -22,11 +22,9 @@
 
 from __future__ import annotations
 
-from ._shared import uid, UID, enum_compat, USE_TYPING
+from ._shared import uid, UID, USE_TYPING
 from .base import Widget
-from .style import Style, _errfmt
 
-from enum import Enum, auto
 
 from typing import TYPE_CHECKING
 
@@ -34,9 +32,14 @@ if TYPE_CHECKING:
     from typing import *  # Protocol, ClassVar, Type, Any, TypeVar
     from .styled_widget import StyledWidget
 
-    _NotFound: object = type("NotFound", (), {})()
     T = TypeVar("T")
+    _NotFound: object = type(
+        "NotFound",
+        (),
+        dict(__repr__=lambda _: "<NotFound (tg-gui internal object)>"),
+    )()
 
+    _StyleAttrSpec = dict[str, type | tuple[type, ...] | tuple[()]]
 
 else:
     T = None  # type: ignore
@@ -44,259 +47,132 @@ else:
     _NotFound = object()
 
 
-class ResolutionError(AttributeError):
+class ResolutionError(Exception):
     pass
 
 
+def themedwidget(
+    *,
+    buildattrs: _StyleAttrSpec | None = None,
+    statefulattrs: _StyleAttrSpec | None = None,
+) -> Type[StyledWidget]:
+    """
+    A decorator that injects the themed attributes in format the subclasses for styled widgets
+    """
+    buildattrs = {} if buildattrs is None else buildattrs
+    statefulattrs = {} if statefulattrs is None else statefulattrs
+
+    return lambda cls: _themedwidget(cls, Theme, buildattrs, statefulattrs)
+
+
+def _themedwidget(
+    cls: Type[StyledWidget],
+    register_to: Type[Theme],
+    buildattrs: _StyleAttrSpec,
+    statefulattrs: _StyleAttrSpec,
+) -> Type[StyledWidget]:
+    """
+    the actual formatter and themeifier so to speak
+    """
+
+    buildattr_names = set(buildattrs)
+    statefulattr_names = set(statefulattrs)
+
+    # validate the build and stateful attrs
+    assert len(overlapping := buildattr_names & statefulattr_names) == 0, (
+        f"conflicting build and style attributes for "
+        + f"@themedwidget(...)(class {cls.__name__}) , found {overlapping} in both"
+    )
+
+    # link the this class into the resolution order
+    cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
+
+    # --- inject sets of attrs ---
+    # spr_buildattrs , spr_statefulattrs= cls._build_style_attrs_,cls._stateful_style_attrs_
+    if len(buildattr_names):
+        cls._build_style_attrs_ = cls._build_style_attrs_ | buildattr_names
+    else:
+        cls._build_style_attrs_ = cls._build_style_attrs_
+
+    if len(statefulattr_names):
+        cls._stateful_style_attrs_ = cls._stateful_style_attrs_ | statefulattr_names
+    else:
+        cls._stateful_style_attrs_ = cls._stateful_style_attrs_
+
+    # --- inject the themed attribute descriptors ---
+    for name, allowed in buildattrs.items():
+        setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=True))
+
+    for name, allowed in statefulattrs.items():
+        print(
+            cls,
+            name,
+        )
+        setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=False))
+
+    return cls
+
+
 class ThemedAttribute:
-
-    _attr_may_be_stateful: ClassVar[bool]
-
-    name: str
-    widtype: Type["StyledWidget"]
-    allowed: type | tuple[type, ...] = object
-
     def __init__(
         self,
         name: str,
-        stateful: bool,
-        widtype: Type["StyledWidget"],
-        allowed: type | tuple[type, ...] = object,
+        stylecls: Type[StyledWidget],
+        allowed: _StyleAttrSpec,
+        isbuildattr: bool,
     ) -> None:
-
         self.name = name
-        self.widtype = widtype
-
-        if USE_TYPING:
-            from .styled_widget import StyledWidget
-
-            assert issubclass(widtype, StyledWidget)
-
+        self.stylecls = stylecls
         self.allowed = allowed
-        self._stateful = stateful
+        self.isbuildattr = isbuildattr
 
-    def __get__(self, owner: None | "StyledWidget", ownertype: Type["StyledWidget"]):
+    def __get__(self, owner: None | StyledWidget, ownertype: Type[StyledWidget]):
         if owner is None:
-            return self
+            return self  # circuitpython compat... also b/c what else would this do...?
+        else:
+            return self.get_themed_attr(owner)
 
-        assert owner is not None
-
-        name = self.name
-        stateful = self._stateful
-
-        inst_attr_dict = owner._stateful_attrs_ if stateful else owner._build_attrs_
-        attr = inst_attr_dict.get(name, _NotFound)
-
-        if attr is _NotFound:
-            theme = owner._superior_._theme_
-            assert theme is not None
-            attr = theme.getattr(
-                self.widtype,  # type(owner),
-                name,
-                _debug_widget=owner,
-            )
-
-        assert isinstance(attr, self.allowed), (
-            f"{owner}.{name} found object of {type(attr)}, "
-            + f"expected one of {self.allowed}"
+    def __set__(self, owner: StyledWidget, value: Any) -> None:
+        raise TypeError(
+            f"{owner}.{self.name} is a themed attribute and cannot be set directly, wrap it in a State object"
         )
 
-        return attr
+    def get_themed_attr(self, widget: StyledWidget) -> Any:
+        # check if it is passed directly
+        name = self.name
+        if name in widget._style_attrs_:
+            return widget._style_attrs_[name]
 
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__}:X {self.widtype.__name__}.{self.name}>"
+        # climb up the widget heirarchy
+        superior = widget
 
+        while superior is not None and not superior._is_root_:
+            superior = superior._superior_
+            # move up the heirarchy if these is no theme entry
+            if not hasattr(superior, "_theme_"):
 
-class Theme:
-    _required_: set[Type["StyledWidget"]] = set()
+                continue
 
-    _check_for_missing: ClassVar[bool] = True
+            theme = superior._theme_
 
-    def __init__(
-        self,
-        *,
-        margin: int | None,
-        styling: dict[Type["StyledWidget"], dict[str, Any]],
-    ) -> None:
-
-        self._check_styling_against_spec(styling)
-
-        self._id_ = uid()
-        self._margin = margin
-        self._source = styling
-
-        self._is_linked = False
-        self._superior_theme_: None | Theme = None
-        self._linked_widget_id_: None | UID = None
-
-    # def __get__(self, owner, ownertype):
-    #     return self
-
-    # def __set__(self, owner, value):
-    #     if owner is None:
-    #         raise TypeError
-    #         assert value is None
-    #     else:
-    #         self.__dict__["_theme_"] = owner
-
-    def _is_linked_(self) -> bool:
-        return self._is_linked
-
-    def _link_to_widget_(self, widget: StyledWidget) -> None:
-
-        if self._is_linked:
-            raise RuntimeError(
-                f"Theme {self._id_} is already linked to widget {self._linked_widget_id_}"
-            )
-
-        self._superior_theme_ = None
-        self._linked_widget_id_ = widget._id_
-        self._is_linked = True
-
-    def _unlink_on_unnest_(self, widget: StyledWidget) -> None:
-        self._required_.remove(widget)
-
-        if widget._id_ is self._linked_widget_id_:
-            self._superior_theme_ = None
-            self._is_linked = False
-
-    def getmargin(self, widget: StyledWidget) -> int:
-        return self._margin
-
-    def getattr(
-        self,
-        widgetcls: Type[StyledWidget],
-        name: str,
-        *,
-        _debug_widget: None | Widget = None,
-        _return_guard: bool = False,
-    ) -> Any:
-        assert isinstance(widgetcls, type)
-
-        attrs = self._source.get(widgetcls, _NotFound)
-
-        # error if it is not found
-        if attrs is _NotFound:
-            if _return_guard:
-                return _NotFound
+            for cls in widget._stylecls_mro_:
+                if (spec := theme.get(cls, False)) and self in spec:
+                    return spec[self]
             else:
-                raise ResolutionError(
-                    f"{self} has no entry for {widgetcls} at "
-                    + ("unknown" if _debug_widget is None else str(_debug_widget))
-                    + f" for the .{name} attribute, is it themed?"
-                )
+                continue
 
-        # otherwise, get the attribute internally (w/ return guard)
-        attr = attrs.get(name, _NotFound)
-        if attr is not _NotFound:
-            return attr
-        elif _return_guard:
-            return _NotFound
-        else:
-            # raise an error
-            wid_dbg_str = (
-                f"on widget of type {widgetcls}"
-                if _debug_widget is None
-                else f" on {_debug_widget}"
-            )
-            raise ResolutionError(
-                f"cannot resolve themed attribute `.{name}` {wid_dbg_str}"
-            )
+        raise ResolutionError(
+            f"unable to resolve .{name} style attribute for {widget} (reached {superior})"
+        )
 
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__}: {self._id_}>"
 
-    @classmethod
-    def _check_styling_against_spec(
-        cls, styling: dict[Type["StyledWidget"], dict[str, Any]]
-    ) -> None:
-        assert (
-            len(extra := set(styling) - set(cls._required_)) == 0
-        ), f"extra style_attrs {extra}"
-
-        if cls._check_for_missing:
-
-            assert (
-                len(missing := set(cls._required_) - set(styling)) == 0
-            ), f"missing style_attrs for {missing}"
-
-        for widcls, attrs in styling.items():
-
-            assert (
-                len(extra := set(attrs) - widcls._all_style_attr_names_) == 0
-            ), f"extra style attrs {extra} for {widcls} entry in {cls}"
-
-            if cls._check_for_missing:
-                assert (
-                    len(missing := widcls._all_style_attr_names_ - set(attrs)) == 0
-                ), f"missing style attrs {missing} for {widcls} entry in {cls}"
+class Theme(dict):
+    pass
 
 
 class SubTheme(Theme):
-
-    _check_for_missing: ClassVar[bool] = False
-
-    def __init__(
-        self,
-        styling: dict[Type["StyledWidget"], dict[str, any]],
-    ) -> None:
-
-        super().__init__(margin=None, styling=styling)
-
-    def _link_to_widget_(self, widget: StyledWidget) -> None:
-
-        assert self._is_linked is False, f"{self} is already linked"
-
-        # climb the widget tree to find the nearest theme above this one
-        superior_widget = widget
-        superior_theme = widget._theme_
-        while superior_theme is self:
-            superior_widget = superior_widget._superior_
-            if superior_widget is None:
-                raise ResolutionError(
-                    f"unable to find super theme for {self} from {widget}"
-                )
-            superior_theme = superior_widget._theme_
-        else:
-            self._superior_theme_ = superior_theme
-
-        self._is_linked = True
-        self._linked_widget_id_ = widget._id_
-
-    def getattr(
-        self,
-        widgetcls: Type[StyledWidget],
-        name: str,
-        *,
-        _debug_widget: None | Widget = None,
-        _return_guard: bool = False,
-    ) -> Any:
-        attr = super().getattr(
-            widgetcls, name, _debug_widget=_debug_widget, _return_guard=True
-        )
-
-        if attr is _NotFound:
-            attr = self._superior_theme_.getattr(
-                widgetcls, name, _debug_widget=_debug_widget
-            )
-
-        if attr is not _NotFound:
-            return attr
-        elif _return_guard:
-            return _NotFound
-        else:
-            raise ResolutionError(
-                f"{self} has no entry for {widgetcls} at "
-                + +("unknown" if _debug_widget is None else _debug_widget)
-                + ", is it themed?"
-            )
+    pass
 
 
-# shared objects required for styling
-
-
-@enum_compat
-class align(Enum):
-    leading = auto()
-    center = auto()
-    trailing = auto()
+if TYPE_CHECKING:
+    themedwidget = lambda cls: cls

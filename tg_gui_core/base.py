@@ -29,20 +29,10 @@ from .dimension_specifiers import *
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING or USE_TYPING:
-    __all__ = (
-        "InheritedAttribute",
-        "LazyInheritedAttribute",
-        "Widget",
-        "application",
-        "Color",
-        "color",
-        "_Screen_",
-    )
 
 if USE_TYPING:
 
-    from typing import *
+    from typing import ClassVar, Protocol, TypeVar, Generic
 
     class Identifiable(Protocol):
         _id_: UID
@@ -55,6 +45,17 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+
+if TYPE_CHECKING or USE_TYPING:
+    __all__ = (
+        "InheritedAttribute",
+        "LazyInheritedAttribute",
+        "Widget",
+        "application",
+        "Color",
+        "color",
+        "_Screen_",
+    )
 
 
 if TYPE_CHECKING:
@@ -285,7 +286,8 @@ class Widget:  # type: ignore
     _phys_coord_: tuple[int, int]
 
     # --- class flags ---
-    _is_app_: ClassVar[bool] = False
+    _is_root_: ClassVar[bool] = False
+    _is_app_: ClassVar[bool] | bool = False
     _declarable_: ClassVar[bool]
 
     # --- class attr and future work ---
