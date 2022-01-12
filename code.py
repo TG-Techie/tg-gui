@@ -6,6 +6,13 @@ if sys.implementation.name in {"circuitpython", "micropython"}:
 
 from tg_gui.prelude import *
 
+if (
+    __debug__ and "--step-print-debug" in sys.argv
+):  # change `True` based on your preference
+    from tg_gui_core import use_step_print_debugging
+
+    use_step_print_debugging(True)
+
 if isoncircuitpython():
     gc.collect()
     print(gc.mem_free())

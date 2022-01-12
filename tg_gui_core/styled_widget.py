@@ -150,7 +150,7 @@ class StyledWidget(Widget):
 
     def _apply_style(self, **__) -> None:
         attrs = {attr: getattr(self, attr) for attr in self._style_attrs_}
-        print(self, attrs, self._style_attrs_)
+        # print(self, attrs, self._style_attrs_)
         try:
             self._impl_apply_style_(self._native_, **attrs)
         except TypeError as err:

@@ -92,23 +92,4 @@ def _generate_default_size_from_screen(screen: Screen) -> tuple[int, int]:
     return (screen.display.width, screen.display.height)
 
 
-# def main(
-#     screen: Screen,
-#     theme: Theme,
-#     size: None | tuple[int, int] = None,
-# ) -> Callable[[Widget], Widget]:
-
-#     display = screen.display
-#     rootwid = Root(
-#         screen=screen,
-#         theme=theme,
-#         size=size if size is not None else (display.width, display.height),
-#     )
-
-#     def _main_startup(wid: Widget) -> Widget:
-#         assert wid._is_app_ is True
-#         ret = rootwid(wid)
-#         rootwid._std_startup_()
-#         return ret
-
-#     return _main_startup
+from supervisor import reload as guiexit

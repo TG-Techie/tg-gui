@@ -29,6 +29,7 @@ def enum_compat(cls: type) -> type:
 
 # --- platform optimization ---
 if sys.implementation.name in ("circuitpython", "micropython"):
+    from supervisor import reload as guiexit
 
     def isoncircuitpython():
         return True
@@ -44,6 +45,7 @@ if sys.implementation.name in ("circuitpython", "micropython"):
     enum_compat = _enum_bypass.enum_compat
 else:
     USE_TYPING = True
+    from sys import exit as guiexit
 
     def isoncircuitpython():
         return False
@@ -74,3 +76,63 @@ def uid() -> UID:
 # --- utils ---
 def clamp(lower: int, value: int, upper: int) -> int:
     return min(max(lower, value), upper)
+
+
+import builtins
+from builtins import print as _orig_print
+
+
+if USE_TYPING or __debug__:
+    if USE_TYPING:
+        from typing import Callable, NoReturn
+
+    def use_step_print_debugging(use_on: bool):
+        if not use_on:
+            builtins.print = _orig_print
+        else:
+            builtins.print = _step_print
+
+    def _raise(exception):
+        raise exception  # !! step print internals
+
+    _step_cmds: dict[tuple[str, ...], tuple[Callable[[], None | NoReturn], str]] = {
+        ("exit",): (guiexit, "exit the python instance"),
+        ("raise",): (
+            lambda: _raise(  # !! step print internals
+                Exception("step print debug raise")
+            ),
+            "raise an exception",
+        ),
+        ("", "continue", "q"): (
+            None,
+            "exit the step session and conintue executing python as normal",
+        ),
+        ("help",): (
+            lambda: _orig_print(
+                "commands include:\n    "
+                + "\n    ".join(
+                    f"{', '.join(map(repr, cmd))}: \t{desc}"
+                    for cmd, (_, desc) in _step_cmds.items()
+                )
+            ),
+            "this help message",
+        ),
+    }
+
+    def _step_print(*args, end: str = "\n", **kwargs):
+        _orig_print(*args, **kwargs, end="")
+
+        prompt_header = end.rstrip() + " "
+
+        while True:
+            cmd = input(prompt_header + "# (step cmd): ").strip()
+            prompt_header = ""
+
+            for cmds, (fn, _) in _step_cmds.items():
+                if cmd in cmds:
+                    if fn is not None:
+                        fn()  # !! step print internals
+                    else:
+                        return
+            else:
+                print(f"Unkown command: `{cmd}`")
