@@ -66,7 +66,7 @@ def themedwidget(cls: Type[StyledWidget]):
         assert isinstance(attr, ThemedAttribute), f"found {attr}"
 
         # circuitpython does not have __set_name__, so add it
-        if isoncircuitpython() and name.name is None:
+        if isoncircuitpython() and attr.name is None:
             attr.__set_name__(cls, name)
 
         # add it to the attr sets
