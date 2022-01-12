@@ -43,6 +43,7 @@ from ._shared import (
     uid,
     UID,
     clamp,
+    guiexit,
     isoncircuitpython,
     enum_compat,
     USE_TYPING,
@@ -124,6 +125,9 @@ from .theming import Theme, SubTheme, themedwidget
 
 if TYPE_CHECKING:
     themedwidget = lambda cls: cls
+
+if TYPE_CHECKING or __debug__:
+    from ._shared import use_step_print_debugging
 
 # from .style import Style, DerivedStyle
 
