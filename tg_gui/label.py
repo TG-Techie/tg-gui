@@ -25,7 +25,7 @@ from __future__ import annotations
 from tg_gui_core import State, Color, StyledWidget, themedwidget, align
 from tg_gui_core.theming import BuildAttribute, StyledAttribute
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
-from .platform._platform_ import label as _label_impl
+from ._platform_ import label as _label_impl
 
 from typing import Union
 

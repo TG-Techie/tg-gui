@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from tg_gui_core import State, DerivedState, uid, themedwidget, _Screen_
-from tg_gui_platform.label import Label
+from .label import Label
 
 from tg_gui_core import isoncircuitpython
 
@@ -41,6 +41,7 @@ try:
 except:
     pass
 
+# TODO: maybe make the _MONTH, const, etc usable by drivers w/out importing all tg-gui (ie put it somehwere else)
 _MONTHS = (
     "<INVALID MONTH>",
     "January",
@@ -68,7 +69,9 @@ _WEEKDAYS = (
 )
 _SHORTWEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 # fmt: off
-_24TO12HOUR =  (12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+_24TO12HOUR =  (
+    (12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+)
 # fmt: on
 
 
@@ -197,31 +200,7 @@ class Date(Label):
             if name in format
         }
 
-        # if not isoncircuitpython():
         return format.format(**values)
-        # else:
-
-        #     sections = format.split("{")
-        #     if format.startswith("{"):
-        #         sections.pop(0)
-
-        #     outstr = ""
-        #     for s in sections:
-        #         if ":" in s:
-        #             f = s.split(":")
-
-        #             src = "{:" + (":".join(f[1:]))
-        #         else:
-        #             f = s.split("}")
-
-        #             src = "{" + ("}".join(f[1:]))
-
-        #         print(src, f[0], values[f[0]])
-
-        #         outstr += src.format(values[f[0]])
-
-        #     print(outstr)
-        #     return outstr
 
     def _refresh_time(self, now: struct_time) -> None:
 

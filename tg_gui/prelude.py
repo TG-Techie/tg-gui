@@ -23,8 +23,7 @@
 from __future__ import annotations
 
 from tg_gui_core import Widget, isoncircuitpython
-from tg_gui_platform import Theme
-from tg_gui_platform import Screen, prelude as _prelude_impl
+from ._platform_ import Screen, prelude as _prelude_impl
 
 try:
     from typing import Callable, ClassVar, Any
@@ -36,7 +35,7 @@ except:
 __default_theme_inst: None | Theme = None
 
 
-def __make_default_theme() -> Theme:
+def _make_default_theme() -> Theme:
     global __default_theme_inst
 
     if __default_theme_inst is not None:
@@ -105,21 +104,16 @@ class default:
     def __init__(self) -> None:
         raise TypeError("cannot create instances of default")
 
-    screen: ClassVar[Callable[..., Screen]]
-    theme: ClassVar[Callable[[], Theme]]
+    screen: ClassVar[Callable[..., Screen]] = staticmethod(_prelude_impl.default_screen)
+    theme: ClassVar[Callable[[], Theme]] = staticmethod(_make_default_theme)
 
-
-default.screen = _prelude_impl.default_screen
-default.theme = __make_default_theme
 
 # --- tg_gui_core interface ---
 from tg_gui_core import *
 
-
 # --- tg_gui_platform interface ---
-from tg_gui_platform.button import Button
-from tg_gui_platform.label import Label
-from tg_gui_platform import guiexit
+from .button import Button
+from .label import Label
 
 # --- tg_gui interface ---
 from .layout import Layout

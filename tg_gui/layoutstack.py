@@ -34,7 +34,7 @@ from tg_gui_core import (
     rightof,
     SubTheme,
 )
-from tg_gui_platform.button import Button
+from .button import Button
 
 GeneratorType = type(_ for _ in ())
 

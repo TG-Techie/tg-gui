@@ -32,3 +32,6 @@ def default_screen() -> Screen:
 
 def _generate_default_size_from_screen(screen: Screen) -> tuple[int, int]:
     return (768, 480)
+
+
+from sys import exit as guiexit
