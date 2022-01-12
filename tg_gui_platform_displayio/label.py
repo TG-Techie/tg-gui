@@ -139,7 +139,7 @@ def apply_style(
     widget: Label,
     native: Group,
     *,
-    color: Color,
+    foreground: Color,
 ) -> None:
     """
     formats the native widget with style attribute given.
@@ -149,7 +149,7 @@ def apply_style(
     :param **style_attrs: the stateful style attributes being applied
     :return: nothing
     """
-    native[0].color = color
+    native[0].color = foreground
 
 
 def set_text(widget: Label, text: str):

@@ -78,7 +78,7 @@ def apply_style(
     native: Native,
     *,
     fill: Color,
-    color: Color,
+    foreground: Color,
     active_fill: Color,
     active_color: Color,
 ):
@@ -89,7 +89,7 @@ def apply_style(
 
     native.style_sheet = sheet = (
         "QPushButton {"
-        + f"background-color: {to_qt_color(fill)}; color: {to_qt_color(color)}; {imple_str}"
+        + f"background-color: {to_qt_color(fill)}; color: {to_qt_color(foreground)}; {imple_str}"
         + "} QPushButton:pressed {"
         + f"background-color: {to_qt_color(active_fill)}; color: {to_qt_color(active_color)};"
         + "}"

@@ -59,9 +59,9 @@ def set_size(widget, native: QLabel, width: int, height: int) -> None:
     pass  # TODO: evaluate if this should be pass for qt (and done in screen) or here
 
 
-def apply_style(widget, native, *, color):
+def apply_style(widget, native, *, foreground):
     native.style_sheet = sheet = (
-        "QLabel {" + f"color:{to_qt_color(color)}; {widget._impl_cache_}" + "}"
+        "QLabel {" + f"color:{to_qt_color(foreground)}; {widget._impl_cache_}" + "}"
     )
 
 

@@ -17,7 +17,7 @@ class Test(Layout):
         {
             Button: dict(size=2),
             Label: dict(size=2),
-        },
+        }
     )
 
     body = VStack(

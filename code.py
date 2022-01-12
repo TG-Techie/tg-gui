@@ -15,20 +15,22 @@ class Test(View):
 
     _theme_ = SubTheme(
         {
-            Button: dict(size=2),
-            Label: dict(size=2),
+            Label: {
+                Label.foreground: color.red,
+                Label.size: 2,
+            },
+            Date: {
+                Date.foreground: color.white,
+            },
         },
     )
 
     body = lambda: VStack(
-        # Button("hello!", action=self.say("hello!")),
-        Date("{hour}:{min}", size=6, fit_to=True),
-        Date("{dayshort} {monthday} {monthshort}", size=3, fit_to=True),
+        Date("{hour}:{min}", size=6),
+        Date("{dayshort} {monthday} {monthshort}", size=3),
         Date("{sec}"),
+        Label("test"),
     )
-
-    # def _layout_(self):
-    #     self.body(center, self.dims)
 
     def say(self, msg: str) -> None:
         print(msg)

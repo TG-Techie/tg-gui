@@ -48,6 +48,8 @@ from ._shared import (
     USE_TYPING,
 )
 
+from typing import TYPE_CHECKING
+
 from .base import (
     Widget,
     color,
@@ -117,9 +119,13 @@ from ._shared import (
     enum_compat,
 )
 
-from .styled_widget import StyledWidget, themedwidget, StyleSpec
-from .theming import Theme, SubTheme, align
-from .style import Style, DerivedStyle
+from .styled_widget import StyledWidget, align
+from .theming import Theme, SubTheme, themedwidget
+
+if TYPE_CHECKING:
+    themedwidget = lambda cls: cls
+
+# from .style import Style, DerivedStyle
 
 
 # un-inject (deject?) the bad import value

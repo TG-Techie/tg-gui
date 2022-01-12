@@ -27,8 +27,8 @@ from tg_gui_core import (
     Color,
     StyledWidget,
     themedwidget,
-    StyleSpec,
 )
+from tg_gui_core.theming import BuildAttribute, StyledAttribute
 from .platform._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
@@ -38,52 +38,50 @@ if TYPE_CHECKING:
 
 
 @_button_impl.format_class
+# @themedwidget(
+#     buildattrs={
+#         "radius": int,
+#         "size": int,
+#         "fit_to_text": bool,
+#     },
+#     statefulattrs={
+#         "fill": Color,
+#         "foreground": Color,
+#         "active_fill": Color,
+#         "active_color": Color,
+#     },
+# )
 @themedwidget
 class Button(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True
     _self_sizing_ = True
 
-    _default_styling_ = dict(
-        # eventaully these will be system colors like color.system_midgrnd
-        style=dict(
-            fill=0x505050,
-            color=0xFFFFFF,
-            active_fill=0x808080,
-            active_color=0xFFFFFF,
-        ),
-        radius=100,
-        size=1,
-        fit_to_text=False,
-    )
-
-    # user facing style
-    _build_style_attrs_: StyleSpec = {
-        "radius": int,
-        "size": int,
-        "fit_to_text": bool,
-    }
-    _stateful_style_attrs_: StyleSpec = {
-        "fill": Color,
-        "color": Color,
-        "active_fill": Color,
-        "active_color": Color,
-    }
-
-    @property
-    def text(self) -> str:
-        return self._text
-
     # impl tie-in
     _impl_build_ = _button_impl.build
     _impl_set_size_ = _button_impl.set_size
     _impl_apply_style_ = _button_impl.apply_style
+    _use_sug_height_ = True
+
+    radius = BuildAttribute[int]()
+    size = BuildAttribute[int]()
+    fit_to_text = BuildAttribute[bool]()
+
+    fill = StyledAttribute[Color]()
+    foreground = StyledAttribute[Color]()
+
+    fill = StyledAttribute[Color]()
+    foreground = StyledAttribute[Color]()
+    active_fill = StyledAttribute[Color]()
+    active_foreground = StyledAttribute[Color]()
 
     @property
     def _use_sug_width_(self) -> bool:
-        return self._theme_.getattr(type(self), "fit_to_text")
+        return self.fit_to_text
 
-    _use_sug_height_ = True
+    @property
+    def text(self) -> str:
+        return self._text
 
     def __init__(
         self,

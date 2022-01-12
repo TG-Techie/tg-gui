@@ -100,23 +100,23 @@ class State(Bindable[T]):
         self.update(self, value)
         # called with self as an assignmetn should update everybody
 
-    def _register_handler_(self, key, handler: Handler) -> None:
-        if key is None:
+    def _register_handler_(self, owner, handler: Handler) -> None:
+        if owner is None:
             self._single_upate_handlers.append(handler)
-        elif key not in self._registered:
-            if hasattr(key, "_id_"):
-                key = key._id_
-            self._registered[key] = handler
+        elif owner not in self._registered:
+            if hasattr(owner, "_id_"):
+                owner = owner._id_
+            self._registered[owner] = handler
 
         else:
-            raise ValueError(f"{self} already has a handler registered for  {key}")
+            raise ValueError(f"{self} already has a handler registered for  {owner}")
 
-    def _deregister_handler_(self, key) -> None:
+    def _deregister_handler_(self, owner) -> None:
         registered = self._registered
-        if hasattr(key, "_id_"):
-            key = key._id_
-        if key in registered:
-            registered.pop(key)
+        if hasattr(owner, "_id_"):
+            owner = owner._id_
+        if owner in registered:
+            registered.pop(owner)
 
     def _alert_registered(self, excluded):
         excluded_key = getattr(excluded, "_id_", excluded)

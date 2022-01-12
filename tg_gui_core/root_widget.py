@@ -35,9 +35,8 @@ if TYPE_CHECKING:
 
 
 class Root(Container):
-    # @property
-    # def _theme_(self):
-    #     raise TypeError(f"Root Widgets are not themed")
+
+    _is_root_ = True
 
     _theme_ = None
 
