@@ -1,5 +1,6 @@
 from tg_gui_core import Widget
-from ...styling import Theme, align
+
+# from ...styling import Theme, align
 
 from .screen import Screen
 

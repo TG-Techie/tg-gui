@@ -22,16 +22,16 @@
 
 from __future__ import annotations
 
-from .base import Widget, InheritedAttribute, LazyInheritedAttribute
-from .specifiers import specify
+from .base import Widget
+from ._shared import enum_compat, isoncircuitpython
 from .stateful import State
-from .style import Style, DerivedStyle
-from .theming import (
-    Theme,
-    ThemedAttribute,
-)
 
+# from .style import Style, DerivedStyle
+from .theming import Theme, themedwidget
+
+from enum import Enum, auto
 from typing import TYPE_CHECKING
+import sys
 
 if TYPE_CHECKING:
     from typing import *
@@ -40,57 +40,51 @@ if TYPE_CHECKING:
 
     Native = Any
 
-    StyleSpec = ClassVar[dict[str, type | tuple[type, ...]]]
 
-else:
-    StyleSpec = object  # type:ignore
+@enum_compat
+class align(Enum):
+    leading = auto()
+    center = auto()
+    trailing = auto()
 
 
+@themedwidget
 class StyledWidget(Widget):
 
-    _build_style_attrs_: StyleSpec = {}
-    _stateful_style_attrs_: StyleSpec = {}
+    # --- themeing ---
+    # these are injected by @themedwidget
+    _build_attrs_: ClassVar[set[str]] = set()
+    _style_attrs_: ClassVar[set[str]] = set()
 
-    _all_style_attr_names_: set[str]
-
-    # --- typing ---
-    _impl_cache_: Any
+    # --- layout ---
+    # these are defined in subclasses of StyledWidget, they can be
+    _use_sug_width_: bool
+    _use_sug_height_: bool
 
     # --- impl tie-in defined in subclass ---
-    _impl_build_: ClassVar[Callable]  # type: ignore
+    _impl_build_: ClassVar[Callable[...]]  # type: ignore
     _impl_set_size_: ClassVar[Callable]  # type: ignore
     _impl_apply_style_: ClassVar[Callable]  # type: ignore
+    _impl_cache_: Any  # a standardized place to store extra info for implemnetation
 
-    # _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
-    @property
-    def _theme_(self) -> Theme:
-        return self._superior_._theme_
+    # --- themed attribure resoution linking ---
+    # circuitpython does not have .mro() so @themedwidget() injects a link to the previous
+    _stylecls_mro_: tuple[Type[StyledWidget], ...] = ()
 
-    def __init__(self, style=None, _margin_=None, **kwargs):
+    def __init__(
+        self,
+        # style=None,
+        _margin_: int = None,
+        **kwargs,
+    ):
 
-        buildatters = {
-            name: kwargs[name]
-            for name in kwargs
-            if self._allows_themed_build_attr_(name)
-        }
+        # input validation
+        given = set(kwargs)
+        allowed = self._build_attrs_ | self._style_attrs_
+        if len(extra := given - allowed):
+            raise TypeError(f"{type(self).__name__} got unexpected style attrs {extra}")
 
-        statefulattrs = {
-            name: kwargs[name]
-            for name in kwargs
-            if self._allows_themed_stateful_attr_(name)
-        }
-
-        assert (
-            len(overlap := set(buildatters) & set(statefulattrs)) == 0
-        ), f"conflicting themedattribute for arguments {overlap}... How!?"
-
-        assert (
-            len(extra := set(kwargs) - set(buildatters) - set(statefulattrs)) == 0
-        ), f"widget of type '{type(self).__name__}' unexpected/extra keyword arguments {extra}"
-
-        self._build_attrs_ = buildatters
-        self._stateful_attrs_ = statefulattrs
-        # self._theme_ = None
+        self._themed_attrs_ = kwargs
 
         self._impl_cache_ = None
 
@@ -98,141 +92,151 @@ class StyledWidget(Widget):
 
     def _build_(self, dim_spec):
 
-        # print(self, self._theme_)
+        # build the native widget
+        attrs = {attr: getattr(self, attr) for attr in self._build_attrs_}
+        native, suggested_size = self._impl_build_(**attrs)
 
-        # print(self._all_style_attr_names_)
-        attrs = {
-            name: getattr(self, name)
-            for name in self._all_style_attr_names_
-            if self._allows_themed_build_attr_(name)
-        }
-        # print(attrs)
+        # validate the native element
+        assert native is not None, f"{self} failed to build, (parent {self._superior_})"
+        self._native_ = native
 
-        # print(self._impl_build_, type(self)._impl_build_.__module__)
-        self._native_, suggested_size = self._impl_build_(**attrs)
+        # get the specfied height from the layout engine
+        specd_wth, specd_ht = self._specify_dim_spec(dim_spec)
+        sugd_wth, sud_ht = suggested_size
 
-        spcw, spch = self._specify_dim_spec(dim_spec)
+        # select between the specified and suggested height based styled widget's behavior
+        wth = sugd_wth if self._use_sug_width_ and (sugd_wth is not None) else specd_wth
+        ht = sud_ht if self._use_sug_height_ and (sud_ht is not None) else specd_ht
 
-        sgw, sgh = suggested_size
+        super()._build_((wth, ht))
 
-        size = w, h = (
-            sgw if self._use_sug_width_ and sgw is not None else spcw,
-            sgh if self._use_sug_height_ and sgh is not None else spch,
-        )
-        # print(
-        #     "_build_",
-        #     self,
-        #     f"size={size}",
-        #     (self._use_sug_width_, self._use_sug_heigh
-        # t_),
-        # )
-        super()._build_(size)
+        self._impl_set_size_(native, wth, ht)
 
-        self._impl_set_size_(self._native_, w, h)
+        # # --- register style states ---
+        # TODO: handle state for styled widgets
 
-        assert self._native_ is not None
+        handler = self._apply_style
+        handler()
+        stateful_attrs = self._themed_attrs_
+        for name, state in self._themed_attrs_.items():
+            if name in stateful_attrs and isinstance(state, State):
+                state._register_handler_(self, handler)
 
-        # --- register style states ---
-        # there are three scenearios, State[Style], Style(state), Style
-        style = self._stateful_attrs_
+    def _demolish_(self):
+        stateful_attrs = self._themed_attrs_
+        for name, state in self._themed_attrs_.values():
+            if isinstance(state, State):
+                state._deregister_handler_(self)
 
-        if isinstance(style, DerivedStyle):
-            handler = self._apply_style_handler
-            style._register_handler_(self, handler)
-            handler(style)
-        else:  # is a Style Object
-            self._apply_style_handler(style)
-            self._stateful_attrs_ = "_style_removed_after_use_"
+        return super()._demolish_()
+
+    def _place_(self, pos_spec):
+        if __debug__ and self.width > self._superior_.width:
+            print(
+                f"WARNING: {type(self).__name__}'s width {self.width} is greater than its "
+                + f"parent {self._superior_}'s width {self._superior_.width}"
+            )
+        if __debug__ and self.height > self._superior_.height:
+            print(
+                f"WARNING: {type(self).__name__}'s height {self.height} is greater than its "
+                + f"parent {self._superior_}'s height {self._superior_.height}"
+            )
+        return super()._place_(pos_spec)
 
     def _demolish_(self):
         if isinstance(self._stateful_attrs_, State):
             self._stateful_attrs_._deregister_handler_(self)
         super()._demolish_()
 
-    def _apply_style_handler(self, style=None):
+    def _apply_style(self, **__) -> None:
+        attrs = {attr: getattr(self, attr) for attr in self._style_attrs_}
+        print(self, attrs, self._style_attrs_)
+        try:
+            self._impl_apply_style_(self._native_, **attrs)
+        except TypeError as err:
+            fn = type(self)._impl_apply_style_
+            msg = (
+                f"WARNING: error while calling {self}._impl_apply_style_(...) "
+                + f"from {fn.__globals__['__name__']}.{fn.__name__} "
+            )
+            if isoncircuitpython():
+                raise err from RuntimeError(msg)
+            else:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                frame = exc_tb.tb_frame
+                msg += (
+                    "\nprobably somewhere in"
+                    + f"\n  File {repr(fn.__code__.co_filename)}, "
+                    + f"line {fn.__code__.co_firstlineno}\n"
+                    + "original exception in the `try:` statement near"
+                    + f"\n  File {repr(frame.f_code.co_filename)}, line {frame.f_lineno}"
+                )
+                raise TypeError(msg) from err
 
-        attrs = {
-            name: getattr(self, name)
-            for name in self._all_style_attr_names_
-            if self._allows_themed_stateful_attr_(name)
-        }
+    # def _apply_style_handler(self, style=None):
 
-        self._impl_apply_style_(self._native_, **attrs)
+    #     attrs = {
+    #         name: getattr(self, name)
+    #         for name in self._all_style_attr_names_
+    #         if self._allows_themed_stateful_attr_(name)
+    #     }
 
-    @classmethod
-    def _allows_themed_build_attr_(cls, name: str) -> bool:
-        return (
-            isinstance(attr := getattr(cls, name, None), ThemedAttribute)
-            and not attr._stateful
-        )
-
-    @classmethod
-    def _allows_themed_stateful_attr_(cls, name: str) -> bool:
-        return (
-            isinstance(attr := getattr(cls, name, None), ThemedAttribute)
-            and attr._stateful
-        )
-
-
-def themedwidget(widcls: "Type['Widget']") -> "Type['Widget']":
-
-    assert issubclass(
-        widcls, StyledWidget
-    ), f"{widcls} does not subclass {StyledWidget}, cannot use @themedwidget on non-styled widget"
-
-    buildattrs = widcls._build_style_attrs_
-    statefulattrs = widcls._stateful_style_attrs_
-
-    assert buildattrs not in (
-        matched_build_conflict := cls
-        if (buildattrs is cls._build_style_attrs_)
-        else False
-        for cls in Theme._required_
-    ), (
-        f"{widcls} missing the ._build_style_attrs_ class attribute, "
-        + "@themedwidget classes require ._build_style_attrs_ attrs spec. "
-        + f"(ie found a dict that belongs to {matched_build_conflict})"
-    )
-
-    assert not any(
-        matched_stateful_conflict_dicts := (
-            cls if (statefulattrs is cls._stateful_style_attrs_) else False
-            for cls in Theme._required_
-        )
-    ), (
-        f"{widcls} missing the ._stateful_style_attrs_ class attribute, "
-        + "@themedwidget classes require ._stateful_style_attrs_  attrs spec. "
-        + f"(ie found a dict that belonges to {matched_stateful_conflict_dicts})"
-    )
-
-    assert (
-        len(
-            overlap := set(widcls._build_style_attrs_)
-            & set(widcls._stateful_style_attrs_)
-        )
-        == 0
-    ), f"overlapping build and stateful style attributes {overlap} in {widcls}"
-
-    for attr, allowed in buildattrs.items():
-        setattr(widcls, attr, ThemedAttribute(attr, False, widcls, allowed))
-
-    for attr, allowed in statefulattrs.items():
-        setattr(widcls, attr, ThemedAttribute(attr, True, widcls, allowed))
-
-    Theme._required_.add(widcls)
-
-    widcls._all_style_attr_names_ = {
-        attr
-        for attr in dir(widcls)
-        if isinstance(getattr(widcls, attr, None), ThemedAttribute)
-    }
-
-    return widcls
+    #     self._impl_apply_style_(self._native_, **attrs)
 
 
-if TYPE_CHECKING:
-    themedwidget = lambda cls: cls
+# def themedwidget(widcls: "Type['Widget']") -> "Type['Widget']":
+
+#     assert issubclass(
+#         widcls, StyledWidget
+#     ), f"{widcls} does not subclass {StyledWidget}, cannot use @themedwidget on non-styled widget"
+
+#     buildattrs = widcls._build_style_attrs_
+#     statefulattrs = widcls._stateful_style_attrs_
+
+#     assert buildattrs not in (
+#         matched_build_conflict := cls
+#         if (buildattrs is cls._build_style_attrs_)
+#         else False
+#         for cls in Theme._required_
+#     ), (
+#         f"{widcls} missing the ._build_style_attrs_ class attribute, "
+#         + "@themedwidget classes require ._build_style_attrs_ attrs spec. "
+#         + f"(ie found a dict that belongs to {matched_build_conflict})"
+#     )
+
+#     assert not any(
+#         matched_stateful_conflict_dicts := (
+#             cls if (statefulattrs is cls._stateful_style_attrs_) else False
+#             for cls in Theme._required_
+#         )
+#     ), (
+#         f"{widcls} missing the ._stateful_style_attrs_ class attribute, "
+#         + "@themedwidget classes require ._stateful_style_attrs_  attrs spec. "
+#         + f"(ie found a dict that belonges to {matched_stateful_conflict_dicts})"
+#     )
+
+#     assert (
+#         len(
+#             overlap := set(widcls._build_style_attrs_)
+#             & set(widcls._stateful_style_attrs_)
+#         )
+#         == 0
+#     ), f"overlapping build and stateful style attributes {overlap} in {widcls}"
+
+#     for attr, allowed in buildattrs.items():
+#         setattr(widcls, attr, ThemedAttribute(attr, False, widcls, allowed))
+
+#     for attr, allowed in statefulattrs.items():
+#         setattr(widcls, attr, ThemedAttribute(attr, True, widcls, allowed))
+
+#     Theme._required_.add(widcls)
+
+#     widcls._all_style_attr_names_ = {
+#         attr
+#         for attr in dir(widcls)
+#         if isinstance(getattr(widcls, attr, None), ThemedAttribute)
+#     }
+
+#     return widcls
 
 # setup base internal state
-
-themedwidget(StyledWidget)

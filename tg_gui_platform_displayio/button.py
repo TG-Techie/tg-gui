@@ -147,7 +147,7 @@ def apply_style(
     native: Native,
     *,
     fill: Color,
-    color: Color,
+    foreground: Color,
     active_fill: Color,
     active_color: Color,
 ) -> None:
@@ -159,7 +159,7 @@ def apply_style(
     :param **style_attrs: the stateful style attributes being applied
     :return: None
     """
-    widget._impl_cache_ = cache = ((fill, color), (active_fill, active_color))
+    widget._impl_cache_ = cache = ((fill, foreground), (active_fill, active_color))
 
     assert len(native) == 2, len(native)
 
