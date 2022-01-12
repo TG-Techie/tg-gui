@@ -48,6 +48,8 @@ from ._shared import (
     USE_TYPING,
 )
 
+from typing import TYPE_CHECKING
+
 from .base import (
     Widget,
     color,
@@ -119,6 +121,9 @@ from ._shared import (
 
 from .styled_widget import StyledWidget, align
 from .theming import Theme, SubTheme, themedwidget
+
+if TYPE_CHECKING:
+    themedwidget = lambda cls: cls
 
 # from .style import Style, DerivedStyle
 

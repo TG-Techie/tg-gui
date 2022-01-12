@@ -53,7 +53,7 @@ def __make_default_theme() -> Theme:
                     Button.fill: 0x505050,
                     Button.foreground: 0xFFFFFF,
                     Button.active_fill: 0x808080,
-                    Button.active_color: 0xFFFFFF,
+                    Button.active_foreground: 0xFFFFFF,
                 },
                 Label: {
                     Label.foreground: 0xFFFFFF,

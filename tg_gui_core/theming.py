@@ -22,27 +22,24 @@
 
 from __future__ import annotations
 
-from ._shared import uid, UID, USE_TYPING
+from ._shared import uid, UID, USE_TYPING, isoncircuitpython
 from .base import Widget
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+T = TypeVar("T")
 
 if TYPE_CHECKING:
     from typing import *  # Protocol, ClassVar, Type, Any, TypeVar
     from .styled_widget import StyledWidget
 
-    T = TypeVar("T")
-    _NotFound: object = type(
-        "NotFound",
-        (),
-        dict(__repr__=lambda _: "<NotFound (tg-gui internal object)>"),
-    )()
+    _NotFound: object = type("NotFound", (), {})
+    ()
 
     _StyleAttrSpec = dict[str, type | tuple[type, ...] | tuple[()]]
 
 else:
-    T = None  # type: ignore
     Protocol = {T: object}  # type: ignore
     _NotFound = object()
 
@@ -51,75 +48,67 @@ class ResolutionError(Exception):
     pass
 
 
-def themedwidget(
-    *,
-    buildattrs: _StyleAttrSpec | None = None,
-    statefulattrs: _StyleAttrSpec | None = None,
-) -> Type[StyledWidget]:
-    """
-    A decorator that injects the themed attributes in format the subclasses for styled widgets
-    """
-    buildattrs = {} if buildattrs is None else buildattrs
-    statefulattrs = {} if statefulattrs is None else statefulattrs
+def themedwidget(cls: Type[StyledWidget]):
+    build_attrs = set()
+    style_attrs = set()
+    for name in dir(cls):
+        attr = getattr(cls, name)
 
-    return lambda cls: _themedwidget(cls, Theme, buildattrs, statefulattrs)
+        # warn on private var
+        if name.startswith("_") and isinstance(attr, ThemedAttribute):
+            raise ValueError(
+                f"{type(attr.__name__)} {cls.__name__}.{name} cannot be privtate"
+            )
+        # skip not themed
+        if name.startswith("_") or not isinstance(attr, ThemedAttribute):
+            continue
 
+        assert isinstance(attr, ThemedAttribute), f"found {attr}"
 
-def _themedwidget(
-    cls: Type[StyledWidget],
-    register_to: Type[Theme],
-    buildattrs: _StyleAttrSpec,
-    statefulattrs: _StyleAttrSpec,
-) -> Type[StyledWidget]:
-    """
-    the actual formatter and themeifier so to speak
-    """
+        # circuitpython does not have __set_name__, so add it
+        if isoncircuitpython() and name.name is None:
+            attr.__set_name__(cls, name)
 
-    buildattr_names = set(buildattrs)
-    statefulattr_names = set(statefulattrs)
+        # add it to the attr sets
+        if attr.isbuildattr:
+            build_attrs.add(name)
+        else:
+            style_attrs.add(name)
 
-    # validate the build and stateful attrs
-    assert len(overlapping := buildattr_names & statefulattr_names) == 0, (
-        f"conflicting build and style attributes for "
-        + f"@themedwidget(...)(class {cls.__name__}) , found {overlapping} in both"
-    )
-
-    # link the this class into the resolution order
+    # circuitpython does not support type.mro(), so we make an explicit list
     cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
 
-    # --- inject sets of attrs ---
-    # spr_buildattrs , spr_statefulattrs= cls._build_style_attrs_,cls._stateful_style_attrs_
-    if len(buildattr_names):
-        cls._build_style_attrs_ = cls._build_style_attrs_ | buildattr_names
+    # store the attrs in the class object, but only if they are different
+    if build_attrs != cls._build_attrs_:
+        cls._build_attrs_ = build_attrs
     else:
-        cls._build_style_attrs_ = cls._build_style_attrs_
+        cls._build_attrs_ = cls._build_attrs_
 
-    if len(statefulattr_names):
-        cls._stateful_style_attrs_ = cls._stateful_style_attrs_ | statefulattr_names
+    if style_attrs != cls._style_attrs_:
+        cls._style_attrs_ = style_attrs
     else:
-        cls._stateful_style_attrs_ = cls._stateful_style_attrs_
+        cls._style_attrs_ = cls._style_attrs_
 
-    # --- inject the themed attribute descriptors ---
-    for name, allowed in buildattrs.items():
-        setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=True))
+    print(cls, cls._build_attrs_, cls._style_attrs_)
 
-    for name, allowed in statefulattrs.items():
-        setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=False))
+    # register the class as required
+    Theme._required_.add(cls)
 
     return cls
 
 
-class ThemedAttribute:
+class ThemedAttribute(Generic[T]):
     def __init__(
         self,
-        name: str,
-        stylecls: Type[StyledWidget],
-        allowed: _StyleAttrSpec,
+        # name: str,
+        # stylecls: Type[StyledWidget],
+        *,
+        allowed: _StyleAttrSpec = (),
         isbuildattr: bool,
     ) -> None:
         self._id_ = uid()
-        self.name = name
-        self.stylecls = stylecls
+        self.name: None | str = None
+        self.stylecls: Type[StyledWidget] | None = None
         self.allowed = allowed
         self.isbuildattr = isbuildattr
 
@@ -134,11 +123,15 @@ class ThemedAttribute:
             f"{owner}.{self.name} is a themed attribute and cannot be set directly, wrap it in a State object"
         )
 
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.stylecls = owner
+
     def get_themed_attr(self, widget: StyledWidget) -> Any:
         # check if it is passed directly
         name = self.name
-        if name in widget._style_attrs_:
-            return widget._style_attrs_[name]
+        if name in widget._themed_attrs_:
+            return widget._themed_attrs_[name]
 
         # climb up the widget heirarchy
         superior = widget
@@ -153,6 +146,7 @@ class ThemedAttribute:
             theme = superior._theme_
 
             for cls in widget._stylecls_mro_:
+                # print((spec := theme.get(cls, False)), spec)
                 if (spec := theme.get(cls, False)) and self in spec:
                     return spec[self]
             else:
@@ -163,40 +157,62 @@ class ThemedAttribute:
         )
 
     def __repr__(self) -> str:
-        return (
-            f"<{type(self).__name__}: {self._id_} {self.stylecls.__name__}.{self.name}>"
-        )
+
+        if self.stylecls is None:
+            f"<{type(self).__name__}: {self._id_} unlinked>"
+        else:
+            return f"<{type(self).__name__}: {self._id_} {self.stylecls.__name__}.{self.name}>"
 
 
-if TYPE_CHECKING or __debug__:
+if TYPE_CHECKING or USE_TYPING:
 
-    class Theme(dict):
-        _required_: ClassVar[set[Type[StyledWidget]]]
+    class BuildAttribute(ThemedAttribute[T]):
+        def __init__(self):
+            super().__init__(isbuildattr=True)
 
-        def __init__(self, specs, *, _debug_name_: str | None = None) -> None:
-            self._id_ = uid()
-            self.specs = specs
-            self._debug_name_ = _debug_name_
-
-        def __getitem__(self, key: StyledWidget) -> _VT:
-            return self.specs[key]
-
-        def get(self, *args):
-            return self.specs.get(*args)
-
-        def __repr__(self) -> str:
-            dbg = f" {repr(self._debug_name_)}" if self._debug_name_ else ""
-            return f"<{type(self).__name__}: {self._id_}{dbg}>"
-
-    class SubTheme(Theme):
-        pass
+    class StyledAttribute(ThemedAttribute[T]):
+        def __init__(self):
+            super().__init__(isbuildattr=False)
 
 else:
-    # TODO: TEST THIS!!!!
-    def Theme(specs, *, _debug_name_=None):
-        return specs
 
-    SubTheme = Theme
+    class _BuildAttribute(ThemedAttribute):
+        def __init__(self):
+            super().__init__(isbuildattr=True)
 
-if TYPE_CHECKING:
-    themedwidget = lambda cls: cls
+    class _StyledAttribute(ThemedAttribute):
+        def __init__(self):
+            super().__init__(isbuildattr=False)
+
+    class _themed_attribute_sugar:
+        def __init__(self, themecls: Type[ThemedAttribute]) -> None:
+            self.themecls = themecls
+
+        def __getitem__(self, allowed) -> Any:
+            return self.themecls
+
+    BuildAttribute = _themed_attribute_sugar(_BuildAttribute)
+    StyledAttribute = _themed_attribute_sugar(_StyledAttribute)
+
+
+class Theme(dict):
+    _required_: ClassVar[set[Type[StyledWidget]]] = set()
+
+    def __init__(self, specs, *, _debug_name_: str | None = None) -> None:
+        self._id_ = uid()
+        self.specs = specs
+        self._debug_name_ = _debug_name_
+
+    def __getitem__(self, key: StyledWidget) -> _VT:
+        return self.specs[key]
+
+    def get(self, *args):
+        return self.specs.get(*args)
+
+    def __repr__(self) -> str:
+        dbg = f" {repr(self._debug_name_)}" if self._debug_name_ else ""
+        return f"<{type(self).__name__}: {self._id_}{dbg}>"
+
+
+class SubTheme(Theme):
+    pass

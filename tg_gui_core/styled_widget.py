@@ -31,6 +31,7 @@ from .theming import Theme, themedwidget
 
 from enum import Enum, auto
 from typing import TYPE_CHECKING
+import sys
 
 if TYPE_CHECKING:
     from typing import *
@@ -47,13 +48,13 @@ class align(Enum):
     trailing = auto()
 
 
-@themedwidget()
+@themedwidget
 class StyledWidget(Widget):
 
     # --- themeing ---
     # these are injected by @themedwidget
-    _build_style_attrs_: ClassVar[set[str]] = set()
-    _stateful_style_attrs_: ClassVar[set[str]] = set()
+    _build_attrs_: ClassVar[set[str]] = set()
+    _style_attrs_: ClassVar[set[str]] = set()
 
     # --- layout ---
     # these are defined in subclasses of StyledWidget, they can be
@@ -79,11 +80,11 @@ class StyledWidget(Widget):
 
         # input validation
         given = set(kwargs)
-        allowed = self._build_style_attrs_ | self._stateful_style_attrs_
+        allowed = self._build_attrs_ | self._style_attrs_
         if len(extra := given - allowed):
             raise TypeError(f"{type(self).__name__} got unexpected style attrs {extra}")
 
-        self._style_attrs_ = kwargs
+        self._themed_attrs_ = kwargs
 
         self._impl_cache_ = None
 
@@ -92,7 +93,7 @@ class StyledWidget(Widget):
     def _build_(self, dim_spec):
 
         # build the native widget
-        attrs = {attr: getattr(self, attr) for attr in self._build_style_attrs_}
+        attrs = {attr: getattr(self, attr) for attr in self._build_attrs_}
         native, suggested_size = self._impl_build_(**attrs)
 
         # validate the native element
@@ -116,14 +117,14 @@ class StyledWidget(Widget):
 
         handler = self._apply_style
         handler()
-        stateful_attrs = self._stateful_style_attrs_
-        for name, state in self._style_attrs_.items():
+        stateful_attrs = self._themed_attrs_
+        for name, state in self._themed_attrs_.items():
             if name in stateful_attrs and isinstance(state, State):
                 state._register_handler_(self, handler)
 
     def _demolish_(self):
-        stateful_attrs = self._stateful_style_attrs_
-        for name, state in self._style_attrs_.values():
+        stateful_attrs = self._themed_attrs_
+        for name, state in self._themed_attrs_.values():
             if isinstance(state, State):
                 state._deregister_handler_(self)
 
@@ -148,17 +149,28 @@ class StyledWidget(Widget):
         super()._demolish_()
 
     def _apply_style(self, **__) -> None:
-        attrs = {attr: getattr(self, attr) for attr in self._stateful_style_attrs_}
-
+        attrs = {attr: getattr(self, attr) for attr in self._style_attrs_}
+        print(self, attrs, self._style_attrs_)
         try:
             self._impl_apply_style_(self._native_, **attrs)
         except TypeError as err:
             fn = type(self)._impl_apply_style_
-            msg = f"error while calling {self}._impl_apply_style_(...) from {fn.__globals__['__name__']}.{fn.__name__} "
+            msg = (
+                f"WARNING: error while calling {self}._impl_apply_style_(...) "
+                + f"from {fn.__globals__['__name__']}.{fn.__name__} "
+            )
             if isoncircuitpython():
-                print(f"WARNING: {msg}")
-                raise err
+                raise err from RuntimeError(msg)
             else:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                frame = exc_tb.tb_frame
+                msg += (
+                    "\nprobably somewhere in"
+                    + f"\n  File {repr(fn.__code__.co_filename)}, "
+                    + f"line {fn.__code__.co_firstlineno}\n"
+                    + "original exception in the `try:` statement near"
+                    + f"\n  File {repr(frame.f_code.co_filename)}, line {frame.f_lineno}"
+                )
                 raise TypeError(msg) from err
 
     # def _apply_style_handler(self, style=None):

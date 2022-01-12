@@ -28,6 +28,7 @@ from tg_gui_core import (
     StyledWidget,
     themedwidget,
 )
+from tg_gui_core.theming import BuildAttribute, StyledAttribute
 from .platform._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
@@ -37,19 +38,20 @@ if TYPE_CHECKING:
 
 
 @_button_impl.format_class
-@themedwidget(
-    buildattrs={
-        "radius": int,
-        "size": int,
-        "fit_to_text": bool,
-    },
-    statefulattrs={
-        "fill": Color,
-        "foreground": Color,
-        "active_fill": Color,
-        "active_color": Color,
-    },
-)
+# @themedwidget(
+#     buildattrs={
+#         "radius": int,
+#         "size": int,
+#         "fit_to_text": bool,
+#     },
+#     statefulattrs={
+#         "fill": Color,
+#         "foreground": Color,
+#         "active_fill": Color,
+#         "active_color": Color,
+#     },
+# )
+@themedwidget
 class Button(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True
@@ -60,6 +62,18 @@ class Button(StyledWidget):
     _impl_set_size_ = _button_impl.set_size
     _impl_apply_style_ = _button_impl.apply_style
     _use_sug_height_ = True
+
+    radius = BuildAttribute[int]()
+    size = BuildAttribute[int]()
+    fit_to_text = BuildAttribute[bool]()
+
+    fill = StyledAttribute[Color]()
+    foreground = StyledAttribute[Color]()
+
+    fill = StyledAttribute[Color]()
+    foreground = StyledAttribute[Color]()
+    active_fill = StyledAttribute[Color]()
+    active_foreground = StyledAttribute[Color]()
 
     @property
     def _use_sug_width_(self) -> bool:

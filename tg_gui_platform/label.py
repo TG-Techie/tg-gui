@@ -23,21 +23,15 @@
 from __future__ import annotations
 
 from tg_gui_core import State, Color, StyledWidget, themedwidget, align
+from tg_gui_core.theming import BuildAttribute, StyledAttribute
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
 from .platform._platform_ import label as _label_impl
 
+from typing import Union
+
 
 @_label_impl.format_class
-@themedwidget(
-    buildattrs={
-        "size": int,
-        "align": align,
-        "fit_to": (bool, str),
-    },
-    statefulattrs={
-        "foreground": Color,
-    },
-)
+@themedwidget
 class Label(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True
@@ -54,10 +48,10 @@ class Label(StyledWidget):
 
     # --- style  typing ---
 
-    size: int
-    align: align
-    fit_to: bool | str
-    foreground: Color
+    size = BuildAttribute[int]()
+    align = BuildAttribute[align]()
+    fit_to = BuildAttribute[Union[bool, str]]()
+    foreground = StyledAttribute[Color]()
 
     # --- bool ---
 
