@@ -49,50 +49,37 @@ class ResolutionError(Exception):
 
 
 def themedwidget(cls: Type[StyledWidget]):
-    build_attrs = set()
-    style_attrs = set()
-    for name in dir(cls):
+    build_attrs = None
+    style_attrs = None
+
+    for name in dir(cls):  # scan by name
         attr = getattr(cls, name)
 
-        # warn on private var
-        if name.startswith("_") and isinstance(attr, ThemedAttribute):
-            raise ValueError(
-                f"{type(attr.__name__)} {cls.__name__}.{name} cannot be privtate"
-            )
         # skip not themed
         if name.startswith("_") or not isinstance(attr, ThemedAttribute):
             continue
-
         assert isinstance(attr, ThemedAttribute), f"found {attr}"
 
         # circuitpython does not have __set_name__, so add it
         if isoncircuitpython() and attr.name is None:
             attr.__set_name__(cls, name)
 
-        # add it to the attr sets
-        if attr.isbuildattr:
-            build_attrs.add(name)
-        else:
-            style_attrs.add(name)
-
-    # circuitpython does not support type.mro(), so we make an explicit list
-    cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
-
-    # store the attrs in the class object, but only if they are different
-    if build_attrs != cls._build_attrs_:
-        cls._build_attrs_ = build_attrs
+        # only add a new set of the attr names if there is a new build or style attr
+        if attr.stylecls is cls:
+            if attr.isbuildattr:
+                if build_attrs is None:
+                    cls._build_attrs_ = build_attrs = set(cls._build_attrs_)
+                build_attrs.add(attr.name)
+            else:
+                if style_attrs is None:
+                    cls._style_attrs_ = style_attrs = set(cls._style_attrs_)
+                style_attrs.add(attr.name)
     else:
-        cls._build_attrs_ = cls._build_attrs_
+        # circuitpython does not support type.mro(), so we make an explicit list
+        cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
 
-    if style_attrs != cls._style_attrs_:
-        cls._style_attrs_ = style_attrs
-    else:
-        cls._style_attrs_ = cls._style_attrs_
-
-    print(cls, cls._build_attrs_, cls._style_attrs_)
-
-    # register the class as required
-    Theme._required_.add(cls)
+        # register the class as required
+        Theme._required_.add(cls)
 
     return cls
 

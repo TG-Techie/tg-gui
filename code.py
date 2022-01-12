@@ -1,4 +1,9 @@
 import gc
+import sys
+
+if sys.implementation.name in {"circuitpython", "micropython"}:
+    import drivers
+
 from tg_gui.prelude import *
 
 if isoncircuitpython():
@@ -15,21 +20,15 @@ class Test(View):
 
     _theme_ = SubTheme(
         {
-            Label: {
-                Label.foreground: color.red,
-                Label.size: 2,
-            },
-            Date: {
-                Date.foreground: color.white,
-            },
-        },
+            Label: {Label.size: 2},
+            Date: {Date.foreground: color.white},
+        }
     )
 
     body = lambda: VStack(
         Date("{hour}:{min}", size=6),
         Date("{dayshort} {monthday} {monthshort}", size=3),
         Date("{sec}"),
-        Label("test"),
     )
 
     def say(self, msg: str) -> None:
