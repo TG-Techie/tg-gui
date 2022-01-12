@@ -42,7 +42,7 @@ def apply_style(
     widget: Label,
     native: Native,
     *,
-    color: Color,
+    foreground: Color,
 ) -> None:
     """
     formats the native widget with style attribute given.

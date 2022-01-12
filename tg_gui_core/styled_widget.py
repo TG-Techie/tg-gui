@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from .base import Widget
-from ._shared import enum_compat
+from ._shared import enum_compat, isoncircuitpython
 from .stateful import State
 
 # from .style import Style, DerivedStyle
@@ -113,19 +113,21 @@ class StyledWidget(Widget):
 
         # # --- register style states ---
         # TODO: handle state for styled widgets
-        print(f"TODO: impl registering state for StyledWidget ({self})")
-        # # there are three scenearios, State[Style], Style(state), Style
-        # style = self._stateful_attrs_
 
-        # if isinstance(style, DerivedStyle):
-        #     handler = self._apply_style_handler
-        #     style._register_handler_(self, handler)
-        #     handler(style)
-        # else:  # is a Style Object
-        #     self._apply_style_handler(style)
-        #     self._stateful_attrs_ = "_style_removed_after_use_"
+        handler = self._apply_style
+        handler()
+        stateful_attrs = self._stateful_style_attrs_
+        for name, state in self._style_attrs_.items():
+            if name in stateful_attrs and isinstance(state, State):
+                state._register_handler_(self, handler)
 
-        # --- debug and qol ---
+    def _demolish_(self):
+        stateful_attrs = self._stateful_style_attrs_
+        for name, state in self._style_attrs_.values():
+            if isinstance(state, State):
+                state._deregister_handler_(self)
+
+        return super()._demolish_()
 
     def _place_(self, pos_spec):
         if __debug__ and self.width > self._superior_.width:
@@ -145,15 +147,29 @@ class StyledWidget(Widget):
             self._stateful_attrs_._deregister_handler_(self)
         super()._demolish_()
 
-    def _apply_style_handler(self, style=None):
+    def _apply_style(self, **__) -> None:
+        attrs = {attr: getattr(self, attr) for attr in self._stateful_style_attrs_}
 
-        attrs = {
-            name: getattr(self, name)
-            for name in self._all_style_attr_names_
-            if self._allows_themed_stateful_attr_(name)
-        }
+        try:
+            self._impl_apply_style_(self._native_, **attrs)
+        except TypeError as err:
+            fn = type(self)._impl_apply_style_
+            msg = f"error while calling {self}._impl_apply_style_(...) from {fn.__globals__['__name__']}.{fn.__name__} "
+            if isoncircuitpython():
+                print(f"WARNING: {msg}")
+                raise err
+            else:
+                raise TypeError(msg) from err
 
-        self._impl_apply_style_(self._native_, **attrs)
+    # def _apply_style_handler(self, style=None):
+
+    #     attrs = {
+    #         name: getattr(self, name)
+    #         for name in self._all_style_attr_names_
+    #         if self._allows_themed_stateful_attr_(name)
+    #     }
+
+    #     self._impl_apply_style_(self._native_, **attrs)
 
 
 # def themedwidget(widcls: "Type['Widget']") -> "Type['Widget']":

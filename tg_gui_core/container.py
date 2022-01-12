@@ -155,7 +155,9 @@ class Container(Widget, **_continer_meta_kwarg):
         super().__init__(_margin_=0)
         # print(self, theme, self._theme_)
         # print(self, type(self)._theme_)
-        self._theme = None if theme is None else SubTheme(theme)
+        self._theme = (
+            None if theme is None else SubTheme(theme, _debug_name_=f"auto:{self}")
+        )
         self._nested_ = []
 
     # def _on_nest_(self):

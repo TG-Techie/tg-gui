@@ -52,6 +52,15 @@ class Label(StyledWidget):
     _impl_apply_style_ = _label_impl.apply_style
     _set_text_ = _label_impl.set_text
 
+    # --- style  typing ---
+
+    size: int
+    align: align
+    fit_to: bool | str
+    foreground: Color
+
+    # --- bool ---
+
     @property
     def text(self):
         return self._text.value(self) if isinstance(self._text, State) else self._text

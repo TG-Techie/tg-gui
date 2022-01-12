@@ -104,10 +104,6 @@ def _themedwidget(
         setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=True))
 
     for name, allowed in statefulattrs.items():
-        print(
-            cls,
-            name,
-        )
         setattr(cls, name, ThemedAttribute(name, cls, allowed, isbuildattr=False))
 
     return cls
@@ -121,6 +117,7 @@ class ThemedAttribute:
         allowed: _StyleAttrSpec,
         isbuildattr: bool,
     ) -> None:
+        self._id_ = uid()
         self.name = name
         self.stylecls = stylecls
         self.allowed = allowed
@@ -165,14 +162,41 @@ class ThemedAttribute:
             f"unable to resolve .{name} style attribute for {widget} (reached {superior})"
         )
 
+    def __repr__(self) -> str:
+        return (
+            f"<{type(self).__name__}: {self._id_} {self.stylecls.__name__}.{self.name}>"
+        )
 
-class Theme(dict):
-    pass
 
+if TYPE_CHECKING or __debug__:
 
-class SubTheme(Theme):
-    pass
+    class Theme(dict):
+        _required_: ClassVar[set[Type[StyledWidget]]]
 
+        def __init__(self, specs, *, _debug_name_: str | None = None) -> None:
+            self._id_ = uid()
+            self.specs = specs
+            self._debug_name_ = _debug_name_
+
+        def __getitem__(self, key: StyledWidget) -> _VT:
+            return self.specs[key]
+
+        def get(self, *args):
+            return self.specs.get(*args)
+
+        def __repr__(self) -> str:
+            dbg = f" {repr(self._debug_name_)}" if self._debug_name_ else ""
+            return f"<{type(self).__name__}: {self._id_}{dbg}>"
+
+    class SubTheme(Theme):
+        pass
+
+else:
+    # TODO: TEST THIS!!!!
+    def Theme(specs, *, _debug_name_=None):
+        return specs
+
+    SubTheme = Theme
 
 if TYPE_CHECKING:
     themedwidget = lambda cls: cls
