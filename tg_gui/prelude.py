@@ -32,52 +32,15 @@ except:
 
 # --- setup and globals ---
 
-__default_theme_inst: None | Theme = None
-
-
-def _make_default_theme() -> Theme:
-    global __default_theme_inst
-
-    if __default_theme_inst is not None:
-        dflt_theme = __default_theme_inst
-    else:
-        dflt_theme = Theme(
-            {
-                StyledWidget: {},
-                Button: {
-                    # eventaully these will be system colors like color.system_midgrnd
-                    Button.radius: 100,
-                    Button.size: 1,
-                    Button.fit_to_text: False,
-                    Button.fill: 0x505050,
-                    Button.foreground: 0xFFFFFF,
-                    Button.active_fill: 0x808080,
-                    Button.active_foreground: 0xFFFFFF,
-                },
-                Label: {
-                    Label.foreground: 0xFFFFFF,
-                    Label.size: 1,
-                    Label.align: align.center,
-                    Label.fit_to: False,
-                },
-            },
-        )
-
-        # __default_theme_inst = dflt_theme = Theme(Theme._decld_default_styling_dict)
-
-    return dflt_theme
-
 
 def main(
     screen: Screen,
-    theme: Theme,
     size: None | tuple[int, int] = None,
     _startup: bool = True,
 ) -> Callable[[Widget], Widget]:
 
     rootwid = Root(
         screen=screen,
-        theme=theme,
         size=(
             size
             if size is not None
@@ -105,7 +68,6 @@ class default:
         raise TypeError("cannot create instances of default")
 
     screen: ClassVar[Callable[..., Screen]] = staticmethod(_prelude_impl.default_screen)
-    theme: ClassVar[Callable[[], Theme]] = staticmethod(_make_default_theme)
 
 
 # --- tg_gui_core interface ---
