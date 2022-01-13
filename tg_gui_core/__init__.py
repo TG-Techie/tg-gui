@@ -121,9 +121,6 @@ from ._shared import (
 from .styled_widget import StyledWidget, align, Color, color
 from .theming import Theme, themedwidget
 
-if TYPE_CHECKING:
-    themedwidget = lambda cls: cls
-
 if TYPE_CHECKING or __debug__:
     from ._shared import use_step_print_debugging
 

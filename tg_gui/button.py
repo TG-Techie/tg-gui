@@ -42,19 +42,6 @@ if TYPE_CHECKING:
 
 
 @_button_impl.format_class
-# @themedwidget(
-#     buildattrs={
-#         "radius": int,
-#         "size": int,
-#         "fit_to_text": bool,
-#     },
-#     statefulattrs={
-#         "fill": Color,
-#         "foreground": Color,
-#         "active_fill": Color,
-#         "active_color": Color,
-#     },
-# )
 @themedwidget
 class Button(StyledWidget):
     _offer_priority_ = 0

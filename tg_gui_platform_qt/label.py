@@ -45,7 +45,6 @@ def build(widget, *, size, align, fit_to: bool | str):
     return (
         native,
         (1.2 * w // 1, h),
-        # (QFontMetrics.horizontal_advance(widget.text), native.size_hint().height),
     )
 
 
