@@ -25,7 +25,7 @@ from __future__ import annotations
 import sys
 
 from ._shared import enum_compat, USE_TYPING
-from .base import Widget, LazyInheritedAttribute
+from .base import Widget
 from .specifiers import SpecifierReference, AttributeSpecifier
 
 from .theming import Theme
@@ -233,13 +233,6 @@ class Container(Widget, **_continer_meta_kwarg):
                 widget._hide_()
         super()._hide_()
         self._screen_.on_container_hide(self)
-
-    # TODO: fix __del__
-    # def __del__(self):
-    #     nested = self._nested_
-    #     while len(nested):
-    #         del nested[0]
-    #     super().__del__()
 
     def _print_tree(self, _level=0, **kwargs):
         super()._print_tree(_level=_level, **kwargs)

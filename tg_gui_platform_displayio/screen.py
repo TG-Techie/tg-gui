@@ -149,7 +149,6 @@ class Screen(_Screen_):
     def on_container_build(_, widget: Widget):
         assert widget._native_ is None
         widget._native_ = group = Group()
-        # TODO: NEXT: figure out why .on_container_show is not being called
         group.hidden = False
 
     def on_container_demolish(_, widget: Widget):

@@ -85,8 +85,6 @@ class DimensionExpression:
         dimension = "width" if self._is_horizontal else "height"
         return f"<DimensionExpression:{dimension} {id(self)}>"
 
-    # TODO: add prety repr version.
-    # tho it is a but expensive and possible large for regular repr
     __floordiv__ = _op_fn(_operations.floordiv)
 
     __add__ = _op_fn(_operations.add)

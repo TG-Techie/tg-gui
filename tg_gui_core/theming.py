@@ -50,6 +50,10 @@ class ResolutionError(Exception):
     pass
 
 
+if TYPE_CHECKING:
+    themedwidget = lambda cls: cls
+
+
 def themedwidget(cls: Type[StyledWidget]):
     build_attrs = None
     style_attrs = None
@@ -70,18 +74,23 @@ def themedwidget(cls: Type[StyledWidget]):
         if attr.stylecls is cls:
             if attr.isbuildattr:
                 if build_attrs is None:
-                    cls._build_attrs_ = build_attrs = set(cls._build_attrs_)
+                    build_attrs = set(cls._build_attrs_)
                 build_attrs.add(attr.name)
             else:
                 if style_attrs is None:
-                    cls._style_attrs_ = style_attrs = set(cls._style_attrs_)
+                    style_attrs = set(cls._style_attrs_)
                 style_attrs.add(attr.name)
     else:
         # circuitpython does not support type.mro(), so we make an explicit list
         cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
 
+        if build_attrs is not None:
+            cls._build_attrs_ = frozenset(build_attrs)
+        if style_attrs is not None:
+            cls._style_attrs_ = frozenset(style_attrs)
+
         # register the class as required
-        Theme._required_.add(cls)
+        Theme._themed_widget_types_.add(cls)
 
     return cls
 
@@ -185,12 +194,14 @@ else:
 
 
 class Theme(dict):
-    _required_: ClassVar[set[Type[StyledWidget]]] = set()
+    _themed_widget_types_: ClassVar[set[Type[StyledWidget]]] = set()
 
     def __init__(self, specs, *, _debug_name_: str | None = None) -> None:
         self._id_ = uid()
         self.specs = specs
         self._debug_name_ = _debug_name_
+
+        # TODO: add a check to make sure the input is valid.
 
     def __getitem__(self, key: StyledWidget) -> _VT:
         return self.specs[key]

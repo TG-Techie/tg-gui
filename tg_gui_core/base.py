@@ -75,6 +75,8 @@ def application(cls):
     return cls()
 
 
+# TODO: consider if this is required. It may need to be replaced by manually
+#      adding the _Screen_ attribute to a widget when it is nested in a container
 class LazyInheritedAttribute(Generic[T]):
     _climb_stack: list["Widget"] = []
     _climb_sentinel = object()
@@ -497,19 +499,6 @@ class Widget:  # type: ignore
 
     def _on_unnest_(self):
         pass
-
-        # TODO: fix __del__
-        # def __del__(self):
-        #     # deconstruct from current stage
-        #     if self.isshowing():
-        #         self._hide_()
-        #     if self.isplaced():
-        #         self._pickup_()
-        #     if self.isbuilt():
-        #         self._demolish_()
-        #     if self.isnested():
-        #         print(self)
-        #         self._superior_._unnest_(self)
 
         # remove double links
         self._superior_ = None

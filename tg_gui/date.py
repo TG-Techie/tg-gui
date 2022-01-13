@@ -92,7 +92,7 @@ class Date(Label):
 
     hour12 = DerivedState(hour24, lambda h: _24TO12HOUR[h])
 
-    # TODO: # FUTURE: make hout dependent on the system to dispatch to hour12 or hour 24
+    # TODO: # FUTURE: make hour depend on the system to dispatch to hour12 or hour 24
     is_24_hour = State(True)
     hour = hour24
     # is_24_hour = State("<hooked into system or platform>")
