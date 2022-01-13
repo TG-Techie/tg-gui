@@ -32,7 +32,6 @@ from tg_gui_core import (
     right,
     below,
     rightof,
-    SubTheme,
 )
 from .button import Button
 

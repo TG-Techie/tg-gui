@@ -38,8 +38,6 @@ class Root(Container):
 
     _is_root_ = True
 
-    _theme_ = None
-
     _screen_ = None
 
     def __init__(
@@ -47,7 +45,6 @@ class Root(Container):
         *,
         screen: _Screen_,
         size: tuple[int, int],
-        theme: Theme,
         **kwargs,
     ):
         assert len(size) == 2, f"expected two dimensions found, {size}"
@@ -58,7 +55,6 @@ class Root(Container):
 
         self._size_ = size
         self._native_ = None
-        self._theme_ = theme
 
         self._is_shown = False
 
