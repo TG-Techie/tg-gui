@@ -40,13 +40,10 @@ GeneratorType = type(_ for _ in ())
 
 class _LayoutStack(Container):
 
-    # _theme_ = SubTheme(
-    #     {
-    #         Button: dict(
-    #             fit_to_text=False,
-    #         ),
-    #     }
-    # )
+    _offer_priority_ = 0
+    # TODO: Maybe make these properties? but it is probably safe to assume they should be
+    _reserve_space_ = True
+    _self_sizing_ = True
 
     @property
     def _reserve_space_(self):

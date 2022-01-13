@@ -24,30 +24,25 @@ class Test(Layout):
 
     _theme_ = Theme(
         {
-            Label: {Label.size: 3},
+            Label: {Label.size: 2},
             Date: {Date.foreground: color.white},
-            Button: {
-                Button.size: 3,
-                Button.fit_to_text: True,
-            },
         }
     )
 
     tgl_state = State(False)
     tgl_color = DerivedState(tgl_state, lambda s: color.red if s else color.green)
 
+    # TODO: add a WidgeBuilder type for type annotations
     body = lambda: VStack(
-        Label("indicator", foreground=self.tgl_color),
-        Button("Toggle", action=self.toggle),
+        Date("{hour}:{min}", size=6),
+        Date("{dayshort} {monthday} {monthshort}", size=3),
+        HStack(
+            Label("[color]", foreground=self.tgl_color),
+            Button("<-Toggle", action=self.toggle, size=2, fit_to_text=True),
+        ),
     )
 
-    # body = widgetbuilder(
-    #     lambda: VStack(
-    #         Date("{hour}:{min}", size=6),
-    #         Date("{dayshort} {monthday} {monthshort}", size=3),
-    #         Date("{sec}"),
-    #     )
-    # )
+    fipple = lambda: Label("fipple", size=2)
 
     def say(self, msg: str):
         print(msg)

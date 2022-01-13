@@ -53,6 +53,14 @@ if isoncircuitpython:
 _dot_prefix = ".{}".format
 
 
+class BuildError(RuntimeError):
+    pass
+
+
+class LayoutError(RuntimeError):
+    pass
+
+
 @declarable
 class Layout(Container):
     def _build_(self, dim_spec):
@@ -119,12 +127,22 @@ class _LayoutProxy(Generic[_L]):
     )
 
     def __init__(self, layout: _L) -> None:
+        # TODO(TG-Techie): comment this! It works but it's not clear how/why things work
         self._container = layout
         self._selected: None | str = None
         self._inited_widgets: dict[str, Widget] = {}
         self._layedout_widgets: dict[str, Widget] = {}
 
-    def __getattr__(self, name: str) -> _LayoutProxy[_l] | Widget | State:
+    def __repr__(self) -> str:
+        seldbg = "" if self._selected is None else f".{self._selected}"
+        return f"<{type(self).__name__}: {self._id_} {self._container}{seldbg}>"
+
+    def __getattr__(self, name: str) -> _LayoutProxy[_L] | Widget | State:
+
+        # TODO: add error case (or support?) for a wiget builder referencing another widger builder
+        # class Foo(Layout):
+        #    body: WidgetBuilder = lamdba: HStack(self.foo)
+        #    foo: WidgetBuilder = lambda: Lable("foo")
 
         not_present = self._not_present_sentinel
         attr = getattr(type(self._container), name, not_present)
@@ -141,16 +159,48 @@ class _LayoutProxy(Generic[_L]):
             return attr
         # if the widget has already been processed and layout out, return it
         elif not in_inited and not in_layedout:
-            self._inited_widgets[name] = self._init_new_widget(name, attr)
-            self._selected = name
-            return self
-        elif in_inited:
-            self._selected = name
-            return self
-        elif in_layedout:
+            if self._selected is None:
+                self._inited_widgets[name] = self._init_new_widget(name, attr)
+                self._selected = name
+                return self
+            else:
+                raise LayoutError(
+                    f"error in {self._container}._layout_(...) method. "
+                    f"tried to select self.{name} while {self._selected} is already selected (and not layed out). "
+                    + f"be sure to call `self.{self._selected}(<pos>, <dims>)` before laying out `self.{name}` or another widget"
+                )
+
+        elif in_layedout and not in_inited:
             return self._layedout_widgets[name]
+        elif in_inited and not in_layedout:
+            if self._selected is None:
+                self._selected = name
+                return self
+            elif self._selected == name:
+                raise LayoutError(
+                    f"error in {self._container}._layout_(...) method. "
+                    + f"`self.{name}` selected but not layed out. "
+                    + f"`self.{name}` used before `self.{name}(<pos>, <dims>)` was called"
+                )
+            else:
+                raise LayoutError(
+                    f"error in {self._container}._layout_(...) method. "
+                    + f"cannot select `self.{name}` while `self.{self._selected}` already selected. "
+                    + f"be sure to call `self.{self._selected}(<pos>, <dims>)` before calling `self.{name}(...)`"
+                )
+        elif in_inited and in_layedout:
+            # this may be pre-emptive but it's not a problem b/c there is a serious issue
+            # if a user runs into this edge case. it shouldn't be possible but *shrug*
+            raise LayoutError(
+                f"error in {self._container}._layout_(...) method. "
+                + f"some interal error occured while laying out `self.{name}`, both inited and layed out. "
+                + f"please file an issue on github, "
+                + "https://github.com/TG-Techie/tg_gui/issues/new?"
+                + "title=Layout%20Error,%20widget%20during%20layout20is%20both%20inited%20and%20layedout"
+                + "&body=Please%20describe%20the%20problem%20here."
+            )
         else:
-            assert False, "unreachable"
+            assert False, "unreachable or internal error"
 
     def __call__(
         self,
@@ -168,7 +218,7 @@ class _LayoutProxy(Generic[_L]):
         ), f"no widget has been selected. use `self.<widget builder name>(pos, dims)` to select a widget to layout"
         assert (
             selected not in self._layedout_widgets
-        ), f"{self._container}.{selected} has already been layedout, cannot be layedout again"
+        ), f"{self._container}.{selected} has already been layed out, cannot be layed out again"
         assert (
             selected in self._inited_widgets
         ), f"internal error: {self._container}.{selected} has not been initialized. this is probably a bug in tg_gui_core"
@@ -179,24 +229,9 @@ class _LayoutProxy(Generic[_L]):
         widget._place_(pos_spec)
 
         self._layedout_widgets[selected] = widget
+        self._selected = None
 
         return widget
-
-    def _closing_asserts(self):
-        assert len(self._inited_widgets) == 0, (
-            f"{self._container} has partially layedout widgets: "
-            + f"{set(map(_dot_prefix, self._inited_widgets))}"
-            + "this could be caused by using "
-        )
-
-        # circuitpython does not support __slots__ so we check for set attributes ater the fact
-        if isoncircuitpython():
-            assert 0 == len(
-                extra_attrs := (set(self.__dict__) - set(self.__slots__))
-            ), (
-                "cannot set attributes inside of ._layout_ methods: ",
-                f"{set(map(_dot_prefix, extra_attrs))} set in {self._container}._layout_(...)",
-            )
 
     def _init_new_widget(self, name: str, fn: Any) -> Widget:
 
@@ -204,7 +239,7 @@ class _LayoutProxy(Generic[_L]):
         if fn is None:
             raise AttributeError(f"{type(self._container)} has no attribute {name}")
         elif isoncircuitpython() and isinstance(fn, ClosureType):
-            raise RuntimeError(
+            raise BuildError(
                 f"found a closure for {type(self._container)}.{name}. "
                 + "This may be an error in writing a widget builder or a bug in tg_gui_core. "
                 + "Please file and issue at https://github.com/TG-Techie/tg-gui/issues/new"
@@ -232,8 +267,8 @@ class _LayoutProxy(Generic[_L]):
         existing = scope.get("self", not_present)
         # if something else is there, bail by raising an error
         if existing is not not_present and existing is not self_attrspec_cnstr:
-            raise RuntimeError(
-                f"unkown binding of self in {type(self._container)}.{name}, expected unbound or `tg_gui_core.container.self`. found {existing}"
+            raise BuildError(
+                f"unkown binding of self for widget builder {type(self._container)}.{name}, expected no bound global for `self` or `tg_gui_core.container.self`. found {existing}"
             )
 
         # inject then build
@@ -249,3 +284,33 @@ class _LayoutProxy(Generic[_L]):
             scope["self"] = existing
 
         return widget
+
+    def _closing_asserts(self):
+        assert len(self._inited_widgets) == 0, (
+            f"{self._container}._layout_(...) finished with partially layed out widget(s): "
+            + "{ "
+            + f"{', '.join(map(_dot_prefix, self._inited_widgets))}"
+            + " }. "
+            + f"for example, `self.{(name:=next(iter(self._inited_widgets)))}` may have been use without "
+            + f"`self.{name}(<pos>, <dims>)` being called first"
+        )
+
+        # circuitpython does not support __slots__ so we check for set attributes ater the fact
+        if isoncircuitpython():
+            assert 0 == len(
+                extra_attrs := (set(self.__dict__) - set(self.__slots__))
+            ), (
+                "cannot set attributes inside of ._layout_ methods: "
+                + f"{', '.join(map(_dot_prefix, extra_attrs))} set in {self._container}._layout_(...)"
+            )
+
+    # add more explicit errors on full python implementations when setting attributes
+    # inside of layout methods. (on circuitpython, this is not possible)
+    if not isoncircuitpython() or TYPE_CHECKING:
+
+        def __setattr__(self, name: str, value: Any) -> None:
+            if name not in self.__slots__:
+                raise AttributeError(  # !! this line is from tg-gui internals
+                    f"cannot set attributes inside of ._layout_(...) methods, tried to assign to `{self._container}.{name}`"
+                )
+            super().__setattr__(name, value)
