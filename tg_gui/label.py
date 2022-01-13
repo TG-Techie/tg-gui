@@ -22,7 +22,16 @@
 
 from __future__ import annotations
 
-from tg_gui_core import State, Color, StyledWidget, themedwidget, align, color
+from tg_gui_core import (
+    State,
+    Color,
+    StyledWidget,
+    themedwidget,
+    align,
+    color,
+    Specifier,
+    specify,
+)
 from tg_gui_core.theming import BuildAttr, StyledAttr
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
 from ._platform_ import label as _label_impl
@@ -59,10 +68,17 @@ class Label(StyledWidget):
     def text(self):
         return self._text.value(self) if isinstance(self._text, State) else self._text
 
-    def __init__(self, text: str | State[str], **kwargs) -> None:
+    def __init__(self, text: str | State[str] | Specifier, **kwargs) -> None:
         super().__init__(**kwargs)
-        assert isinstance(text, (str, State)), f"found {text}"
-        self._text = text
+
+        assert isinstance(
+            text, (str, State, Specifier)
+        ), f"expexted str, State[str], or Specifier. found {text}"
+        self._text_src = text
+
+    def _on_nest_(self) -> None:
+        super()._on_nest_()
+        self._text = specify(self._text_src, self)
 
     def _build_(self, dim_spec: DimensionSpecifier):
 

@@ -30,14 +30,15 @@ class Test(Layout):
     )
 
     tgl_state = State(False)
-    tgl_color = DerivedState(tgl_state, lambda s: color.red if s else color.green)
+    tgl_text = DerivedState(tgl_state, lambda s: "[grn]" if s else "[red]")
+    tgl_color = DerivedState(tgl_state, lambda s: color.green if s else color.red)
 
     # TODO: add a WidgeBuilder type for type annotations
     body = lambda: VStack(
         Date("{hour}:{min}", size=6),
         Date("{dayshort} {monthday} {monthshort}", size=3),
         HStack(
-            Label("[color]", foreground=self.tgl_color),
+            Label(self.tgl_text, foreground=self.tgl_color, fit_to=True),
             Button("<-Toggle", action=self.toggle, size=2, fit_to_text=True),
         ),
     )

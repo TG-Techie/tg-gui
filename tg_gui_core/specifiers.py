@@ -83,9 +83,6 @@ class Specifier:  # protocol
     def _code_str_(self):
         raise NotImplementedError
 
-    def __str__(self):
-        return self._code_str_()
-
     def __repr__(self):
         type(self).__name__
         self._code_str_()
