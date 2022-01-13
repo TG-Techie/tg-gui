@@ -22,7 +22,7 @@ if isoncircuitpython():
 @application
 class Test(View):
 
-    _theme_ = SubTheme(
+    _theme_ = Theme(
         {
             Label: {Label.size: 2},
             Date: {Date.foreground: color.white},

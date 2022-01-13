@@ -28,7 +28,7 @@ from ._shared import enum_compat, USE_TYPING
 from .base import Widget, LazyInheritedAttribute
 from .specifiers import SpecifierReference, AttributeSpecifier
 
-from .theming import SubTheme, Theme
+from .theming import Theme
 
 # TODO: add app SpecifierReference("app", _find_app_widget)
 

@@ -201,7 +201,3 @@ class Theme(dict):
     def __repr__(self) -> str:
         dbg = f" {repr(self._debug_name_)}" if self._debug_name_ else ""
         return f"<{type(self).__name__}: {self._id_}{dbg}>"
-
-
-class SubTheme(Theme):
-    pass

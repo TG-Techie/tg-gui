@@ -119,7 +119,7 @@ from ._shared import (
 )
 
 from .styled_widget import StyledWidget, align, Color, color
-from .theming import Theme, SubTheme, themedwidget
+from .theming import Theme, themedwidget
 
 if TYPE_CHECKING:
     themedwidget = lambda cls: cls
