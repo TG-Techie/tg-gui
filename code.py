@@ -20,7 +20,7 @@ if isoncircuitpython():
 
 @main(screen := default.screen())
 @application
-class Test(View):
+class Test(Layout):
 
     _theme_ = Theme(
         {
@@ -29,14 +29,34 @@ class Test(View):
         }
     )
 
+    tgl_state = State(False)
+    tgl_color = DerivedState(tgl_state, lambda s: color.red if s else color.green)
+
     body = lambda: VStack(
-        Date("{hour}:{min}", size=6),
-        Date("{dayshort} {monthday} {monthshort}", size=3),
-        Date("{sec}"),
+        Label("indicator", foreground=self.tgl_color),
+        Button("Toggle", action=self.toggle),
     )
 
-    def say(self, msg: str) -> None:
+    # body = widgetbuilder(
+    #     lambda: VStack(
+    #         Date("{hour}:{min}", size=6),
+    #         Date("{dayshort} {monthday} {monthshort}", size=3),
+    #         Date("{sec}"),
+    #     )
+    # )
+
+    def say(self, msg: str):
         print(msg)
+
+    def toggle(self) -> None:
+        before = self.tgl_color
+        self.tgl_state = not self.tgl_state
+        st: DerivedState[Color] = type(self).tgl_color
+        print("toggle", self, before, self.tgl_color, st._registered)
+
+    # @layoutmethod
+    def _layout_(self):
+        self.body(center, self.dims)
 
 
 if isoncircuitpython():

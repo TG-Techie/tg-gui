@@ -82,6 +82,7 @@ class Button(StyledWidget):
     ):
         super().__init__(**kwargs)
         self._text = text
+        # print(f"%% Button({text}, action={action})")
         self._action_src = action
         self._action_ = None
 
@@ -91,4 +92,5 @@ class Button(StyledWidget):
         action = self._action_src
         if isinstance(action, Specifier):
             action = action._resolve_specified_(self)
+            # print(f"%%2 action={action}")
         self._action_ = action

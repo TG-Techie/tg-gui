@@ -38,6 +38,7 @@ class View(Layout):
     body: ClassVar[Callable[[], Widget]]
 
     def __init__(self, **kwargs):
+        raise NotImplementedError
         super(View, self).__init__(**kwargs)
 
         self._widget = self._chek_and_make_body()
@@ -76,3 +77,11 @@ class View(Layout):
         raise TypeError(
             f"{cls}.body must be a function or a property that returns a Widget, got {cls.body}"
         )
+
+    if not TYPE_CHECKING:
+
+        @property
+        def body(self):
+            raise NotImplementedError(
+                f"{type(self).__name__}.body must [TODO: add more erro message]"
+            )

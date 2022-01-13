@@ -154,6 +154,8 @@ class ThemedAttribute(Generic[T]):
                 continue
 
             theme = superior._theme_
+            if theme is None:
+                continue
 
             for cls in widget._stylecls_mro_:
                 # print((spec := theme.get(cls, False)), spec)

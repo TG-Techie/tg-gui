@@ -340,22 +340,22 @@ class Widget:  # type: ignore
             owner._nest_(self)
         return self
 
-    def __call__(self, pos_spec, dim_spec):
-        self._build_(dim_spec)
-        self._place_(pos_spec)
-        return self
+    # def __call__(self, pos_spec, dim_spec):
+    #     self._build_(dim_spec)
+    #     self._place_(pos_spec)
+    #     return self
 
-    def _show_(self):
+    def _show_(self) -> None:
         assert self.isnested()
         self._is_shown = True
         self._screen_.on_widget_show(self)
 
-    def _hide_(self):
+    def _hide_(self) -> None:
         assert self.isshowing()
         self._is_shown = False
         self._screen_.on_widget_hide(self)
 
-    def _nest_in_(self, superior):
+    def _nest_in_(self, superior) -> None:
         """
         Called by the superior of a widget (self) to link the widget as it's subordinate.
         """
@@ -379,7 +379,7 @@ class Widget:  # type: ignore
 
         self._on_nest_()
 
-    def _unnest_from_(self, superior=None):
+    def _unnest_from_(self, superior=None) -> None:
         """
         Called by superiors to un-link the (now-ex) subordinate from the superior
         """
@@ -396,7 +396,7 @@ class Widget:  # type: ignore
                 f"cannot unnest {self} from {superior}, it is nested in {self._superior_}"
             )
 
-    def _build_(self, dim_spec):
+    def _build_(self, dim_spec) -> None:
         suggested = self._specify_dim_spec(dim_spec)
         self._build_exactly_(*suggested)
 
@@ -423,7 +423,7 @@ class Widget:  # type: ignore
 
         return (width, height)
 
-    def _build_exactly_(self, width, height):
+    def _build_exactly_(self, width, height) -> None:
         assert self.isnested(), f"{self} must be nested to size it, it's not"
         assert not self.isbuilt(), f"{self} is already built"
 
@@ -443,14 +443,14 @@ class Widget:  # type: ignore
 
         self._screen_.on_widget_build(self)  # platform tie-in
 
-    def _demolish_(self):
+    def _demolish_(self) -> None:
         self._screen_.on_widget_demolish(self)  # platform tie-in
 
         self._margin_ = None
         self._size_ = None
         self._phys_size_ = None
 
-    def _place_(self, pos_spec):
+    def _place_(self, pos_spec) -> None:
         assert self.isbuilt(), f"{self} must be sized to place it, it's not"
         assert not self.isplaced(), f"{self} already placed"
 
@@ -485,7 +485,7 @@ class Widget:  # type: ignore
 
         self._screen_.on_widget_place(self)  # platform tie-in
 
-    def _pickup_(self):
+    def _pickup_(self) -> None:
         assert self.isplaced()
         self._screen_.on_widget_pickup(self)  # platform tie-in
         # only containers need to worry about when to cover vs replace
@@ -494,10 +494,10 @@ class Widget:  # type: ignore
         self._phys_coord_ = None
         self._phys_end_coord_ = None
 
-    def _on_nest_(self):
+    def _on_nest_(self) -> None:
         pass
 
-    def _on_unnest_(self):
+    def _on_unnest_(self) -> None:
         pass
 
         # remove double links

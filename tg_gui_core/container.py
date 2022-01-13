@@ -71,23 +71,24 @@ superior = self._superior_ = AttributeSpecifier(self, "_superior_")  # type: ign
 app = SpecifierReference("app", _search_traverse_up, check=lambda c: c._is_app_)
 
 # --- metaclass scopeing for specifiers ---
+# TODO: remove this section after layout revision
 # will inject a metaclass into
 
 # provide a dict to unpack into the
-_continer_meta_kwarg = {}
-if USE_TYPING:
+# _continer_meta_kwarg = {}
+# if USE_TYPING:
 
-    class _ContainerScopeingMeta(type):
-        def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
-            from . import _bulitin_tg_specifiers_ as tgbuilitns
+#     class _ContainerScopeingMeta(type):
+#         def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
+#             from . import _bulitin_tg_specifiers_ as tgbuilitns
 
-            return {
-                name: attr
-                for name, attr in tgbuilitns.__dict__.items()
-                if not name.startswith("__")
-            }
+#             return {
+#                 name: attr
+#                 for name, attr in tgbuilitns.__dict__.items()
+#                 if not name.startswith("__")
+#             }
 
-    _continer_meta_kwarg["metaclass"] = _ContainerScopeingMeta
+#     _continer_meta_kwarg["metaclass"] = _ContainerScopeingMeta
 
 
 # --- class tagging tools ---
@@ -95,31 +96,30 @@ if TYPE_CHECKING:
 
     from .theming import Theme
 
-
-def declarable(cls: Type["Widget"]) -> Type["Widget"]:
-    """
-    dcecorator to mark that a contianer is declarable (like layout or Pages).
-    this is used for attr_specs to finf the referenced self in `self.blah`
-    """
-    assert isinstance(cls, type), f"can only decorate classes"
-    assert issubclass(
-        cls, Widget
-    ), f"{cls} does not subclass Container, it must to be @declarable"
-    cls._declarable_ = True
-
-    # if USE_TYPING:
-    #     mro = cls.mro()[1:]
-
-    #     class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
-    #         locals().update(cls.__dict__)
-
-    #     cls = NewCls
-
-    return cls
-
-
 if TYPE_CHECKING:
     declarable = lambda cls: cls
+else:
+
+    def declarable(cls: Type["Widget"]) -> Type["Widget"]:
+        """
+        dcecorator to mark that a contianer is declarable (like layout or Pages).
+        this is used for attr_specs to finf the referenced self in `self.blah`
+        """
+        assert isinstance(cls, type), f"can only decorate classes"
+        assert issubclass(
+            cls, Widget
+        ), f"{cls} does not subclass Container, it must to be @declarable"
+        cls._declarable_ = True
+
+        # if USE_TYPING:
+        #     mro = cls.mro()[1:]
+
+        #     class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
+        #         locals().update(cls.__dict__)
+
+        #     cls = NewCls
+
+        return cls
 
 
 def isdeclarable(obj: object) -> bool:
@@ -136,52 +136,31 @@ def isdeclarable(obj: object) -> bool:
 
 
 # --- the nity gritty ---
-class Container(Widget, **_continer_meta_kwarg):
+# class Container(Widget, **_continer_meta_kwarg):
+class Container(Widget):
     _nested_: list[Widget]
 
     _declarable_ = False
 
-    # _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
-    # @property
-    # def _theme_(self) -> Theme:
-    #     # print(self, self._theme)
-    #     if self._theme is not None:
-    #         return self._theme
-    #     else:
-    #         return self._superior_._theme_
-
-    def __init__(self, theme: Theme = None):
-
+    def __init__(self, theme: Theme = None) -> None:
         super().__init__(_margin_=0)
-        # print(self, theme, self._theme_)
-        # print(self, type(self)._theme_)
-        self._theme = (
+        self._theme_ = (
             None if theme is None else Theme(theme, _debug_name_=f"auto:{self}")
         )
         self._nested_ = []
 
-    # def _on_nest_(self):
-    #     super()._on_nest_()
-    #     if not (theme := self._theme_)._is_linked_():
-    #         theme._link_to_widget_(self)
-
-    # def _on_unnest_(self):
-    #     self._theme_._unlink_on_unnest_(self)
-    #     self._theme_ = None  # "un-inherit" the theme
-    #     super()._on_unnest_()
-
-    def _nest_(self, widget: Widget):
+    def _nest_(self, widget: Widget) -> None:
         if widget not in self._nested_:
             self._nested_.append(widget)
             widget._nest_in_(self)
 
-    def _unnest_(self, widget: Widget):
+    def _unnest_(self, widget: Widget) -> None:
         if widget in self._nested_:
             widget._unnest_from_(self)
         while widget in self._nested_:
             self._nested_.remove(widget)
 
-    def _build_(self, dim_spec):
+    def _build_(self, dim_spec) -> None:
         raise NotImplementedError(
             f"{type(self).__name__}._build_(...) not implemented,"
             + " see tg_gui_core/container.py for the template"
@@ -191,14 +170,14 @@ class Container(Widget, **_continer_meta_kwarg):
         super(Container, self)._build_(dim_spec)
         self._screen_.on_container_build(self)  # platform tie-in
 
-    def _demolish_(self):
+    def _demolish_(self) -> None:
         for widget in self._nested_:
             if widget.isformed():
                 widget._deform_()
         super()._demolish_()
         self._screen_.on_container_demolish(self)  # platform tie-in
 
-    def _place_(self, pos_spec):
+    def _place_(self, pos_spec) -> None:
         raise NotImplementedError(
             f"{type(self).__name__}._place_(...) not implemented,"
             + " see tg_gui_core/container.py for the template"
@@ -208,14 +187,14 @@ class Container(Widget, **_continer_meta_kwarg):
         # container subcless specific place code here
         self._screen_.on_container_place(self)  # platform tie-in
 
-    def _pickup_(self):
+    def _pickup_(self) -> None:
         for widget in self._nested_:
             if widget.isplaced():
                 widget._pickup_()
-        super()._deform_()
+        super()._pickup_()
         self._screen_.on_container_pickup(self)  # platform tie-in
 
-    def _show_(self):
+    def _show_(self) -> None:
         # is this exception needed?
         # raise NotImplementedError(
         #     f"{type(self).__name__}._show_() not implemented,"

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from .base import Widget
 from .dimension_specifiers import DimensionSpecifier
+from .stateful import State
 
 from typing import TYPE_CHECKING
 
@@ -92,6 +93,8 @@ class Specifier:  # protocol
 
 
 class AttributeSpecifier(Specifier):
+    _not_present_sentinel = object()
+
     def _code_str_(self):
         return f"{self._spec_ref._name}.{'.'.join(self._attr_path)}"
 
@@ -119,8 +122,14 @@ class AttributeSpecifier(Specifier):
 
     def _resolve_specified_(self, ref: Widget):
         attr = self._spec_ref._resolve_reference_(self._attr_path, ref)
+        missing = self._not_present_sentinel
         for attrname in self._attr_path:
-            attr = getattr(attr, attrname)
+            if (
+                clsattr := getattr(type(attr), attrname, missing)
+            ) is not missing and isinstance(clsattr, State):
+                return clsattr
+            else:
+                attr = getattr(attr, attrname)
         return attr
 
     def _set_specified_(self, *_, **__):
