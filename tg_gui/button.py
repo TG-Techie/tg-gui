@@ -57,7 +57,8 @@ class Button(StyledWidget):
     radius: BuildAttr[int | DimensionSpecifier] = BuildAttr(
         default=ratio(width + height)
     )
-    size = BuildAttr(default=1)
+
+    size = BuildAttr(default=2)
     fit_to_text = BuildAttr(default=False)
 
     fill = StyledAttr(default=color.system_fill)

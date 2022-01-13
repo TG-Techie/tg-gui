@@ -50,6 +50,8 @@ else:
 if isoncircuitpython:
     ClosureType = type((lambda x: (lambda: x))(None))
 
+_dot_prefix = ".{}".format
+
 
 @declarable
 class Layout(Container):
@@ -183,7 +185,7 @@ class _LayoutProxy(Generic[_L]):
     def _closing_asserts(self):
         assert len(self._inited_widgets) == 0, (
             f"{self._container} has partially layedout widgets: "
-            + f"{set(map('.{}'.format, self._inited_widgets))}"
+            + f"{set(map(_dot_prefix, self._inited_widgets))}"
             + "this could be caused by using "
         )
 
@@ -193,7 +195,7 @@ class _LayoutProxy(Generic[_L]):
                 extra_attrs := (set(self.__dict__) - set(self.__slots__))
             ), (
                 "cannot set attributes inside of ._layout_ methods: ",
-                f"{set(map('.{}'.format, extra_attrs))} set in {self._container}._layout_(...)",
+                f"{set(map(_dot_prefix, extra_attrs))} set in {self._container}._layout_(...)",
             )
 
     def _init_new_widget(self, name: str, fn: Any) -> Widget:

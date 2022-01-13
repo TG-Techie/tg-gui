@@ -144,9 +144,13 @@ class Container(Widget):
 
     def __init__(self, theme: Theme = None) -> None:
         super().__init__(_margin_=0)
-        self._theme_ = (
-            None if theme is None else Theme(theme, _debug_name_=f"auto:{self}")
-        )
+
+        if theme is not None:
+            if isinstance(theme, dict):
+                self._theme_ = Theme(theme, _debug_name_=f"auto:{self}")
+            else:
+                self._theme_ = theme
+
         self._nested_ = []
 
     def _nest_(self, widget: Widget) -> None:

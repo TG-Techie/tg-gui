@@ -189,11 +189,11 @@ class StyledWidget(Widget):
         super()._demolish_()
 
     def _apply_style(self, *_, **__) -> None:
+
+        attrs = {name: getattr(self, name) for name in self._style_attrs_}
         attrs = {
-            name: attr.value(self)
-            if isinstance(attr := getattr(self, name), State)
-            else attr
-            for name in self._style_attrs_
+            name: attr.value(self) if isinstance(attr, State) else attr
+            for name, attr in attrs.items()
         }
 
         try:
@@ -202,10 +202,11 @@ class StyledWidget(Widget):
             fn = type(self)._impl_apply_style_
             msg = (
                 f"WARNING: error while calling {self}._impl_apply_style_(...) "
-                + f"from {fn.__globals__['__name__']}.{fn.__name__} "
+                + f"from File {fn.__globals__['__name__'].replace('.', '/')}.py in {fn.__name__}"
             )
             if isoncircuitpython():
-                raise err from RuntimeError(msg)
+                print(msg)
+                raise err
             else:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 frame = exc_tb.tb_frame

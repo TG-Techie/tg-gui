@@ -31,7 +31,7 @@ to cover:
 - the use of the _impl_cache_ in this particular file
 """
 
-from tg_gui_core import Color
+from tg_gui_core import Color, specify
 from .shared import decorator_pass as _decorator_pass
 
 from displayio import Group
@@ -42,8 +42,8 @@ from terminalio import FONT
 
 try:
     from typing import Type, Union
-    from .. import SizeHint
-    from ... import Button
+
+    from tg_gui.button import Button
 except:
     pass
 
@@ -75,7 +75,7 @@ def build(
     radius: int,
     size: float | int,
     fit_to_text: bool,
-) -> tuple[Native, SizeHint]:
+) -> tuple[Native, tuple[int, int]]:
     """
     Creates the native element for the std tg-gui widget based on the _fixed_style_attrs_.
     Those _fixed_style_attrs_ are passed as kwargs to this function.
@@ -91,10 +91,10 @@ def build(
     _, _, w, h = label.bounding_box
     w *= size
     h = int(1.15 * h * size)
-    r = min(radius, w // 2, h // 2)
-    padding = round(1.5 * r)
+    r = min(radius, w // 2, h // 2) if isinstance(radius, int) else min(w // 2, h // 2)
+    padding = round(1.25 * r)
 
-    widget._impl_cache_ = dict(radius=r, label_width=w)
+    widget._impl_cache_ = dict(radius=radius, label_width=w)
     return (
         native,
         (
@@ -121,7 +121,11 @@ def set_size(widget: Button, native: Native, width: int, height: int) -> None:
     :param height:
     """
 
-    radius: int = widget._impl_cache_["radius"]
+    radius: int = min(
+        widget.width // 2,
+        widget.height // 2,
+        specify(widget._impl_cache_["radius"], widget),
+    )
     label_width: int = widget._impl_cache_["label_width"]
     margin = widget._margin_
 
@@ -149,7 +153,7 @@ def apply_style(
     fill: Color,
     foreground: Color,
     active_fill: Color,
-    active_color: Color,
+    active_foreground: Color,
 ) -> None:
     """
     formats the native widget with style attribute given.
@@ -159,7 +163,7 @@ def apply_style(
     :param **style_attrs: the stateful style attributes being applied
     :return: None
     """
-    widget._impl_cache_ = cache = ((fill, foreground), (active_fill, active_color))
+    widget._impl_cache_ = cache = ((fill, foreground), (active_fill, active_foreground))
 
     assert len(native) == 2, len(native)
 

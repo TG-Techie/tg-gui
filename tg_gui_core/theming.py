@@ -98,7 +98,7 @@ def themedwidget(cls: Type[StyledWidget]):
 class ThemedAttribute(Generic[T]):
     isbuildattr: ClassVar[bool]
 
-    if __debug__:
+    if __debug__ and not TYPE_CHECKING:
 
         def __new__(cls: Type[ThemedAttribute], *_, **__) -> ThemedAttribute:
             assert (
@@ -158,8 +158,9 @@ class ThemedAttribute(Generic[T]):
                 continue
 
             for cls in widget._stylecls_mro_:
-                # print((spec := theme.get(cls, False)), spec)
-                if (spec := theme.get(cls, False)) and self in spec:
+                # print((spec := theme.get(cls, False)), spec)\
+                spec = theme.get(cls, None)
+                if spec is not None and self in spec:
                     return spec[self]
             else:
                 continue
