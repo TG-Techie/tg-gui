@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from ._shared import uid, UID, USE_TYPING, isoncircuitpython
 from .base import Widget
+from .stateful import State
 
 
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -33,6 +34,7 @@ T = TypeVar("T")
 if TYPE_CHECKING:
     from typing import *  # Protocol, ClassVar, Type, Any, TypeVar
     from .styled_widget import StyledWidget
+    from .stateful import State
 
     _NotFound: object = type("NotFound", (), {})
     ()
@@ -85,23 +87,32 @@ def themedwidget(cls: Type[StyledWidget]):
 
 
 class ThemedAttribute(Generic[T]):
+    isbuildattr: ClassVar[bool]
+
+    if __debug__:
+
+        def __new__(cls: Type[ThemedAttribute], *_, **__) -> ThemedAttribute:
+            assert (
+                cls is not ThemedAttribute
+            ), f"{cls} is abstract, cannot make a instance of it. use BuildAttr or StyleAttr instead"
+            return object.__new__(cls)
+
     def __init__(
         self,
-        # name: str,
-        # stylecls: Type[StyledWidget],
         *,
-        allowed: _StyleAttrSpec = (),
-        isbuildattr: bool,
+        default: T,
     ) -> None:
         self._id_ = uid()
+
         self.name: None | str = None
         self.stylecls: Type[StyledWidget] | None = None
-        self.allowed = allowed
-        self.isbuildattr = isbuildattr
 
-    def __get__(self, owner: None | StyledWidget, ownertype: Type[StyledWidget]):
+        self.default = default
+
+    def __get__(self, owner: None | StyledWidget, ownertype: Type[StyledWidget]) -> T:
         if owner is None:
-            return self  # circuitpython compat... also b/c what else would this do...?
+            # circuitpython compat... also b/c what else would this do...?
+            return self  #
         else:
             return self.get_themed_attr(owner)
 
@@ -110,11 +121,14 @@ class ThemedAttribute(Generic[T]):
             f"{owner}.{self.name} is a themed attribute and cannot be set directly, wrap it in a State object"
         )
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner: StyledWidget, name: str) -> None:
+        assert (
+            self.name is None and self.stylecls is None
+        ), f"{self} alreay initialized (w/ __set_name__"
         self.name = name
         self.stylecls = owner
 
-    def get_themed_attr(self, widget: StyledWidget) -> Any:
+    def get_themed_attr(self, widget: StyledWidget) -> T:
         # check if it is passed directly
         name = self.name
         if name in widget._themed_attrs_:
@@ -138,10 +152,12 @@ class ThemedAttribute(Generic[T]):
                     return spec[self]
             else:
                 continue
+        else:
+            return self.default
 
-        raise ResolutionError(
-            f"unable to resolve .{name} style attribute for {widget} (reached {superior})"
-        )
+        # raise ResolutionError(
+        #     f"unable to resolve .{name} style attribute for {widget} (reached {superior})"
+        # )
 
     def __repr__(self) -> str:
 
@@ -153,33 +169,19 @@ class ThemedAttribute(Generic[T]):
 
 if TYPE_CHECKING or USE_TYPING:
 
-    class BuildAttribute(ThemedAttribute[T]):
-        def __init__(self):
-            super().__init__(isbuildattr=True)
+    class BuildAttr(ThemedAttribute[T]):
+        isbuildattr = True
 
-    class StyledAttribute(ThemedAttribute[T]):
-        def __init__(self):
-            super().__init__(isbuildattr=False)
+    class StyledAttr(ThemedAttribute[T | State[T]]):
+        isbuildattr = False
 
 else:
 
-    class _BuildAttribute(ThemedAttribute):
-        def __init__(self):
-            super().__init__(isbuildattr=True)
+    class BuildAttr(ThemedAttribute):
+        isbuildattr = True
 
-    class _StyledAttribute(ThemedAttribute):
-        def __init__(self):
-            super().__init__(isbuildattr=False)
-
-    class _themed_attribute_sugar:
-        def __init__(self, themecls: Type[ThemedAttribute]) -> None:
-            self.themecls = themecls
-
-        def __getitem__(self, allowed) -> Any:
-            return self.themecls
-
-    BuildAttribute = _themed_attribute_sugar(_BuildAttribute)
-    StyledAttribute = _themed_attribute_sugar(_StyledAttribute)
+    class StyledAttr(ThemedAttribute):
+        isbuildattr = False
 
 
 class Theme(dict):

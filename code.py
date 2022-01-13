@@ -18,10 +18,7 @@ if isoncircuitpython():
     print(gc.mem_free())
 
 
-@main(
-    screen := default.screen(),
-    default.theme(),
-)
+@main(screen := default.screen())
 @application
 class Test(View):
 

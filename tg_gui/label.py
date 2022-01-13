@@ -22,8 +22,8 @@
 
 from __future__ import annotations
 
-from tg_gui_core import State, Color, StyledWidget, themedwidget, align
-from tg_gui_core.theming import BuildAttribute, StyledAttribute
+from tg_gui_core import State, Color, StyledWidget, themedwidget, align, color
+from tg_gui_core.theming import BuildAttr, StyledAttr
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
 from ._platform_ import label as _label_impl
 
@@ -48,10 +48,10 @@ class Label(StyledWidget):
 
     # --- style  typing ---
 
-    size = BuildAttribute[int]()
-    align = BuildAttribute[align]()
-    fit_to = BuildAttribute[Union[bool, str]]()
-    foreground = StyledAttribute[Color]()
+    size = BuildAttr(default=2)
+    align = BuildAttr(default=align.center)
+    fit_to: BuildAttr[Union[bool, str]] = BuildAttr(default=False)
+    foreground = StyledAttr(default=color.system_fill)
 
     # --- bool ---
 

@@ -142,13 +142,13 @@ class Container(Widget, **_continer_meta_kwarg):
     _declarable_ = False
 
     # _theme_: InheritedAttribute[Theme] = LazyInheritedAttribute("_theme_", None)
-    @property
-    def _theme_(self) -> Theme:
-        # print(self, self._theme)
-        if self._theme is not None:
-            return self._theme
-        else:
-            return self._superior_._theme_
+    # @property
+    # def _theme_(self) -> Theme:
+    #     # print(self, self._theme)
+    #     if self._theme is not None:
+    #         return self._theme
+    #     else:
+    #         return self._superior_._theme_
 
     def __init__(self, theme: Theme = None):
 

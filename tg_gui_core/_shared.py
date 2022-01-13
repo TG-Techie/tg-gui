@@ -50,6 +50,8 @@ else:
     def isoncircuitpython():
         return False
 
+    enum_compat = lambda cls: cls
+
 
 # --- unique ids ---
 UID = int

@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 
     from .root_widget import Root
     from .container import Container
+    from .stateful import State
 
 
 T = TypeVar("T")
@@ -133,33 +134,6 @@ class LazyInheritedAttribute(Generic[T]):
 
     def __set__(self, owner, value) -> None:
         setattr(owner, self._priv_attrname, value)
-
-
-Color = int
-
-
-class color(Color):
-    # TODO: consider make ready only using proerties and lambdas vs performance
-    _clear = None  # tentative
-    red = 0xFF0000
-    orange = 0xFFA500
-    yellow = 0xFFFF00
-    green = 0x00FF00
-    lightgreen = 0xA0FFA0
-    blue = 0x0000FF
-    purple = 0xCC8899
-
-    white = 0xFFFFFF
-    lightgray = 0xC4C4C4
-    gray = 0x909090
-    darkgray = 0x606060
-    black = 0x000000
-
-    def fromfloats(r, g, b):
-        r = round(255 * r ** 1.125)
-        g = round(255 * g ** 1.125)
-        b = round(255 * b ** 1.125)
-        return (r << 16) | (g << 8) | (b << 0)
 
 
 class _Screen_:

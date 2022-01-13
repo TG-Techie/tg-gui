@@ -24,11 +24,15 @@ from __future__ import annotations
 
 from tg_gui_core import (
     Specifier,
-    Color,
+    color,
     StyledWidget,
     themedwidget,
+    DimensionSpecifier,
+    ratio,
+    width,
+    height,
 )
-from tg_gui_core.theming import BuildAttribute, StyledAttribute
+from tg_gui_core.theming import BuildAttr, StyledAttr
 from ._platform_ import button as _button_impl
 
 from typing import TYPE_CHECKING
@@ -63,17 +67,16 @@ class Button(StyledWidget):
     _impl_apply_style_ = _button_impl.apply_style
     _use_sug_height_ = True
 
-    radius = BuildAttribute[int]()
-    size = BuildAttribute[int]()
-    fit_to_text = BuildAttribute[bool]()
+    radius: BuildAttr[int | DimensionSpecifier] = BuildAttr(
+        default=ratio(width + height)
+    )
+    size = BuildAttr(default=1)
+    fit_to_text = BuildAttr(default=False)
 
-    fill = StyledAttribute[Color]()
-    foreground = StyledAttribute[Color]()
-
-    fill = StyledAttribute[Color]()
-    foreground = StyledAttribute[Color]()
-    active_fill = StyledAttribute[Color]()
-    active_foreground = StyledAttribute[Color]()
+    fill = StyledAttr(default=color.system_fill)
+    foreground = StyledAttr(default=color.system_foreground)
+    active_fill = StyledAttr(default=color.system_active_fill)
+    active_foreground = StyledAttr(default=color.system_active_foreground)
 
     @property
     def _use_sug_width_(self) -> bool:

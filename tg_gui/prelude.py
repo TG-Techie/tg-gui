@@ -70,14 +70,12 @@ def _make_default_theme() -> Theme:
 
 def main(
     screen: Screen,
-    theme: Theme,
     size: None | tuple[int, int] = None,
     _startup: bool = True,
 ) -> Callable[[Widget], Widget]:
 
     rootwid = Root(
         screen=screen,
-        theme=theme,
         size=(
             size
             if size is not None

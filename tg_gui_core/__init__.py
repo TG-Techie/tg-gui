@@ -53,8 +53,6 @@ from typing import TYPE_CHECKING
 
 from .base import (
     Widget,
-    color,
-    Color,
     application,
 )
 
@@ -120,7 +118,7 @@ from ._shared import (
     enum_compat,
 )
 
-from .styled_widget import StyledWidget, align
+from .styled_widget import StyledWidget, align, Color, color
 from .theming import Theme, SubTheme, themedwidget
 
 if TYPE_CHECKING:
