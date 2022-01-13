@@ -43,8 +43,6 @@ class Test(Layout):
         ),
     )
 
-    fipple = lambda: Label("fipple", size=2)
-
     def say(self, msg: str):
         print(msg)
 

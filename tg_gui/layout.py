@@ -166,8 +166,9 @@ class _LayoutProxy(Generic[_L]):
             else:
                 raise LayoutError(
                     f"error in {self._container}._layout_(...) method. "
-                    f"tried to select self.{name} while {self._selected} is already selected (and not layed out). "
-                    + f"be sure to call `self.{self._selected}(<pos>, <dims>)` before laying out `self.{name}` or another widget"
+                    + f"tried to select self.{name} while {self._selected} is already selected (and not layed out). "
+                    + f"be sure to call `self.{self._selected}(<pos>, <dims>)` before "
+                    + f"laying out `self.{name}` or another widget"
                 )
 
         elif in_layedout and not in_inited:
@@ -287,13 +288,12 @@ class _LayoutProxy(Generic[_L]):
 
     def _closing_asserts(self):
         assert len(self._inited_widgets) == 0, (
-            f"{self._container}._layout_(...) finished with partially layed out widget(s): "
-            + "{ "
-            + f"{', '.join(map(_dot_prefix, self._inited_widgets))}"
-            + " }. "
-            + f"for example, `self.{(name:=next(iter(self._inited_widgets)))}` may have been use without "
-            + f"`self.{name}(<pos>, <dims>)` being called first"
-        )
+            (name := next(iter(self._inited_widgets))),
+            (attrs := (", ".join(map(_dot_prefix, self._inited_widgets)))),
+            f"{self._container}._layout_(...) finished with partially layed out widget(s): {attrs} . "
+            + f"for example, `self.{name}` may have been use without "
+            + f"`self.{name}(<pos>, <dims>)` being called first",
+        )[-1]
 
         # circuitpython does not support __slots__ so we check for set attributes ater the fact
         if isoncircuitpython():

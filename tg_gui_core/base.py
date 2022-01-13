@@ -330,7 +330,12 @@ class Widget:  # type: ignore
         return self._is_shown
 
     def __repr__(self):
-        return f"<{type(self).__name__}{(': '+str(self._id_)) if hasattr(self, '_id_') else ' at '+str(id(self))}>"
+        if hasattr(self, "_id_"):
+            identity_info = f"widget: {self._id_}"
+        else:
+            identity_info = f" widget at {id(self)}"
+
+        return f"<{type(self).__name__}{identity_info}>"
 
     def __get__(self, owner, ownertype=None):
         """
