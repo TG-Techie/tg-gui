@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from tg_gui_core import (
-    Specifier,
+    # Specifier,
     color,
     StyledWidget,
     themedwidget,
@@ -91,7 +91,7 @@ class Button(StyledWidget):
         super()._on_nest_()
 
         action = self._action_src
-        if isinstance(action, Specifier):
-            action = action._resolve_specified_(self)
-            # print(f"%%2 action={action}")
+        # if isinstance(action, Specifier):
+        #     action = action._resolve_specified_(self)
+        # print(f"%%2 action={action}")
         self._action_ = action

@@ -23,9 +23,10 @@
 from __future__ import annotations
 
 from .base import Widget
-from ._shared import enum_compat, isoncircuitpython
+from ._platform_support import enum_compat, isoncircuitpython
 from .stateful import State
-from .specifiers import specify, Specifier
+
+# from .specifiers import specify, Specifier
 
 # from .style import Style, DerivedStyle
 from .theming import Theme, themedwidget
@@ -110,7 +111,8 @@ class StyledWidget(Widget):
 
     # --- themed attribure resoution linking ---
     # circuitpython does not have .mro() so @themedwidget() injects a link to the previous
-    _stylecls_mro_: tuple[Type[StyledWidget], ...] = ()
+    # TODO: see if .__bases__ can be used instead of this hack
+    # TODO: this may be needed for later `_stylecls_mro_: tuple[Type[StyledWidget], ...] = ()`
 
     def __init__(
         self,
@@ -159,8 +161,8 @@ class StyledWidget(Widget):
         handler = self._apply_style
         themed_attrs = self._themed_attrs_
         for name, value in themed_attrs.items():
-            if isinstance(value, Specifier):
-                value = themed_attrs[name] = specify(value, self)
+            # if isinstance(value, Specifier):
+            #     value = themed_attrs[name] = specify(value, self)
             if isinstance(value, State) and name in self._style_attrs_:
                 value._register_handler_(self, handler)
         else:

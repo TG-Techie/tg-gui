@@ -24,37 +24,25 @@
 
 import sys
 
-# import guard for tg_gui_std
-# _ImportGuard = type(
-#     "ImportNotAllowedYet",
-#     (),
-#     {
-#         "__repr__": lambda self: f"<ImportNotAlloedYet {self._name}>",
-#         "__init__": lambda self, name: setattr(self, "_name", name),
-#     },
-# )
-# sys.modules["tg_gui_platform"] = _ImportGuard("tg_gui_platform")
-# sys.modules["tg_gui"] = _ImportGuard("tg_gui")
-
 # -- start exposed api imports ---
 
 # base classes and application environment
-from ._shared import (
-    uid,
-    UID,
-    clamp,
+from ._platform_support import (
     guiexit,
     isoncircuitpython,
     enum_compat,
-    USE_TYPING,
+    use_typing,
 )
 
 from typing import TYPE_CHECKING
 
 from .base import (
-    Widget,
     application,
+    Widget,
 )
+
+from .container import Container
+from .layout import Layout, layoutwidget
 
 from .stateful import (
     State,
@@ -63,12 +51,7 @@ from .stateful import (
     Identifiable,
 )
 
-from .container import (
-    Container,
-    # self,
-    # superior
-    # app,
-)
+
 from .position_specifiers import (
     PositionSpecifier,
     ConstantPosition,
@@ -83,6 +66,7 @@ from .position_specifiers import (
     left,
     right,
 )
+
 from .dimension_specifiers import (
     DimensionSpecifier,
     DimensionExpression,
@@ -94,39 +78,20 @@ from .dimension_specifiers import (
 
 
 # --- std lib and impl tool ---
+
 # classes and functions for making widget classes
-from .base import _Screen_
-from .container import (
-    declarable,
-    isdeclarable,
-)
-
-from . import _bulitin_tg_specifiers_
-
-if isoncircuitpython():
-    from tg_gui_core._bulitin_tg_specifiers_ import *
-
+from ._platform_support import enum_compat
+from .base import uid, UID, _Screen_
+from .container import declarable, isdeclarable
 from .root_widget import Root
-from .specifiers import (
-    SpecifierReference,
-    Specifier,
-    AttributeSpecifier,
-    ForwardMethodCall,
-    specify,
-)
-from ._shared import (
-    enum_compat,
-)
-
 from .styled_widget import StyledWidget, align, Color, color
 from .theming import Theme, themedwidget
 
-if TYPE_CHECKING or __debug__:
-    from ._shared import use_step_print_debugging
+if TYPE_CHECKING:
+    from typing import Any
 
-# from .style import Style, DerivedStyle
+    class _SelfStub:
+        def __getattr__(self) -> Any:
+            return None
 
-
-# un-inject (deject?) the bad import value
-# sys.modules.pop("tg_gui_platform")
-# sys.modules.pop("tg_gui")
+    self = _SelfStub()

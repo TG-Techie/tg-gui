@@ -23,34 +23,40 @@
 from __future__ import annotations
 
 
-from ._shared import *
+from ._platform_support import *
 from .position_specifiers import *
 from .dimension_specifiers import *
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Generic
+
+T = TypeVar("T")
+S = TypeVar("S")
+
+if TYPE_CHECKING:
+    from typing import (
+        ClassVar,
+        TypeVar,
+        Generic,
+        Type,
+        Callable,
+        NoReturn,
+        Iterable,
+        Any,
+        Union,
+    )
+    from .root_widget import Root
+    from .container import Container
 
 
-if USE_TYPING:
-
-    from typing import ClassVar, Protocol, TypeVar, Generic
+if use_typing() or TYPE_CHECKING:
+    from typing import Protocol
 
     class Identifiable(Protocol):
         _id_: UID
 
-
-if TYPE_CHECKING:
-
-    from .root_widget import Root
-    from .container import Container
-    from .stateful import State
-
-
-T = TypeVar("T")
-
-if TYPE_CHECKING or USE_TYPING:
     __all__ = (
         "InheritedAttribute",
-        "LazyInheritedAttribute",
+        "InheritedAttribute",
         "Widget",
         "application",
         "Color",
@@ -59,29 +65,56 @@ if TYPE_CHECKING or USE_TYPING:
     )
 
 
-if TYPE_CHECKING:
-    InheritedAttribute = Union[
-        None,
-        T,
-        "LazyInheritedAttribute[Union[T, None]]",
-    ]
+# --- unique ids ---
+UID = int
+
+from random import randint  # type: ignore
+
+_next_id = randint(0, 11)
+del randint
+
+
+def uid() -> UID:
+    global _next_id
+    id = _next_id
+    _next_id += 1
+    return id
+
+
+def clamp(lower: int, value: int, upper: int) -> int:
+    return min(max(lower, value), upper)
+
+
+if __debug__:
+    _MISSING = type("_MISSING", (), {})()
 else:
-    InheritedAttribute = object
-# --- Exception ("oh crap") types ---
+    _MISSING = object()
 
 
-def application(cls):
-    cls._is_app_ = True
-    return cls()
+# --- tag stuff ---
+# todo: name this better
+if TYPE_CHECKING:
+
+    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
+    # DO NOT add typing annotations or doc strings to this function.
+    def application(cls):
+        return cls
+
+else:
+
+    def application(cls):
+        cls._is_app_ = True
+        return cls()
 
 
+# --- screen stuff ---
 # TODO: consider if this is required. It may need to be replaced by manually
 #      adding the _Screen_ attribute to a widget when it is nested in a container
-class LazyInheritedAttribute(Generic[T]):
+class InheritedAttribute(Generic[T, S]):
     _climb_stack: list["Widget"] = []
     _climb_sentinel = object()
 
-    def __init__(self, attrname: str, initial: T) -> None:
+    def __init__(self, attrname: str, initial: S) -> None:
         # TODO: add doc string to decribe the funcitonality
         self._attrname = attrname
         self._priv_attrname = "_inherited_" + attrname + "_attr_"
@@ -90,7 +123,7 @@ class LazyInheritedAttribute(Generic[T]):
     def __repr__(self):
         return f"<InheritedAttribute: .{self._attrname}>"
 
-    def __get__(self, owner: "Widget", ownertype: Type[object]) -> T:
+    def __get__(self, owner: "Widget", ownertype: Type[object]) -> T | S:
         """
         Make sure the attribute is set on the owner before it is retrieved.
         This makes sure the memory for that attribute is allocated in the init method (this is a circuitpython safeguard)
@@ -134,7 +167,7 @@ class LazyInheritedAttribute(Generic[T]):
 
             return heirattr
 
-    def __set__(self, owner, value) -> None:
+    def __set__(self, owner, value: T | S) -> None:
         setattr(owner, self._priv_attrname, value)
 
 
@@ -261,14 +294,10 @@ class Widget:  # type: ignore
     _phys_coord_: tuple[int, int]
 
     # --- class flags ---
-    _is_root_: ClassVar[bool] = False
     _is_app_: ClassVar[bool] | bool = False
-    _declarable_: ClassVar[bool]
 
     # --- class attr and future work ---
-    _screen_: InheritedAttribute[None | _Screen_] = LazyInheritedAttribute(
-        "_screen_", None
-    )
+    _screen_: InheritedAttribute[_Screen_, None] = InheritedAttribute("_screen_", None)
 
     # --- body ---
     def __init__(self, *, _margin_: None | int = None):

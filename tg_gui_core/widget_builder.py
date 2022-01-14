@@ -44,7 +44,7 @@ class BuildError(RuntimeError):
     pass
 
 
-def _widget_builder_cls_format(cls: Type[Container]) -> cls:
+def _widget_builder_cls_format(cls: Type[Container]) -> Type[Container]:
     """
     scan throguht a class body to find sugary widget builders (no argument lamdas)
     and wrap them in WigetBuiilder descriptors.
@@ -307,5 +307,8 @@ class WidgetBuilder(Generic[_C, _W]):
 
         declared_proxy.close_build()
         app_proxy.close_build()
+
+        del declared_proxy
+        del app_proxy
 
         return widget

@@ -31,7 +31,8 @@ to cover:
 - the use of the _impl_cache_ in this particular file
 """
 
-from tg_gui_core import Color, specify
+from tg_gui_core import Color
+from tg_gui_core.dimension_specifiers import _dimspecify
 from .shared import decorator_pass as _decorator_pass
 
 from displayio import Group
@@ -128,7 +129,7 @@ def set_size(widget: Button, native: Native, width: int, height: int) -> None:
     radius: int = min(
         widget.width // 2,
         widget.height // 2,
-        specify(widget._impl_cache_["radius"], widget),
+        _dimspecify(widget._impl_cache_["radius"], widget),
     )
     label_width: int = widget._impl_cache_["label_width"]
     margin = widget._margin_

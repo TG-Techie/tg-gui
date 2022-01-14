@@ -24,22 +24,28 @@
 
 from __future__ import annotations
 
-from ._shared import enum_compat
+from ._platform_support import enum_compat, use_typing
 from enum import Enum, auto
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from typing import *
-
     from .base import Widget
 
+if use_typing() or TYPE_CHECKING:
+    DimSpec = Union[
+        "DimensionSpecifier",
+        tuple[
+            Union[int, "DimensionSpecifier"],
+            Union[int, "DimensionSpecifier"],
+        ],
+    ]
 
-class DimensionSpecifier:
-    def _calc_dim_(
-        self, inst: Widget
-    ) -> tuple[int | "DimensionSpecifier", int | "DimensionSpecifier"]:
-        raise NotImplementedError("cannot use a bare DimensionSpecifier")
+
+def _dimspecify(value: int | DimensionSpecifier, ref: Widget) -> int:
+    if isinstance(value, DimensionSpecifier):
+        value = value._calc_dim_(ref)
+    return value
 
 
 @enum_compat
@@ -49,6 +55,13 @@ class _operations(Enum):
     rsub = auto()
     mul = auto()
     floordiv = auto()
+
+
+class DimensionSpecifier:
+    def _calc_dim_(
+        self, inst: Widget
+    ) -> tuple[int | "DimensionSpecifier", int | "DimensionSpecifier"]:
+        raise NotImplementedError("cannot use a bare DimensionSpecifier")
 
 
 # maually inline this

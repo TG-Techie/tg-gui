@@ -24,80 +24,22 @@ from __future__ import annotations
 
 import sys
 
-from ._shared import enum_compat, USE_TYPING
 from .base import Widget
-from .specifiers import SpecifierReference, AttributeSpecifier
-
 from .theming import Theme
-
-# TODO: add app SpecifierReference("app", _find_app_widget)
-
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Callable, Type
+    from typing import Callable, Type, ClassVar
+    from .theming import ThemeDict
 
-    from .specifiers import AttrSpec
-    from .base import InheritedAttribute
-
-
-def _search_traverse_up(
-    attr_spec: AttrSpec,
-    widget: Widget,
-    foundit: Callable[[Widget], bool],
-    debug_name: str,
-):
-    assert isinstance(widget, Widget)
-    container = widget if isinstance(widget, Container) else widget._superior_
-    while not foundit(container):
-        prev = container
-        container = container._superior_
-        if container is None:
-            raise AttributeError(
-                f"unable to find outer {debug_name} that {widget} is used in"
-            )
-    return container
-
-
-# --- tg-gui builtin specifiers  ---
-
-self = SpecifierReference("self", _search_traverse_up, check=lambda c: c._declarable_)
-# app = SpecifierReference("app")
-
-# optimization for for ._superior_ up the widget tree
-superior = self._superior_ = AttributeSpecifier(self, "_superior_")  # type: ignore
-
-app = SpecifierReference("app", _search_traverse_up, check=lambda c: c._is_app_)
-
-# --- metaclass scopeing for specifiers ---
-# TODO: remove this section after layout revision
-# will inject a metaclass into
-
-# provide a dict to unpack into the
-# _continer_meta_kwarg = {}
-# if USE_TYPING:
-
-#     class _ContainerScopeingMeta(type):
-#         def __prepare__(*_, **__) -> dict[str, object]:  # type: ignore
-#             from . import _bulitin_tg_specifiers_ as tgbuilitns
-
-#             return {
-#                 name: attr
-#                 for name, attr in tgbuilitns.__dict__.items()
-#                 if not name.startswith("__")
-#             }
-
-#     _continer_meta_kwarg["metaclass"] = _ContainerScopeingMeta
-
-
-# --- class tagging tools ---
-if TYPE_CHECKING:
-
-    from .theming import Theme
 
 if TYPE_CHECKING:
-    declarable = lambda cls: cls
+    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
+    # DO NOT add typing annotations or doc strings to this function.
+    def declarable(cls):
+        return cls
+
 else:
 
     def declarable(cls: Type["Widget"]) -> Type["Widget"]:
@@ -107,17 +49,9 @@ else:
         """
         assert isinstance(cls, type), f"can only decorate classes"
         assert issubclass(
-            cls, Widget
+            cls, Container
         ), f"{cls} does not subclass Container, it must to be @declarable"
         cls._declarable_ = True
-
-        # if USE_TYPING:
-        #     mro = cls.mro()[1:]
-
-        #     class NewCls(*mro, metaclass=_ContainerScopeingMeta):  # type: ignore
-        #         locals().update(cls.__dict__)
-
-        #     cls = NewCls
 
         return cls
 
@@ -135,23 +69,25 @@ def isdeclarable(obj: object) -> bool:
     )
 
 
-# --- the nity gritty ---
-# class Container(Widget, **_continer_meta_kwarg):
 class Container(Widget):
     _nested_: list[Widget]
 
-    _declarable_ = False
+    # --- class tags ---
+    _is_root_: ClassVar[bool] = False
+    _is_app_: ClassVar[bool] = False
+    _declarable_: bool | ClassVar[bool] = False
 
-    def __init__(self, theme: Theme = None) -> None:
+    _theme_: None | Theme | ThemeDict = None
+
+    def __init__(self, theme: Theme | ThemeDict | None = None) -> None:
         super().__init__(_margin_=0)
 
-        if theme is not None:
-            if isinstance(theme, dict):
-                self._theme_ = Theme(theme, _debug_name_=f"auto:{self}")
-            else:
-                self._theme_ = theme
+        if isinstance(theme, dict) and __debug__:
+            theme = Theme(theme, _debug_name_=f"auto:{self}")
 
         self._nested_ = []
+        if theme is not None:
+            self._theme_ = theme
 
     def _nest_(self, widget: Widget) -> None:
         if widget not in self._nested_:
@@ -170,8 +106,8 @@ class Container(Widget):
             + " see tg_gui_core/container.py for the template"
         )
         # Template:
-        # container subcless specific form code here
         super(Container, self)._build_(dim_spec)
+        # container subcless specific form code here
         self._screen_.on_container_build(self)  # platform tie-in
 
     def _demolish_(self) -> None:
@@ -199,12 +135,6 @@ class Container(Widget):
         self._screen_.on_container_pickup(self)  # platform tie-in
 
     def _show_(self) -> None:
-        # is this exception needed?
-        # raise NotImplementedError(
-        #     f"{type(self).__name__}._show_() not implemented,"
-        #     + " see tg_gui_core/container.py for the template"
-        # )
-        # Tempalte:
         super()._show_()
         for wid in self._nested_:
             wid._show_()

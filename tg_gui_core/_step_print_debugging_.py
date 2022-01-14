@@ -1,4 +1,7 @@
-from typing import Callable, NoReturn
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, NoReturn
 
 
 import builtins
@@ -17,12 +20,11 @@ def _raise(exception):
 
 
 _step_cmds: dict[tuple[str, ...], tuple[Callable[[], None | NoReturn], str]] = {
-    ("exit",): (guiexit, "exit the python instance"),
     ("raise",): (
         lambda: _raise(Exception("step print debug raise")),  # !! step print internals
         "raise an exception",
     ),
-    ("", "continue", "q"): (
+    ("", "continue", "c"): (
         None,
         "exit the step session and conintue executing python as normal",
     ),

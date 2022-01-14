@@ -29,8 +29,8 @@ from tg_gui_core import (
     themedwidget,
     align,
     color,
-    Specifier,
-    specify,
+    # Specifier,
+    # specify,
 )
 from tg_gui_core.theming import BuildAttr, StyledAttr
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
@@ -60,7 +60,7 @@ class Label(StyledWidget):
     size = BuildAttr(default=2)
     align = BuildAttr(default=align.center)
     fit_to: BuildAttr[Union[bool, str]] = BuildAttr(default=False)
-    foreground = StyledAttr(default=color.system_fill)
+    foreground = StyledAttr(default=color.system_foreground)
 
     # --- bool ---
 
@@ -68,17 +68,18 @@ class Label(StyledWidget):
     def text(self):
         return self._text.value(self) if isinstance(self._text, State) else self._text
 
-    def __init__(self, text: str | State[str] | Specifier, **kwargs) -> None:
+    def __init__(self, text: str | State[str], **kwargs) -> None:
         super().__init__(**kwargs)
 
         assert isinstance(
-            text, (str, State, Specifier)
+            text, (str, State)  # , Specifier)
         ), f"expexted str, State[str], or Specifier. found {text}"
-        self._text_src = text
+        # self._text_src = text
+        self._text = text
 
-    def _on_nest_(self) -> None:
-        super()._on_nest_()
-        self._text = specify(self._text_src, self)
+    # def _on_nest_(self) -> None:
+    #     super()._on_nest_()
+    #     self._text = specify(self._text_src, self)
 
     def _build_(self, dim_spec: DimensionSpecifier):
 

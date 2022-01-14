@@ -22,13 +22,13 @@
 
 from __future__ import annotations
 
-from tg_gui_core import Widget, Root, isoncircuitpython, USE_TYPING
+from tg_gui_core import Widget, Root, isoncircuitpython, use_typing
 from .screen import Screen
 from .event_loop import EventLoop, SinglePointEventLoop
 
 from typing import TYPE_CHECKING
 
-if USE_TYPING:
+if use_typing():
     from typing import Callable
 
 if TYPE_CHECKING:

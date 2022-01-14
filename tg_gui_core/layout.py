@@ -101,6 +101,8 @@ class LayoutMethod:
     def layout(self, widget: Layout) -> None:
         proxy = _LayoutProxy(widget)
         self._fn(proxy)
+        proxy.close_layout()
+        del proxy
 
 
 @declarable

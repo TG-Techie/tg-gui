@@ -23,7 +23,8 @@
 from __future__ import annotations
 
 
-from tg_gui_core import Color, specify
+from tg_gui_core import Color
+from tg_gui_core.dimension_specifiers import _dimspecify
 
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Slot
@@ -54,7 +55,8 @@ def build(
 
     native.style_sheet, _ = widget._impl_cache_ = (
         f"font-size:{to_qt_font_size(size)};",
-        lambda: f"border-radius:{min(specify(radius, widget), min(widget._phys_size_) // 2)}px;",
+        lambda: f"border-radius:{min(_dimspecify(radius, widget), min(widget._phys_size_) // 2)}px;",
+        # lambda: f"border-radius:{min(specify(radius, widget), min(widget._phys_size_) // 2)}px;",
     )
 
     # None for now, later will use disposition

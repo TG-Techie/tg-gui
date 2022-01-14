@@ -24,7 +24,7 @@ from __future__ import annotations
 
 
 from tg_gui_core import center, declarable, Widget
-from .layout import Layout
+from tg_gui_core.layout import Layout
 
 from typing import TYPE_CHECKING
 

@@ -22,54 +22,40 @@
 
 import sys
 
-# here for transparent typing when decorating enums
+# here for circuitpython compatibility.
+# this function is a no-op for typing transparancy when using mypy but is overwritten below.
+# DO NOT add typing annotations or doc strings to this function.
 def enum_compat(cls):
     return cls
 
 
 # --- platform optimization ---
 if sys.implementation.name == "circuitpython":
-    from . import _typing_bypass as _typing_bypass
-    from . import _enum_bypass as _enum_bypass
+    from . import _cpython_bypass
 
-    sys.modules["typing"] = _typing_bypass  # type: ignore
-    sys.modules["enum"] = _enum_bypass  # type: ignore
+    sys.modules["typing"] = _cpython_bypass  # type: ignore
+    sys.modules["types"] = _cpython_bypass  # type: ignore
+    sys.modules["enum"] = _cpython_bypass  # type: ignore
 
     from supervisor import reload as guiexit
 
     use_typing = lambda: False
     isoncircuitpython = lambda: True
-    enum_compat = _enum_bypass.enum_compat
+    isoncpython = lambda: False
+    enum_compat = _cpython_bypass.enum_compat
+
 elif sys.implementation.name == "cpython":
     from sys import exit as guiexit
 
     use_typing = lambda: True
     isoncircuitpython = lambda: False
+    isoncpython = lambda: True
     enum_compat = lambda cls: cls
+
+    from types import FunctionType, MethodType
 else:
     raise Exception(
         f"unsupported python implementation: {sys.implementation.name}, "
         + "please open an issue at https://github.com/TG-Techie/tg-gui/issues/new?"
         + "title=unsupported%20python%20implementation%3A%20{sys.implementation.name}"
     )
-
-
-# --- unique ids ---
-UID = int
-
-from random import randint  # type: ignore
-
-_next_id = randint(0, 11)
-del randint
-
-
-def uid() -> UID:
-    global _next_id
-    id = _next_id
-    _next_id += 1
-    return id
-
-
-# --- utils ---
-def clamp(lower: int, value: int, upper: int) -> int:
-    return min(max(lower, value), upper)
