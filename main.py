@@ -27,7 +27,10 @@ class Test(View):
 
     _theme_ = Theme(
         {
-            Label: {Label.size: 2},
+            Label: {
+                Label.size: 2,
+                Label.fill: color.system_fill,
+            },
             Date: {Date.foreground: color.white},
         }
     )
@@ -44,9 +47,7 @@ class Test(View):
         ),
     )
 
-    def toggle(self, msg="") -> None:
-        if msg:
-            print(time.monotonic(), msg)
+    def toggle(self) -> None:
         self.tgl_state = not self.tgl_state
 
 
@@ -57,11 +58,11 @@ if isoncircuitpython():
 
 if __name__ == "__main__":
 
-    if isoncircuitpython():
-        screen._register_recurring_update_(
-            screen,
-            lambda: print(time.monotonic(), gc.mem_free()),
-            10.0,
-        )
+    # if isoncircuitpython():
+    #     screen._register_recurring_update_(
+    #         screen,
+    #         lambda: print(time.monotonic(), gc.mem_free()),
+    #         10.0,
+    #     )
 
     screen.run()
