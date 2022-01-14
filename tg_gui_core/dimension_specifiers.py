@@ -24,22 +24,28 @@
 
 from __future__ import annotations
 
-from ._shared import enum_compat
+from ._platform_support import enum_compat, use_typing
 from enum import Enum, auto
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from typing import *
-
     from .base import Widget
 
+if use_typing() or TYPE_CHECKING:
+    DimSpec = Union[
+        "DimensionSpecifier",
+        tuple[
+            Union[int, "DimensionSpecifier"],
+            Union[int, "DimensionSpecifier"],
+        ],
+    ]
 
-class DimensionSpecifier:
-    def _calc_dim_(
-        self, inst: Widget
-    ) -> tuple[int | "DimensionSpecifier", int | "DimensionSpecifier"]:
-        raise NotImplementedError("cannot use a bare DimensionSpecifier")
+
+def _dimspecify(value: int | DimensionSpecifier, ref: Widget) -> int:
+    if isinstance(value, DimensionSpecifier):
+        value = value._calc_dim_(ref)
+    return value
 
 
 @enum_compat
@@ -51,10 +57,11 @@ class _operations(Enum):
     floordiv = auto()
 
 
-@enum_compat
-class _dimensions(Enum):
-    horizontal = auto()
-    vertical = auto()
+class DimensionSpecifier:
+    def _calc_dim_(
+        self, inst: Widget
+    ) -> tuple[int | "DimensionSpecifier", int | "DimensionSpecifier"]:
+        raise NotImplementedError("cannot use a bare DimensionSpecifier")
 
 
 # maually inline this
@@ -62,10 +69,9 @@ def _op_fn(operator):
     # used to define the dunder methods in the DimensionExpression
     def _op_fn_(self, other):
         op = (operator, other)
-        dims = _dimensions
         return DimensionExpression(
             self._operation_sequence + (op,),
-            dims.horizontal if self._is_horizontal else dims.vertical,
+            is_horizontal=self._is_horizontal,
         )
 
     return _op_fn_
@@ -75,10 +81,8 @@ class DimensionExpression:
 
     operations = _operations
 
-    _dimensions = _dimensions
-
-    def __init__(self, operations, dimension):
-        self._is_horizontal = bool(dimension is _dimensions.horizontal)
+    def __init__(self, operations, *, is_horizontal):
+        self._is_horizontal = is_horizontal
         self._operation_sequence = operations
 
     def __repr__(self):
@@ -96,13 +100,15 @@ class DimensionExpression:
     __sub__ = _op_fn(_operations.sub)
     __rsub__ = _op_fn(_operations.rsub)
 
-    def _calc_dim(self, dims):
+    def _calc_dim(self, dims: tuple[int, int]) -> int:
         ops = _operations
         running_value = dims[0] if self._is_horizontal else dims[1]
         for op, value in self._operation_sequence:
             # if it is also a DimExpr, simplify it
             if isinstance(value, DimensionExpression):
                 value = value._calc_dim(dims)
+            elif isinstance(value, DimensionExpressionConstructor):
+                value = dims[0] if value._is_horizontal else dims[1]
             assert isinstance(value, int), f"found `{repr(value)}`"
             # apply the operation
             if op is ops.floordiv:
@@ -123,17 +129,17 @@ class DimensionExpression:
 
 # maually inline this
 def _op_constr_fn(operator):
-    def _op_constr_fn_(self, value):
+    def _op_constr_fn_(self: DimensionExpressionConstructor, value: int):
         op = (operator, value)
-        return DimensionExpression((op,), self._dim)
+        return DimensionExpression((op,), is_horizontal=self._is_horizontal)
 
     return _op_constr_fn_
 
 
 class DimensionExpressionConstructor:
-    def __init__(self, *, name, dimension):
+    def __init__(self, *, name: str, is_horizontal: bool):
         self._name = name
-        self._dim = dimension
+        self._is_horizontal = is_horizontal
 
     def __repr__(self):
         return f"<DimensionExpressionConstructor '{self._name}'>"
@@ -161,10 +167,10 @@ class ratio(DimensionSpecifier):
 
 height = DimensionExpressionConstructor(
     name="height",
-    dimension=_dimensions.vertical,
+    is_horizontal=False,
 )
 
 width = DimensionExpressionConstructor(
     name="width",
-    dimension=_dimensions.horizontal,
+    is_horizontal=True,
 )

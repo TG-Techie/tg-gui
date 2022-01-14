@@ -44,7 +44,7 @@ def build(widget, *, size, align, fit_to: bool | str):
     w, h = native.size_hint().to_tuple()
     return (
         native,
-        (1.2 * w // 1, h),
+        (int(1.2 * w), int(1.2 * h)),
     )
 
 

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 
 from tg_gui_core import Color
+from tg_gui_core.dimension_specifiers import _dimspecify
 
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Slot
@@ -32,12 +33,11 @@ from .shared import to_qt_color, to_qt_font_size, Native
 
 from __feature__ import snake_case, true_property  # type: ignore
 
-try:
-    from typing import Type, Union
-    from .. import SizeHint
-    from ... import Button
-except:
-    pass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tg_gui.button import Button
+
 
 format_class = lambda cls: cls
 
@@ -51,11 +51,12 @@ def build(
 ) -> tuple[Native, SizeHint]:
     native = QPushButton(widget._text)
 
-    native.clicked.connect(widget._action_)
+    native.clicked.connect(lambda: widget._action_())
 
     native.style_sheet, _ = widget._impl_cache_ = (
         f"font-size:{to_qt_font_size(size)};",
-        lambda: f"border-radius:{min(radius, min(widget._phys_size_) // 2)}px;",
+        lambda: f"border-radius:{min(_dimspecify(radius, widget), min(widget._phys_size_) // 2)}px;",
+        # lambda: f"border-radius:{min(specify(radius, widget), min(widget._phys_size_) // 2)}px;",
     )
 
     # None for now, later will use disposition
@@ -80,7 +81,7 @@ def apply_style(
     fill: Color,
     foreground: Color,
     active_fill: Color,
-    active_color: Color,
+    active_foreground: Color,
 ):
     imple_str = widget._impl_cache_
     if isinstance(imple_str, tuple):
@@ -91,7 +92,7 @@ def apply_style(
         "QPushButton {"
         + f"background-color: {to_qt_color(fill)}; color: {to_qt_color(foreground)}; {imple_str}"
         + "} QPushButton:pressed {"
-        + f"background-color: {to_qt_color(active_fill)}; color: {to_qt_color(active_color)};"
+        + f"background-color: {to_qt_color(active_fill)}; color: {to_qt_color(active_foreground)};"
         + "}"
     )
 

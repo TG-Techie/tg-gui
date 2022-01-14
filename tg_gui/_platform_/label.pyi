@@ -1,10 +1,10 @@
 from typing import *
 
 from tg_gui_core import Color
-from ... import Label, align
+from ..label import Label, align
 from . import Native, SizeHint
 
-def format_class(cls: Type[Label]) -> Type[Label]:
+def format_class(cls):
     """
     @decorator
     A tie-in to allow modification of the tg-gui class body
@@ -12,7 +12,7 @@ def format_class(cls: Type[Label]) -> Type[Label]:
     :param cls: the tg-gui class object, to format
     :return: the same class
     """
-    ...
+    return cls
 
 def build(
     widget: Label,

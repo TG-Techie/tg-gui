@@ -23,8 +23,7 @@
 from __future__ import annotations
 
 import gc
-from ._shared import uid
-from .base import Widget
+from .base import uid, Widget
 from .container import Container
 from .base import _Screen_
 

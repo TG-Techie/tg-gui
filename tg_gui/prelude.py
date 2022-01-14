@@ -60,7 +60,7 @@ def main(
 
 # --- interface ---
 
-from tg_gui_core.container import superior, app
+# from tg_gui_core.container import superior, app
 
 
 class default:
@@ -78,7 +78,6 @@ from .button import Button
 from .label import Label
 
 # --- tg_gui interface ---
-from .layout import Layout
 from .layoutstack import VStack, HStack
 
 from .date import Date

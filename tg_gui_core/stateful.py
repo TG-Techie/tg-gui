@@ -22,16 +22,15 @@
 
 from __future__ import annotations
 
-from ._shared import uid, UID, USE_TYPING
+from ._platform_support import use_typing
+from .base import uid, UID
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING or USE_TYPING:
+if TYPE_CHECKING or use_typing():
     from typing import *
 
-    # Handler = Callable[[T], Any]
     Handler = Callable[..., Any]
-    # DerivedHandler = Callable[..., Any]
 
     class Identifiable(Protocol):
         _id_: UID
@@ -52,7 +51,7 @@ if TYPE_CHECKING or USE_TYPING:
             ...
 
 else:
-    from .typing_bypass import Bypass
+    from ._cpython_bypass import Bypass
 
     Bindable = Bypass("Bindable", type)
     Identifiable = None

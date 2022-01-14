@@ -22,10 +22,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from ._platform_support import use_typing
+
+from typing import TYPE_CHECKING, Union
+
 
 if TYPE_CHECKING:
     from .base import Widget
+
+if use_typing() or TYPE_CHECKING:
+    PosSpec = Union[
+        "PositionSpecifier",
+        tuple[
+            Union[int, "PositionSpecifier"],
+            Union[int, "PositionSpecifier"],
+        ],
+    ]
 
 
 class PositionSpecifier:

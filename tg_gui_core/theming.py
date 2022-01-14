@@ -22,8 +22,8 @@
 
 from __future__ import annotations
 
-from ._shared import uid, UID, USE_TYPING, isoncircuitpython
-from .base import Widget
+from ._platform_support import use_typing, isoncircuitpython
+from .base import uid, UID, Widget
 from .stateful import State
 
 
@@ -36,14 +36,11 @@ if TYPE_CHECKING:
     from .styled_widget import StyledWidget
     from .stateful import State
 
-    _NotFound: object = type("NotFound", (), {})
-    ()
+    ThemeAttrsDict = Dict["ThemedAttribute", Any]
+    ThemeDict = dict[StyledWidget, ThemeAttrsDict]
 
-    _StyleAttrSpec = dict[str, type | tuple[type, ...] | tuple[()]]
 
-else:
-    Protocol = {T: object}  # type: ignore
-    _NotFound = object()
+_NotFound = object()
 
 
 class ResolutionError(Exception):
@@ -51,54 +48,59 @@ class ResolutionError(Exception):
 
 
 if TYPE_CHECKING:
-    themedwidget = lambda cls: cls
 
+    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
+    # DO NOT add typing annotations or doc strings to this function.
+    def themedwidget(cls):
+        return cls
 
-def themedwidget(cls: Type[StyledWidget]):
-    build_attrs = None
-    style_attrs = None
+else:
 
-    for name in dir(cls):  # scan by name
-        attr = getattr(cls, name)
+    def themedwidget(cls: Type[StyledWidget]):
+        build_attrs = None
+        style_attrs = None
 
-        # skip not themed
-        if name.startswith("_") or not isinstance(attr, ThemedAttribute):
-            continue
-        assert isinstance(attr, ThemedAttribute), f"found {attr}"
+        for name in dir(cls):  # scan by name
+            attr = getattr(cls, name)
 
-        # circuitpython does not have __set_name__, so add it
-        if isoncircuitpython() and attr.name is None:
-            attr.__set_name__(cls, name)
+            # skip not themed
+            if name.startswith("_") or not isinstance(attr, ThemedAttribute):
+                continue
+            assert isinstance(attr, ThemedAttribute), f"found {attr}"
 
-        # only add a new set of the attr names if there is a new build or style attr
-        if attr.stylecls is cls:
-            if attr.isbuildattr:
-                if build_attrs is None:
-                    build_attrs = set(cls._build_attrs_)
-                build_attrs.add(attr.name)
-            else:
-                if style_attrs is None:
-                    style_attrs = set(cls._style_attrs_)
-                style_attrs.add(attr.name)
-    else:
-        # circuitpython does not support type.mro(), so we make an explicit list
-        cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_
+            # circuitpython does not have __set_name__, so add it
+            if isoncircuitpython() and attr.name is None:
+                attr.__set_name__(cls, name)
 
-        if build_attrs is not None:
-            cls._build_attrs_ = frozenset(build_attrs)
-        if style_attrs is not None:
-            cls._style_attrs_ = frozenset(style_attrs)
+            # only add a new set of the attr names if there is a new build or style attr
+            if attr.stylecls is cls:
+                if attr.isbuildattr:
+                    if build_attrs is None:
+                        build_attrs = set(cls._build_attrs_)
+                    build_attrs.add(attr.name)
+                else:
+                    if style_attrs is None:
+                        style_attrs = set(cls._style_attrs_)
+                    style_attrs.add(attr.name)
+        else:
+            # circuitpython does not support type.mro(), so we make an explicit list
+            # TODO: this mey be neede for later `cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_`
 
-        # register the class as required
-        Theme._themed_widget_types_.add(cls)
+            if build_attrs is not None:
+                cls._build_attrs_ = frozenset(build_attrs)
+            if style_attrs is not None:
+                cls._style_attrs_ = frozenset(style_attrs)
 
-    return cls
+            # register the class as required
+            Theme._themed_widget_types_.add(cls)
+
+        return cls
 
 
 class ThemedAttribute(Generic[T]):
     isbuildattr: ClassVar[bool]
 
-    if __debug__:
+    if __debug__ and not TYPE_CHECKING:
 
         def __new__(cls: Type[ThemedAttribute], *_, **__) -> ThemedAttribute:
             assert (
@@ -146,7 +148,11 @@ class ThemedAttribute(Generic[T]):
         # climb up the widget heirarchy
         superior = widget
 
-        while superior is not None and not superior._is_root_:
+        while (
+            superior is not None
+            and hasattr(superior, "_is_root_")
+            and not superior._is_root_
+        ):
             superior = superior._superior_
             # move up the heirarchy if these is no theme entry
             if not hasattr(superior, "_theme_"):
@@ -154,10 +160,14 @@ class ThemedAttribute(Generic[T]):
                 continue
 
             theme = superior._theme_
+            if theme is None:
+                continue
 
-            for cls in widget._stylecls_mro_:
-                # print((spec := theme.get(cls, False)), spec)
-                if (spec := theme.get(cls, False)) and self in spec:
+            # TODO: this may be needed for later `for cls in widget._stylecls_mro_`:
+            for cls in type(widget).__bases__:
+                # print((spec := theme.get(cls, False)), spec)\
+                spec = theme.get(cls, None)
+                if spec is not None and self in spec:
                     return spec[self]
             else:
                 continue
@@ -176,7 +186,7 @@ class ThemedAttribute(Generic[T]):
             return f"<{type(self).__name__}: {self._id_} {self.stylecls.__name__}.{self.name}>"
 
 
-if TYPE_CHECKING or USE_TYPING:
+if TYPE_CHECKING or use_typing():
 
     class BuildAttr(ThemedAttribute[T]):
         isbuildattr = True

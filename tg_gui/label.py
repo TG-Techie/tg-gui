@@ -22,7 +22,16 @@
 
 from __future__ import annotations
 
-from tg_gui_core import State, Color, StyledWidget, themedwidget, align, color
+from tg_gui_core import (
+    State,
+    Color,
+    StyledWidget,
+    themedwidget,
+    align,
+    color,
+    # Specifier,
+    # specify,
+)
 from tg_gui_core.theming import BuildAttr, StyledAttr
 from tg_gui_core.dimension_specifiers import DimensionSpecifier
 from ._platform_ import label as _label_impl
@@ -51,7 +60,7 @@ class Label(StyledWidget):
     size = BuildAttr(default=2)
     align = BuildAttr(default=align.center)
     fit_to: BuildAttr[Union[bool, str]] = BuildAttr(default=False)
-    foreground = StyledAttr(default=color.system_fill)
+    foreground = StyledAttr(default=color.system_foreground)
 
     # --- bool ---
 
@@ -61,8 +70,16 @@ class Label(StyledWidget):
 
     def __init__(self, text: str | State[str], **kwargs) -> None:
         super().__init__(**kwargs)
-        assert isinstance(text, (str, State)), f"found {text}"
+
+        assert isinstance(
+            text, (str, State)  # , Specifier)
+        ), f"expexted str, State[str], or Specifier. found {text}"
+        # self._text_src = text
         self._text = text
+
+    # def _on_nest_(self) -> None:
+    #     super()._on_nest_()
+    #     self._text = specify(self._text_src, self)
 
     def _build_(self, dim_spec: DimensionSpecifier):
 

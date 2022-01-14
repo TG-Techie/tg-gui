@@ -32,6 +32,7 @@ to cover:
 """
 
 from tg_gui_core import Color
+from tg_gui_core.dimension_specifiers import _dimspecify
 from .shared import decorator_pass as _decorator_pass
 
 from displayio import Group
@@ -40,12 +41,12 @@ from adafruit_display_text.label import Label
 from terminalio import FONT
 
 
-try:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
     from typing import Type, Union
-    from .. import SizeHint
-    from ... import Button
-except:
-    pass
+    from tg_gui.button import Button
+
 
 from displayio import Group as Native
 
@@ -75,7 +76,7 @@ def build(
     radius: int,
     size: float | int,
     fit_to_text: bool,
-) -> tuple[Native, SizeHint]:
+) -> tuple[Native, tuple[int, int]]:
     """
     Creates the native element for the std tg-gui widget based on the _fixed_style_attrs_.
     Those _fixed_style_attrs_ are passed as kwargs to this function.
@@ -91,15 +92,19 @@ def build(
     _, _, w, h = label.bounding_box
     w *= size
     h = int(1.15 * h * size)
-    r = min(radius, w // 2, h // 2)
-    padding = round(1.5 * r)
+    r = (
+        min(radius, w // 2 - 1, h // 2 - 1)
+        if isinstance(radius, int)
+        else min(w // 2, h // 2) - 1
+    )
+    padding = round(1.25 * r)
 
-    widget._impl_cache_ = dict(radius=r, label_width=w)
+    widget._impl_cache_ = dict(radius=radius, label_width=w)
     return (
         native,
         (
             w + padding + widget._margin_ * 2,
-            h + widget._margin_ * 2,
+            int(h * 1.2) + widget._margin_ * 2,
         ),
     )
     # return (
@@ -121,7 +126,11 @@ def set_size(widget: Button, native: Native, width: int, height: int) -> None:
     :param height:
     """
 
-    radius: int = widget._impl_cache_["radius"]
+    radius: int = min(
+        widget.width // 2,
+        widget.height // 2,
+        _dimspecify(widget._impl_cache_["radius"], widget),
+    )
     label_width: int = widget._impl_cache_["label_width"]
     margin = widget._margin_
 
@@ -149,7 +158,7 @@ def apply_style(
     fill: Color,
     foreground: Color,
     active_fill: Color,
-    active_color: Color,
+    active_foreground: Color,
 ) -> None:
     """
     formats the native widget with style attribute given.
@@ -159,7 +168,7 @@ def apply_style(
     :param **style_attrs: the stateful style attributes being applied
     :return: None
     """
-    widget._impl_cache_ = cache = ((fill, foreground), (active_fill, active_color))
+    widget._impl_cache_ = cache = ((fill, foreground), (active_fill, active_foreground))
 
     assert len(native) == 2, len(native)
 

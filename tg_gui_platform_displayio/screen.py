@@ -28,6 +28,7 @@ from tg_gui_core import _Screen_
 
 from .event_loop import EventLoop
 
+import gc
 from gc import collect as gc_collect
 from time import monotonic_ns
 
@@ -83,26 +84,32 @@ class Screen(_Screen_):
         for (fn, _, _) in updates:
             fn()
 
+        gc_collect()
+        print(gc.mem_free())
         print("starting loop...")
         touch_loop = self.touch_loop
 
+        display_refresh = self.display.refresh
+
+        loop = touch_loop.loop
+
         while True:
+            display_refresh()
+            loop()
+            display_refresh()
+            loop()
+            display_refresh()
+            loop()
             gc_collect()
-            self.display.refresh()
-            touch_loop.loop()
 
             # run_updates
             now = monotonic_ns()
-            rotate = 0
             for (pack, (fn, period, run_next)) in zip(updates, updates):
-
                 if run_next < now:
                     fn()
                     pack[2] = now + period
-                    rotate += 1
                 else:
                     break
-
             updates.sort(key=sort)
             # # if len(rotate) != len(updates):
             # for _ in range(rotate):

@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from tg_gui_core import (
-    Specifier,
+    # Specifier,
     color,
     StyledWidget,
     themedwidget,
@@ -57,7 +57,8 @@ class Button(StyledWidget):
     radius: BuildAttr[int | DimensionSpecifier] = BuildAttr(
         default=ratio(width + height)
     )
-    size = BuildAttr(default=1)
+
+    size = BuildAttr(default=2)
     fit_to_text = BuildAttr(default=False)
 
     fill = StyledAttr(default=color.system_fill)
@@ -82,6 +83,7 @@ class Button(StyledWidget):
     ):
         super().__init__(**kwargs)
         self._text = text
+        # print(f"%% Button({text}, action={action})")
         self._action_src = action
         self._action_ = None
 
@@ -89,6 +91,7 @@ class Button(StyledWidget):
         super()._on_nest_()
 
         action = self._action_src
-        if isinstance(action, Specifier):
-            action = action._resolve_specified_(self)
+        # if isinstance(action, Specifier):
+        #     action = action._resolve_specified_(self)
+        # print(f"%%2 action={action}")
         self._action_ = action

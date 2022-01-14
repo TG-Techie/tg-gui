@@ -23,8 +23,10 @@
 from __future__ import annotations
 
 from .base import Widget
-from ._shared import enum_compat, isoncircuitpython
+from ._platform_support import enum_compat, isoncircuitpython
 from .stateful import State
+
+# from .specifiers import specify, Specifier
 
 # from .style import Style, DerivedStyle
 from .theming import Theme, themedwidget
@@ -83,6 +85,10 @@ class color(Color):
 
 # --- THE style widget base ---
 
+Widget._offer_priority_ = 0
+Widget._reserve_space_ = True
+Widget._self_sizing_ = False
+
 
 @themedwidget
 class StyledWidget(Widget):
@@ -105,7 +111,8 @@ class StyledWidget(Widget):
 
     # --- themed attribure resoution linking ---
     # circuitpython does not have .mro() so @themedwidget() injects a link to the previous
-    _stylecls_mro_: tuple[Type[StyledWidget], ...] = ()
+    # TODO: see if .__bases__ can be used instead of this hack
+    # TODO: this may be needed for later `_stylecls_mro_: tuple[Type[StyledWidget], ...] = ()`
 
     def __init__(
         self,
@@ -146,17 +153,20 @@ class StyledWidget(Widget):
 
         super()._build_((wth, ht))
 
-        self._impl_set_size_(native, wth, ht)
+        self._impl_set_size_(native, self.width, self.height)
 
         # # --- register style states ---
         # TODO: handle state for styled widgets
 
         handler = self._apply_style
-        handler()
-        stateful_attrs = self._themed_attrs_
-        for name, state in self._themed_attrs_.items():
-            if name in stateful_attrs and isinstance(state, State):
-                state._register_handler_(self, handler)
+        themed_attrs = self._themed_attrs_
+        for name, value in themed_attrs.items():
+            # if isinstance(value, Specifier):
+            #     value = themed_attrs[name] = specify(value, self)
+            if isinstance(value, State) and name in self._style_attrs_:
+                value._register_handler_(self, handler)
+        else:
+            handler()
 
     def _demolish_(self):
         stateful_attrs = self._themed_attrs_
@@ -184,19 +194,25 @@ class StyledWidget(Widget):
             self._stateful_attrs_._deregister_handler_(self)
         super()._demolish_()
 
-    def _apply_style(self, **__) -> None:
-        attrs = {attr: getattr(self, attr) for attr in self._style_attrs_}
-        # print(self, attrs, self._style_attrs_)
+    def _apply_style(self, *_, **__) -> None:
+
+        attrs = {name: getattr(self, name) for name in self._style_attrs_}
+        attrs = {
+            name: attr.value(self) if isinstance(attr, State) else attr
+            for name, attr in attrs.items()
+        }
+
         try:
             self._impl_apply_style_(self._native_, **attrs)
         except TypeError as err:
             fn = type(self)._impl_apply_style_
             msg = (
                 f"WARNING: error while calling {self}._impl_apply_style_(...) "
-                + f"from {fn.__globals__['__name__']}.{fn.__name__} "
+                + f"from File {fn.__globals__['__name__'].replace('.', '/')}.py in {fn.__name__}"
             )
             if isoncircuitpython():
-                raise err from RuntimeError(msg)
+                print(msg)
+                raise err
             else:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 frame = exc_tb.tb_frame
