@@ -366,19 +366,6 @@ class Widget:  # type: ignore
 
         return f"<{type(self).__name__}{identity_info}>"
 
-    def __get__(self, owner, ownertype=None):
-        """
-        Widgets act as their own descriptors, this allows them to auto nest into layouts.
-        """
-        if not self.isnested():
-            owner._nest_(self)
-        return self
-
-    # def __call__(self, pos_spec, dim_spec):
-    #     self._build_(dim_spec)
-    #     self._place_(pos_spec)
-    #     return self
-
     def _show_(self) -> None:
         assert self.isnested()
         self._is_shown = True

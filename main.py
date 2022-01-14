@@ -31,7 +31,9 @@ class Test(View):
                 Label.size: 2,
                 Label.foreground: color.system_foreground,
             },
-            Date: {Date.foreground: color.white},
+            Date: {
+                Date.foreground: color.white,
+            },
         }
     )
 
