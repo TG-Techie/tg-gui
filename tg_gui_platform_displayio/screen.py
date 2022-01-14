@@ -89,23 +89,27 @@ class Screen(_Screen_):
         print("starting loop...")
         touch_loop = self.touch_loop
 
+        display_refresh = self.display.refresh
+
+        loop = touch_loop.loop
+
         while True:
+            display_refresh()
+            loop()
+            display_refresh()
+            loop()
+            display_refresh()
+            loop()
             gc_collect()
-            self.display.refresh()
-            touch_loop.loop()
 
             # run_updates
             now = monotonic_ns()
-            rotate = 0
             for (pack, (fn, period, run_next)) in zip(updates, updates):
-
                 if run_next < now:
                     fn()
                     pack[2] = now + period
-                    rotate += 1
                 else:
                     break
-
             updates.sort(key=sort)
             # # if len(rotate) != len(updates):
             # for _ in range(rotate):

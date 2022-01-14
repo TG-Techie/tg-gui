@@ -72,6 +72,8 @@ else:
         assert isinstance(cls, type), f"@layoutwidget must decorator a class, got {cls}"
         assert issubclass(cls, Layout), f"@layoutwidget({cls}) does not subclass Layout"
 
+        # TODO: add check for decoration back in
+
         cls_layout = cls._layout_
         assert (
             cls_layout is not Layout._layout_

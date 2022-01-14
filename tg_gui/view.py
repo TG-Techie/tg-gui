@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from tg_gui_core import center, declarable, Widget
 from tg_gui_core.layout import Layout
+from tg_gui_core.widget_builder import WidgetBuilder, _widget_builder_cls_format
 
 from typing import TYPE_CHECKING
 
@@ -37,51 +38,17 @@ class View(Layout):
 
     body: ClassVar[Callable[[], Widget]]
 
-    def __init__(self, **kwargs):
-        raise NotImplementedError
-        super(View, self).__init__(**kwargs)
+    def __new__(cls, *args, **kwargs):
+        assert (
+            cls is not View
+        ), f"View is an abstract class, {cls} cannot be instantiated"
+        assert hasattr(cls, "body"), "View must have a body widget builder"
 
-        self._widget = self._chek_and_make_body()
+        # TODO: make this a better check
+        if not isinstance(cls.body, WidgetBuilder):
+            _widget_builder_cls_format(cls)
 
-    def _on_nest_(self):
-        super()._on_nest_()
-        self._nest_(self._widget)
+        return super().__new__(cls)
 
     def _layout_(self):
-        self._widget(center, self.dims)
-
-    def _chek_and_make_body(self):
-        cls = type(self)
-        if not hasattr(cls, "body"):
-            raise AttributeError(f"{cls} must define a body property")
-
-        if callable(cls.body):
-            if callable(cls.body) and not isinstance(cls.body, Widget):
-                return cls.body()
-            elif isinstance(cls.body, Widget):
-                raise TypeError(
-                    f"{cls}.body may not be a widget, got {cls.body}. "
-                    + "try putting `lambda:` in front of it or using a propery"
-                )
-            else:
-                pass  # fall thorugh
-        elif isinstance(cls.body, property):
-            wid = self.body
-            assert isinstance(
-                wid, Widget
-            ), f"@property {cls}.body must be a Widget, got {wid} from {self}.body"
-            return wid
-        else:
-            pass  # fall through
-
-        raise TypeError(
-            f"{cls}.body must be a function or a property that returns a Widget, got {cls.body}"
-        )
-
-    if not TYPE_CHECKING:
-
-        @property
-        def body(self):
-            raise NotImplementedError(
-                f"{type(self).__name__}.body must [TODO: add more erro message]"
-            )
+        self.body(center, self.dims)
