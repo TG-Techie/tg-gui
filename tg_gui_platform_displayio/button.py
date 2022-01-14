@@ -40,12 +40,12 @@ from adafruit_display_text.label import Label
 from terminalio import FONT
 
 
-try:
-    from typing import Type, Union
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from typing import Type, Union
     from tg_gui.button import Button
-except:
-    pass
+
 
 from displayio import Group as Native
 
@@ -91,7 +91,11 @@ def build(
     _, _, w, h = label.bounding_box
     w *= size
     h = int(1.15 * h * size)
-    r = min(radius, w // 2, h // 2) if isinstance(radius, int) else min(w // 2, h // 2)
+    r = (
+        min(radius, w // 2 - 1, h // 2 - 1)
+        if isinstance(radius, int)
+        else min(w // 2, h // 2) - 1
+    )
     padding = round(1.25 * r)
 
     widget._impl_cache_ = dict(radius=radius, label_width=w)
@@ -99,7 +103,7 @@ def build(
         native,
         (
             w + padding + widget._margin_ * 2,
-            h + widget._margin_ * 2,
+            int(h * 1.2) + widget._margin_ * 2,
         ),
     )
     # return (

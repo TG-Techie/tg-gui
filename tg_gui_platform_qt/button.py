@@ -32,12 +32,11 @@ from .shared import to_qt_color, to_qt_font_size, Native
 
 from __feature__ import snake_case, true_property  # type: ignore
 
-try:
-    from typing import Type, Union
-    from .. import SizeHint
-    from ... import Button
-except:
-    pass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tg_gui.button import Button
+
 
 format_class = lambda cls: cls
 
@@ -51,7 +50,7 @@ def build(
 ) -> tuple[Native, SizeHint]:
     native = QPushButton(widget._text)
 
-    native.clicked.connect(widget._action_)
+    native.clicked.connect(lambda: widget._action_())
 
     native.style_sheet, _ = widget._impl_cache_ = (
         f"font-size:{to_qt_font_size(size)};",

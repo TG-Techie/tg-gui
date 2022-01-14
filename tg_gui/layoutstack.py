@@ -47,7 +47,6 @@ class _LayoutStack(Container):
 
     @property
     def _reserve_space_(self):
-        print(self, self._widgets)
         return any(wid._reserve_space_ for wid in self._nested_)
 
     def __init__(self, *widgets: Widget, **kwargs):
