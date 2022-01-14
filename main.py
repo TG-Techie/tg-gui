@@ -29,7 +29,7 @@ class Test(View):
         {
             Label: {
                 Label.size: 2,
-                Label.fill: color.system_fill,
+                Label.foreground: color.system_foreground,
             },
             Date: {Date.foreground: color.white},
         }

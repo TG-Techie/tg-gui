@@ -162,11 +162,13 @@ class _BuildProxy(Generic[_W]):
             )
 
         else:
+            # TODO: formalize this?
             print(
                 f"fallthrough: `{widget}.{name}` featched by {self} with value "
                 + f"{instattr} (clsattr={clsattr} w/ obj as missing)"
             )
-            assert False, "unreachable"
+            returnvalue = instattr
+            # assert False, "unreachable"
 
         # cache and return
         assert name not in cache
@@ -297,6 +299,7 @@ class WidgetBuilder(Generic[_C, _W]):
         # inject self as the global self variable
         scope["self"] = declared_proxy
         scope["app"] = app_proxy
+
         widget = self._fn()
 
         # retsore the self object if it was set and unlock self
