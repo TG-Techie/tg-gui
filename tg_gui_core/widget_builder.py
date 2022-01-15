@@ -124,11 +124,15 @@ class ForwardMethodCall:
 
 class _BuildProxy(Generic[_W]):
     def __init__(self, proxied: _W, _debug: str | None = None) -> None:
-        self._widget: _W = proxied
-        self._cache: dict[str, Any] = {}
-        self._debug: str = _debug or ""
+        self._id_ = uid()
+        self._proxied: _W = proxied
+        self._cache: dict[str | Widget | Type[Widget], Any] = {}
+        self._debug = repr(" debug:" + _debug) if _debug and __debug__ else ""
 
-    def close_build(self):
+    def __repr__(self):
+        return f"<{type(self).__name__}: {self._id_}{self._debug}>"
+
+    def _close_build_(self):
         # close any build objects
         for buildattr in self._cache.values():
             if hasattr(buildattr, "_close_build_"):
@@ -138,10 +142,10 @@ class _BuildProxy(Generic[_W]):
 
     def __getattr__(self, name: str) -> Any:
 
-        widget = self._widget
+        proxied = self._proxied
         cache = self._cache
 
-        ownercls = type(widget)
+        ownercls = type(proxied)
 
         if name in cache:
             return cache[name]
@@ -151,12 +155,12 @@ class _BuildProxy(Generic[_W]):
         if isinstance(clsattr, State):
             return clsattr
 
-        instattr = getattr(widget, name, _MISSING)
+        instattr = getattr(proxied, name, _MISSING)
 
         if isinstance(instattr, MethodType):
             assert isinstance(
                 clsattr, FunctionType
-            ), f"{self} w/ owner {widget} of type {ownercls} conflicitng types for bound method and cls attribute"
+            ), f"{self} w/ owner {proxied} of type {ownercls} conflicitng types for bound method and cls attribute"
             returnvalue = ForwardMethodCall(
                 instattr, clsattr, attrname=name, clsname=ownercls.__name__
             )
@@ -164,7 +168,7 @@ class _BuildProxy(Generic[_W]):
         else:
             # TODO: formalize this?
             print(
-                f"fallthrough: `{widget}.{name}` featched by {self} with value "
+                f"fallthrough: `{proxied}.{name}` featched by {self} with value "
                 + f"{instattr} (clsattr={clsattr} w/ obj as missing)"
             )
             returnvalue = instattr
@@ -305,8 +309,8 @@ class WidgetBuilder(Generic[_C, _W]):
         if existsing_app is not _MISSING:
             scope["app"] = existsing_app
 
-        declared_proxy.close_build()
-        app_proxy.close_build()
+        declared_proxy._close_build_()
+        app_proxy._close_build_()
 
         del declared_proxy
         del app_proxy
