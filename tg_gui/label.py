@@ -26,7 +26,6 @@ from tg_gui_core import (
     State,
     Color,
     StyledWidget,
-    themedwidget,
     align,
     color,
     # Specifier,
@@ -40,7 +39,6 @@ from typing import Union
 
 
 @_label_impl.format_class
-@themedwidget
 class Label(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True

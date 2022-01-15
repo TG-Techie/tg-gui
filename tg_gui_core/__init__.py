@@ -85,7 +85,7 @@ from .base import uid, UID, _Screen_
 from .root_widget import Root
 from .widget_builder import Declarable
 from .styled_widget import StyledWidget, align, Color, color
-from .theming import Theme, themedwidget
+from .theming import Theme, ThemedWidget
 
 if TYPE_CHECKING:
     from typing import Any

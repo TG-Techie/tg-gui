@@ -60,10 +60,6 @@ def _widget_builder_cls_format(cls: Type[Container]) -> Type[Container]:
         else:
             pass
 
-        # circuitpython does not support __set_name__, so add it in manually
-        if isoncircuitpython() and builder is not None and builder.name is None:
-            builder.__set_name__(name, cls)
-
     return cls
 
 

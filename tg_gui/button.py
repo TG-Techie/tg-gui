@@ -26,7 +26,6 @@ from tg_gui_core import (
     # Specifier,
     color,
     StyledWidget,
-    themedwidget,
     DimensionSpecifier,
     ratio,
     width,
@@ -42,7 +41,6 @@ if TYPE_CHECKING:
 
 
 @_button_impl.format_class
-@themedwidget
 class Button(StyledWidget):
     _offer_priority_ = 0
     _reserve_space_ = True

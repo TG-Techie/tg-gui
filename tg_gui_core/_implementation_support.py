@@ -69,3 +69,6 @@ else:
         + "please open an issue at https://github.com/TG-Techie/tg-gui/issues/new?"
         + "title=unsupported%20python%20implementation%3A%20{sys.implementation.name}"
     )
+
+if __debug__:
+    cls_unique_id = lambda cls: f"(:{cls.__module__}.{cls.__name__})"
