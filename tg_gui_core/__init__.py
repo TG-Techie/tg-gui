@@ -87,15 +87,8 @@ from .widget_builder import Declarable
 from .styled_widget import StyledWidget, align, Color, color
 from .theming import Theme, themedwidget
 
-<<<<<<< Updated upstream
 if TYPE_CHECKING:
     from typing import Any
-=======
-if TYPE_CHECKING or __debug__:
-    from ._shared import use_step_print_debugging
-
-# from .style import Style, DerivedStyle
->>>>>>> Stashed changes
 
     class _SelfStub:
         def __getattr__(self) -> Any:
