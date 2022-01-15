@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+import sys
 
 from ._implementation_support import *
 from .position_specifiers import *
@@ -313,20 +314,21 @@ class Widget:  # type: ignore
 
     # circuitpython does not support __init_subclass__, so we run the gui_class format
     # when the first instance of the class is created when on circuitpython
-    if isoncpython() or TYPE_CHECKING:
-
-        def __init_subclass__(cls, *args, **kwargs):
-            super().__init_subclass__(*args, **kwargs)
-            if not cls._is_subclass_formatted():
-                cls._format_subclass_on_init()
-
-    else:
+    if isoncircuitpython() and not TYPE_CHECKING:
 
         def __new__(cls, *args, **kwargs):
 
             if not cls._is_subclass_formatted():
                 cls._format_subclass_on_init()
             return object.__new__(cls)
+
+    else:
+
+        def __init_subclass__(cls, *args, **kwargs):
+            assert not isoncircuitpython()
+            super().__init_subclass__(*args, **kwargs)
+            if not cls._is_subclass_formatted():
+                cls._format_subclass_on_init()
 
     @classmethod
     def _subclass_format_(cls: Type[Widget], subcls: Type[Widget]) -> None:
@@ -360,12 +362,17 @@ class Widget:  # type: ignore
         order = []
         curcls: Type[Widget] | Type[object] = cls
         while curcls is not object:
+            if (curcls is not cls) and (not curcls._is_subclass_formatted()):
+                curcls._format_subclass_on_init()
+
             if "_subclass_format_" in curcls.__dict__:
                 order.append(curcls)
             curcls = curcls.__bases__[0]
         else:
             for basecls in reversed(order):
                 basecls._subclass_format_(cls)
+
+        # print(f"{cls}._format_subclass_on_init()")
 
         assert cls._is_subclass_formatted(), f"{cls} failed to subclass formatting"
 

@@ -181,15 +181,39 @@ class Theme(dict):
 # TODO: convert BuildAttr, StyledAttr into a WidgetAttr base and
 # # move this bahavior into the Widget base class
 
+# this could also open the door for attr = EviromentAttr(...) which
+# would bind that attr to the same object in the enviroment (a but like themes...)
+
 
 class ThemedWidget(Widget):
-    _build_attrs_: ClassVar[set[str]] = set()
-    _style_attrs_: ClassVar[set[str]] = set()
+    _build_attrs_: ClassVar[set[str]] = frozenset()
+    _style_attrs_: ClassVar[set[str]] = frozenset()
+
+    _themed_attrs_: Dict[str, Any] = {}
+
+    def __init__(
+        self,
+        # style=None,
+        _margin_: int = None,
+        **kwargs,
+    ):
+
+        super().__init__(_margin_=_margin_)
+
+        # input validation
+        if len(extra := set(kwargs) - (self._build_attrs_ | self._style_attrs_)):
+            raise TypeError(
+                f"{type(self).__name__}(...) got unexpected style attrs {extra}"
+            )
+
+        self._themed_attrs_ = kwargs
 
     @classmethod
     def _subclass_format_(cls: Type[ThemedWidget], subcls: Type[ThemedWidget]):
         build_attrs = set()
         style_attrs = set()
+
+        # print(f"{cls}._subclass_format_({subcls})")
 
         for name, attr in subcls.__dict__.items():
             if isinstance(attr, BuildAttr):

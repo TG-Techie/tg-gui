@@ -102,26 +102,11 @@ class StyledWidget(ThemedWidget):
     _impl_apply_style_: ClassVar[Callable]  # type: ignore
     _impl_cache_: Any  # a standardized place to store extra info for implemnetation
 
-    def __init__(
-        self,
-        # style=None,
-        _margin_: int = None,
-        **kwargs,
-    ):
-
-        # input validation
-        given = set(kwargs)
-        allowed = self._build_attrs_ | self._style_attrs_
-        if len(extra := given - allowed):
-            raise TypeError(
-                f"{type(self).__name__}(...) got unexpected style attrs {extra}"
-            )
-
-        self._themed_attrs_ = kwargs
+    def __init__(self, **kwargs):
 
         self._impl_cache_ = None
 
-        super().__init__(_margin_=_margin_)
+        super().__init__(**kwargs)
 
     def _build_(self, dim_spec):
 
