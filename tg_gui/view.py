@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 
-from tg_gui_core import center, declarable, Widget
+from tg_gui_core import center, Widget
 from tg_gui_core.layout import Layout
 from tg_gui_core.widget_builder import WidgetBuilder, _widget_builder_cls_format
 
@@ -33,22 +33,10 @@ if TYPE_CHECKING:
     from typing import *
 
 
-@declarable
 class View(Layout):
 
     body: ClassVar[Callable[[], Widget]]
 
-    def __new__(cls, *args, **kwargs):
-        assert (
-            cls is not View
-        ), f"View is an abstract class, {cls} cannot be instantiated"
-        assert hasattr(cls, "body"), "View must have a body widget builder"
-
-        # TODO: make this a better check
-        if not isinstance(cls.body, WidgetBuilder):
-            _widget_builder_cls_format(cls)
-
-        return super().__new__(cls)
-
     def _layout_(self):
-        self.body(center, self.dims)
+        print("<^1>", self)
+        body = self.body(center, self.dims)

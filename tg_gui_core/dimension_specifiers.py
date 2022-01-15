@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from ._platform_support import enum_compat, use_typing
+from ._implementation_support import enum_compat, use_typing
 from enum import Enum, auto
 
 from typing import TYPE_CHECKING, Union

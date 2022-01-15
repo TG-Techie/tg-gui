@@ -22,12 +22,12 @@
 
 from __future__ import annotations
 
-from ._platform_support import isoncpython, isoncircuitpython, use_typing
+from ._implementation_support import isoncpython, isoncircuitpython, use_typing
 from .base import uid, UID, Widget, _MISSING
-from .container import Container, declarable
+from .container import Container
 from .stateful import State
 
-from .widget_builder import WidgetBuilder, _widget_builder_cls_format
+from .widget_builder import WidgetBuilder, Declarable
 
 
 # from tg_gui_core.container import self as self_attrspec_cnstr
@@ -55,92 +55,13 @@ class LayoutError(RuntimeError):
     pass
 
 
-if TYPE_CHECKING:
-    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
-    # DO NOT add typing annotations or doc strings to this function.
-    def layoutwidget(cls):
-        cls
-
-else:
-
-    def layoutwidget(cls):
-        """
-        This decorator is used to pre-process layout class bodies.
-        this looks for sugary widget builders (raw `my_builder = lambda: Widget(...)`, etc)
-        and wraps them in WidgetBuilder objects.
-        """
-        assert isinstance(cls, type), f"@layoutwidget must decorator a class, got {cls}"
-        assert issubclass(cls, Layout), f"@layoutwidget({cls}) does not subclass Layout"
-
-        # TODO: add check for decoration back in
-
-        cls_layout = cls._layout_
-        assert (
-            cls_layout is not Layout._layout_
-        ), f"subclasses of {Layout} must define a ._layout_(...) method, {cls} does not"
-
-        if isinstance(cls_layout, FunctionType):
-            cls._layout_ = cls_layout = LayoutMethod(cls._layout_)
-
-        assert isinstance(
-            cls_layout, LayoutMethod
-        ), f"{cls}._layout_ must be a LayoutMethod, found {cls_layout}"
-
-        _widget_builder_cls_format(cls)
-
-        return cls
-
-
-class LayoutMethod:
-    def __init__(self, fn: Callable[[Layout], None]):
-        self._fn = fn
-
-    def __get__(self, owner: Layout | None, owner_type: Type[Layout]):
-        if owner is None:
-            return self
-        return lambda *, __owner=owner: self.layout(__owner)
-
-    def layout(self, widget: Layout) -> None:
-        proxy = _LayoutProxy(widget)
-        self._fn(proxy)
-        proxy.close_layout()
-        del proxy
-
-
-@declarable
-class Layout(Container):
-    def _build_(self, dim_spec):
-        super(Container, self)._build_(dim_spec)
-        self._screen_.on_container_build(self)  # platform tie-in
-
-    def _layout_(self):
-        raise NotImplementedError(
-            f"{type(self)} does not implement the ._layout_(...) method"
-        )
-
-    def _build_(self, dim_spec) -> None:
-        super(Container, self)._build_(dim_spec)
-        self._screen_.on_container_build(self)
-
-    def _place_(self, pos_spec):
-        super(Container, self)._place_(pos_spec)
-        self._layout_()
-
-        self._screen_.on_container_place(self)
-
-    def _show_(self):
-        super(Container, self)._show_()
-        for widget in self._nested_:
-            widget._show_()
-
-
 class _LayoutProxy(Generic[_L]):
 
     _not_present_sentinel = object()
 
     __slots__ = (
         "_id_",
-        "_widget",
+        "_proxied",
         "_selected",
         "_cache",
     )
@@ -148,38 +69,94 @@ class _LayoutProxy(Generic[_L]):
     def __init__(self, proxied: _L) -> None:
         # TODO(TG-Techie): comment this! It works but it's not clear how/why things work
         self._id_: UID = uid()
-        self._widget = proxied
+        self._proxied = proxied
         self._selected: Any | None = None
         self._cache: dict[str, Widget] = {}
 
     def __repr__(self) -> str:
         seldbg = "" if self._selected is None else f".{self._selected}"
-        return f"<{type(self).__name__}: {self._id_} {self._widget}{seldbg}>"
+        return f"<{type(self).__name__}: {self._id_} {self._proxied}{seldbg}>"
 
     def __getattr__(self, name: str) -> Any:
 
-        widget = self._widget
+        proxied = self._proxied
+        selected = self._selected
         cache = self._cache
 
-        # TODO: add error and debug to this. use self._selected to track if the widget was layouted or not.
+        # print(
+        #     f"%> .{name}: ", self, proxied, selected, set(cache) if len(cache) else "{}"
+        # )
 
-        if name not in cache:
-
-            clsattr = getattr(type(widget), name, _MISSING)
-            if not isinstance(clsattr, WidgetBuilder):
-                return getattr(widget, name)
-
-            else:
-                built = clsattr.build(widget)
-                return lambda pos, dim, *, __built=built, __wid=widget: (
-                    print(pos, dim),
-                    __wid._nest_(__built),
-                    __built._build_(dim),
-                    __built._place_(pos),
-                    __built,
-                )[-1]
-        else:
+        if selected is None and name in cache:
+            # print("%> none selected, cache hit")
             return cache[name]
+        elif selected is None:
+            clsattr = getattr(type(proxied), name, _MISSING)
+            # print(
+            #     "%> none selected, cache miss",
+            #     clsattr,
+            #     isinstance(clsattr, WidgetBuilder),
+            # )
+            if isinstance(clsattr, WidgetBuilder):
+                self._selected = selected = name
+                return self
+            else:
+                attr = cache[name] = getattr((proxied), name)
+                return attr
+        elif selected == name:
+            # print("%> selected, cache miss")
+            raise LayoutError(
+                f"error laying out {self._proxied}. "
+                + f"`self.{selected}` is already selected, cannot select `self.{name}` again. "
+                + f"ie call `self.{selected}(<pos>, <dims>)` before using `self.{name}` without calling it"
+            )
+        elif name in cache:
+            # print(f"%> selected .{selected} but getting .{name} cache hit")
+            return cache[name]
+        elif selected != name:
+            clsattr = getattr(type(proxied), name, _MISSING)
+            if isinstance(clsattr, WidgetBuilder):
+                raise LayoutError(
+                    f"error laying out {self._widget}. "
+                    + f"`self.{selected}` is already selected, cannot select "
+                    + f"`self.{name}` before calling `self.{selected}(<pos>, <dims>)`. "
+                )
+            else:
+                attr = cache[name] = getattr((proxied), name)
+                return attr
+        else:
+            assert False, "unreachable"
+            raise RuntimeError(f"unreachable?")
+
+    def __call__(self, pos: PosSpec, dims: DimSpec) -> Widget:
+        assert self._selected is not None, (
+            f"error laying out {self._widget}. "
+            + f"either the invalid syntax `self()` was used or "
+            + f"`self.{self._selected}` was not selected before first. "
+        )
+
+        proxied = self._proxied
+        selected = self._selected
+        cache = self._cache
+
+        assert selected not in cache, (
+            f"error laying out {self._proxied}. "
+            + f"`self.{selected})(...)` callbed but already in cache. as {cache[selected]}"
+        )
+
+        budiler = getattr(type(proxied), selected)
+        assert isinstance(budiler, WidgetBuilder), (
+            f"error laying out {self._proxied}. " + f"{budiler} is not a WidgetBuilder"
+        )
+        widget = budiler.build(proxied)
+        proxied._nest_(widget)
+        widget._build_(dims)
+        widget._place_(pos)
+
+        cache[selected] = widget
+        self._selected = None
+
+        return widget
 
     def close_layout(self):
 
@@ -202,3 +179,66 @@ class _LayoutProxy(Generic[_L]):
                     f"cannot set attributes inside of ._layout_(...) methods, tried to assign to `{self._widget}.{name}`"
                 )
             super().__setattr__(name, value)
+
+
+class LayoutMethod:
+    def __init__(self, fn: Callable[[Layout], None]):
+        self._fn = fn
+
+    def __get__(self, owner: Layout | None, owner_type: Type[Layout]):
+        if owner is None:
+            return self
+        return lambda *, __owner=owner: self.layout(__owner)
+
+    def layout(self, widget: Layout) -> None:
+        proxy = _LayoutProxy(widget)
+        self._fn(proxy)
+        proxy.close_layout()
+        del proxy
+
+
+class Layout(Declarable):
+    def _build_(self, dim_spec):
+        super(Container, self)._build_(dim_spec)
+        self._screen_.on_container_build(self)  # platform tie-in
+
+    @classmethod
+    def _layout_(cls):
+        f"{cls} does not implement the ._layout_(...) method, subclasses of Layout must implement this method."
+
+    def _build_(self, dim_spec) -> None:
+        super(Container, self)._build_(dim_spec)
+        self._screen_.on_container_build(self)
+
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+        self._layout_()
+
+        self._screen_.on_container_place(self)
+
+    def _show_(self):
+        super(Container, self)._show_()
+        for widget in self._nested_:
+            widget._show_()
+
+    @classmethod
+    def _subclass_format_(cls, subcls) -> None:
+        """
+        This is called when Layout is subclassed subclasses
+        """
+        global __name__
+
+        # skip formatting Layout
+        if cls is subcls:
+            return
+
+        assert (
+            subcls._layout_ is not Layout._layout_
+        ), f"subclasses of {Layout} must define a ._layout_(...) method, {subcls} does not"
+
+        if isinstance(subcls._layout_, FunctionType):
+            subcls._layout_ = LayoutMethod(subcls._layout_)
+
+        assert isinstance(
+            subcls._layout_, LayoutMethod
+        ), f"{subcls}._layout_ must be a LayoutMethod, found {subcls._layout_}"

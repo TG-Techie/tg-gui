@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from ._platform_support import isoncpython, isoncircuitpython
+from ._implementation_support import isoncpython, isoncircuitpython
 from .base import UID, uid, Widget, _MISSING
 from .container import Container
 from .stateful import State
@@ -34,7 +34,7 @@ _W = TypeVar("_W", bound=Widget)
 _C = TypeVar("_C", bound=Container)
 
 if TYPE_CHECKING:
-    from typing import Callable, Type, Any
+    from typing import Callable, Type, Any, ClassVar
 
     from .position_specifiers import PosSpec
     from .dimension_specifiers import DimSpec
@@ -282,9 +282,6 @@ class WidgetBuilder(Generic[_C, _W]):
         return lambda *, __build=self.build, __owner=owner: __build(__owner)
 
     def build(self, owner: _C) -> _W:
-        """
-        This is called when the descriptor is accessed.
-        """
 
         # get the proxy objects for the build process to use
         # however, if the owner has them cached, use thos isead of making new proxies
@@ -315,3 +312,11 @@ class WidgetBuilder(Generic[_C, _W]):
         del app_proxy
 
         return widget
+
+
+class Declarable(Container):
+    _declarable_: ClassVar[bool] = True
+
+    @classmethod
+    def _subclass_format_(cls: Type[Declarable], subcls: Type[Declarable]) -> str:
+        _widget_builder_cls_format(subcls)

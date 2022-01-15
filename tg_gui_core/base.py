@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 
-from ._platform_support import *
+from ._implementation_support import *
 from .position_specifiers import *
 from .dimension_specifiers import *
 
@@ -281,10 +281,12 @@ class _Screen_:
 
 
 class Widget:  # type: ignore
-    _id_: UID
 
     _superior_: Container
     _native_: Any
+    _screen_: InheritedAttribute[_Screen_, None] = InheritedAttribute("_screen_", None)
+
+    _id_: UID
 
     _size_: tuple[int, int]
     _phys_size_: tuple[int, int]
@@ -296,8 +298,65 @@ class Widget:  # type: ignore
     # --- class flags ---
     _is_app_: ClassVar[bool] | bool = False
 
-    # --- class attr and future work ---
-    _screen_: InheritedAttribute[_Screen_, None] = InheritedAttribute("_screen_", None)
+    # --- class format ---
+    # use to identify if the class has been formatted
+    # cannot use the class name as a tag because it is not unique and
+    # the id or hash of the class cannot be used b/c circuitpython can, occasionally,
+    # change the class's id (ie move it in memory)
+    _subcls_gui_id_: ClassVar[int] = 0
+    _subcls_formatters_: ClassVar[staticmethod[Callable[[Type[Widget]], None]]] = ()
+
+    # circuitpython does not support __init_subclass__, so we run the gui_class format
+    # when the first instance of the class is created when on circuitpython
+    if isoncpython() or TYPE_CHECKING:
+
+        def __init_subclass__(cls, *args, **kwargs):
+            super().__init_subclass__(*args, **kwargs)
+            if not cls._is_subclass_formatted():
+                cls._format_subclass_on_init()
+
+    else:
+
+        def __new__(cls, *args, **kwargs):
+
+            if not cls._is_subclass_formatted():
+                cls._fmt_on_subclass_init_(expected_id)
+            return object.__new__(cls)
+
+    @classmethod
+    def _subclass_format_(cls: Type[Widget], subcls: Type[Widget]) -> None:
+        subcls_id = cls_unique_id(subcls)
+
+        assert (
+            subcls._subcls_gui_id_ != subcls_id
+        ), f"{subcls} already subclass formatted with id {subcls._subcls_gui_id_}"
+
+        subcls._subcls_gui_id_ = subcls_id
+
+    @classmethod
+    def _is_subclass_formatted(cls) -> bool:
+        return cls._subcls_gui_id_ == cls_unique_id(cls)
+
+    @classmethod
+    def _format_subclass_on_init(cls: Type[Widget]) -> Type[Widget]:
+        assert not cls._is_subclass_formatted(), f"{cls} already had its gui_id set"
+
+        assert (
+            len(cls.__bases__) == 1
+        ), f"{cls} must have exactly one super class, found {(cls.__bases__)}"
+        # starting with widget climb down then up the class hierarchy can apply the _subclass_format_ attribubtes
+
+        order = []
+        curcls: Type[Widget] | Type[object] = cls
+        while curcls is not object:
+            if "_subclass_format_" in curcls.__dict__:
+                order.append(curcls)
+            curcls = curcls.__base__
+        else:
+            for basecls in reversed(order):
+                basecls._subclass_format_(cls)
+
+        assert cls._is_subclass_formatted(), f"{cls} failed to subclass formatting"
 
     # --- body ---
     def __init__(self, *, _margin_: None | int = None):
@@ -535,3 +594,7 @@ class Widget:  # type: ignore
         self, *, indent="    ", fn: Callable[["Widget"], Any] = lambda _: "", _level=0
     ):
         print(indent * _level, self, fn(self))
+
+
+Widget._format_subclass_on_init()
+print(f"{Widget._subcls_gui_id_=}")

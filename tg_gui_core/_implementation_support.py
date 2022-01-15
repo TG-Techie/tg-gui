@@ -31,6 +31,12 @@ def enum_compat(cls):
 
 # --- platform optimization ---
 if sys.implementation.name == "circuitpython":
+    if sys.implementation.version < (7, 2):
+        raise RuntimeError(
+            "CircuitPython version 7.2.0 or higher is required. "
+            + f"running on {'.'.join(sys.implementation.version)}"
+        )
+
     from . import _cpython_bypass
 
     sys.modules["typing"] = _cpython_bypass  # type: ignore
@@ -44,6 +50,9 @@ if sys.implementation.name == "circuitpython":
     isoncpython = lambda: False
     enum_compat = _cpython_bypass.enum_compat
 
+    # cls_unique_id = lambda cls: hash(f":{cls.__module__}.{cls.__name__}")
+    cls_unique_id = lambda cls: (f":{cls.__module__}.{cls.__name__}")
+
 elif sys.implementation.name == "cpython":
     from sys import exit as guiexit
 
@@ -53,9 +62,13 @@ elif sys.implementation.name == "cpython":
     enum_compat = lambda cls: cls
 
     from types import FunctionType, MethodType
+
+    cls_unique_id = id
 else:
     raise Exception(
         f"unsupported python implementation: {sys.implementation.name}, "
         + "please open an issue at https://github.com/TG-Techie/tg-gui/issues/new?"
         + "title=unsupported%20python%20implementation%3A%20{sys.implementation.name}"
     )
+
+cls_unique_id = lambda cls: (f":{cls.__module__}.{cls.__name__}")

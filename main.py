@@ -11,6 +11,7 @@ if sys.implementation.name in {"circuitpython", "micropython"}:
 
 from tg_gui.prelude import *
 
+
 # from tg_gui_core._step_print_debugging_ import use_step_print_debugging
 
 # use_step_print_debugging(True)
@@ -22,7 +23,6 @@ if isoncircuitpython():
 
 @main(screen := default.screen())
 @application
-@layoutwidget
 class Test(View):
 
     _theme_ = Theme(

@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from ._platform_support import use_typing
+from ._implementation_support import use_typing
 
 from typing import TYPE_CHECKING, Union
 
