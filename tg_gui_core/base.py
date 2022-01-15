@@ -295,6 +295,11 @@ class Widget:  # type: ignore
     _rel_coord_: tuple[int, int]
     _phys_coord_: tuple[int, int]
 
+    # properties for laying out widgets which describe how space should be allocated
+    _offer_priority_ = 0
+    _reserve_space_ = True
+    _self_sizing_ = False
+
     # --- class flags ---
     _is_app_: ClassVar[bool] | bool = False
 
@@ -332,6 +337,12 @@ class Widget:  # type: ignore
         ), f"{subcls} already subclass formatted with id {subcls._subcls_gui_id_}"
 
         subcls._subcls_gui_id_ = subcls_id
+
+        # circuitpython does not support __set_name__, so we add it manually
+        if isoncircuitpython():
+            for name, attr in subcls.__dict__.items():
+                if hasattr(attr, "__set_name__"):
+                    attr.__set_name__(subcls, name)
 
     @classmethod
     def _is_subclass_formatted(cls) -> bool:

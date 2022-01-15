@@ -47,56 +47,6 @@ class ResolutionError(Exception):
     pass
 
 
-if TYPE_CHECKING:
-
-    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
-    # DO NOT add typing annotations or doc strings to this function.
-    def themedwidget(cls):
-        return cls
-
-else:
-
-    def themedwidget(cls: Type[StyledWidget]):
-        build_attrs = None
-        style_attrs = None
-
-        for name in dir(cls):  # scan by name
-            attr = getattr(cls, name)
-
-            # skip not themed
-            if name.startswith("_") or not isinstance(attr, ThemedAttribute):
-                continue
-            assert isinstance(attr, ThemedAttribute), f"found {attr}"
-
-            # circuitpython does not have __set_name__, so add it
-            if isoncircuitpython() and attr.name is None:
-                attr.__set_name__(cls, name)
-
-            # only add a new set of the attr names if there is a new build or style attr
-            if attr.stylecls is cls:
-                if attr.isbuildattr:
-                    if build_attrs is None:
-                        build_attrs = set(cls._build_attrs_)
-                    build_attrs.add(attr.name)
-                else:
-                    if style_attrs is None:
-                        style_attrs = set(cls._style_attrs_)
-                    style_attrs.add(attr.name)
-        else:
-            # circuitpython does not support type.mro(), so we make an explicit list
-            # TODO: this mey be neede for later `cls._stylecls_mro_ = (cls,) + cls._stylecls_mro_`
-
-            if build_attrs is not None:
-                cls._build_attrs_ = frozenset(build_attrs)
-            if style_attrs is not None:
-                cls._style_attrs_ = frozenset(style_attrs)
-
-            # register the class as required
-            Theme._themed_widget_types_.add(cls)
-
-        return cls
-
-
 class ThemedAttribute(Generic[T]):
     isbuildattr: ClassVar[bool]
 
@@ -164,19 +114,17 @@ class ThemedAttribute(Generic[T]):
                 continue
 
             # TODO: this may be needed for later `for cls in widget._stylecls_mro_`:
-            for cls in type(widget).__bases__:
+            curcls: Type[Widget] | Type[object] = type(widget)
+            while curcls is not object:
                 # print((spec := theme.get(cls, False)), spec)\
-                spec = theme.get(cls, None)
+                spec = theme.get(curcls, None)
                 if spec is not None and self in spec:
                     return spec[self]
+                curcls = curcls.__bases__[0]
             else:
                 continue
         else:
             return self.default
-
-        # raise ResolutionError(
-        #     f"unable to resolve .{name} style attribute for {widget} (reached {superior})"
-        # )
 
     def __repr__(self) -> str:
 
@@ -228,3 +176,37 @@ class Theme(dict):
     def __repr__(self) -> str:
         dbg = f" {repr(self._debug_name_)}" if self._debug_name_ else ""
         return f"<{type(self).__name__}: {self._id_}{dbg}>"
+
+
+# TODO: convert BuildAttr, StyledAttr into a WidgetAttr base and
+# # move this bahavior into the Widget base class
+
+
+class ThemedWidget(Widget):
+    _build_attrs_: ClassVar[set[str]] = set()
+    _style_attrs_: ClassVar[set[str]] = set()
+
+    @classmethod
+    def _subclass_format_(cls: Type[ThemedWidget], subcls: Type[ThemedWidget]):
+        build_attrs = set()
+        style_attrs = set()
+
+        for name, attr in subcls.__dict__.items():
+            if isinstance(attr, BuildAttr):
+                assert (
+                    attr.name is not None
+                ), f"{attr} has no name (__set_name__ not called?)"
+                build_attrs.add(name)
+            elif isinstance(attr, StyledAttr):
+                assert (
+                    attr.name is not None
+                ), f"{attr} has no name (__set_name__ not called?)"
+                style_attrs.add(name)
+            else:
+                pass
+        else:
+            if len(build_attrs):
+                subcls._build_attrs_ = frozenset(build_attrs | subcls._build_attrs_)
+            if len(style_attrs):
+                subcls._style_attrs_ = frozenset(style_attrs | subcls._style_attrs_)
+        return subcls

@@ -29,7 +29,7 @@ from .stateful import State
 # from .specifiers import specify, Specifier
 
 # from .style import Style, DerivedStyle
-from .theming import Theme, themedwidget
+from .theming import Theme, ThemedWidget
 
 from enum import Enum, auto
 from typing import TYPE_CHECKING
@@ -85,18 +85,11 @@ class color(Color):
 
 # --- THE style widget base ---
 
-Widget._offer_priority_ = 0
-Widget._reserve_space_ = True
-Widget._self_sizing_ = False
 
-
-@themedwidget
-class StyledWidget(Widget):
+class StyledWidget(ThemedWidget):
 
     # --- themeing ---
-    # these are injected by @themedwidget
-    _build_attrs_: ClassVar[set[str]] = set()
-    _style_attrs_: ClassVar[set[str]] = set()
+    # these are injected by
 
     # --- layout ---
     # these are defined in subclasses of StyledWidget, they can be
@@ -109,11 +102,6 @@ class StyledWidget(Widget):
     _impl_apply_style_: ClassVar[Callable]  # type: ignore
     _impl_cache_: Any  # a standardized place to store extra info for implemnetation
 
-    # --- themed attribure resoution linking ---
-    # circuitpython does not have .mro() so @themedwidget() injects a link to the previous
-    # TODO: see if .__bases__ can be used instead of this hack
-    # TODO: this may be needed for later `_stylecls_mro_: tuple[Type[StyledWidget], ...] = ()`
-
     def __init__(
         self,
         # style=None,
@@ -125,7 +113,9 @@ class StyledWidget(Widget):
         given = set(kwargs)
         allowed = self._build_attrs_ | self._style_attrs_
         if len(extra := given - allowed):
-            raise TypeError(f"{type(self).__name__} got unexpected style attrs {extra}")
+            raise TypeError(
+                f"{type(self).__name__}(...) got unexpected style attrs {extra}"
+            )
 
         self._themed_attrs_ = kwargs
 
@@ -224,71 +214,3 @@ class StyledWidget(Widget):
                     + f"\n  File {repr(frame.f_code.co_filename)}, line {frame.f_lineno}"
                 )
                 raise TypeError(msg) from err
-
-    # def _apply_style_handler(self, style=None):
-
-    #     attrs = {
-    #         name: getattr(self, name)
-    #         for name in self._all_style_attr_names_
-    #         if self._allows_themed_stateful_attr_(name)
-    #     }
-
-    #     self._impl_apply_style_(self._native_, **attrs)
-
-
-# def themedwidget(widcls: "Type['Widget']") -> "Type['Widget']":
-
-#     assert issubclass(
-#         widcls, StyledWidget
-#     ), f"{widcls} does not subclass {StyledWidget}, cannot use @themedwidget on non-styled widget"
-
-#     buildattrs = widcls._build_style_attrs_
-#     statefulattrs = widcls._stateful_style_attrs_
-
-#     assert buildattrs not in (
-#         matched_build_conflict := cls
-#         if (buildattrs is cls._build_style_attrs_)
-#         else False
-#         for cls in Theme._required_
-#     ), (
-#         f"{widcls} missing the ._build_style_attrs_ class attribute, "
-#         + "@themedwidget classes require ._build_style_attrs_ attrs spec. "
-#         + f"(ie found a dict that belongs to {matched_build_conflict})"
-#     )
-
-#     assert not any(
-#         matched_stateful_conflict_dicts := (
-#             cls if (statefulattrs is cls._stateful_style_attrs_) else False
-#             for cls in Theme._required_
-#         )
-#     ), (
-#         f"{widcls} missing the ._stateful_style_attrs_ class attribute, "
-#         + "@themedwidget classes require ._stateful_style_attrs_  attrs spec. "
-#         + f"(ie found a dict that belonges to {matched_stateful_conflict_dicts})"
-#     )
-
-#     assert (
-#         len(
-#             overlap := set(widcls._build_style_attrs_)
-#             & set(widcls._stateful_style_attrs_)
-#         )
-#         == 0
-#     ), f"overlapping build and stateful style attributes {overlap} in {widcls}"
-
-#     for attr, allowed in buildattrs.items():
-#         setattr(widcls, attr, ThemedAttribute(attr, False, widcls, allowed))
-
-#     for attr, allowed in statefulattrs.items():
-#         setattr(widcls, attr, ThemedAttribute(attr, True, widcls, allowed))
-
-#     Theme._required_.add(widcls)
-
-#     widcls._all_style_attr_names_ = {
-#         attr
-#         for attr in dir(widcls)
-#         if isinstance(getattr(widcls, attr, None), ThemedAttribute)
-#     }
-
-#     return widcls
-
-# setup base internal state

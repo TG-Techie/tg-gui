@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from tg_gui_core import State, DerivedState, uid, themedwidget, _Screen_
+from tg_gui_core import State, DerivedState, uid, _Screen_
 from .label import Label
 
 from tg_gui_core import isoncircuitpython
@@ -75,7 +75,6 @@ _24TO12HOUR =  (
 # fmt: on
 
 
-@themedwidget
 class Date(Label):
 
     # _default_styling_ = {}
