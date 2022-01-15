@@ -320,7 +320,7 @@ class Widget:  # type: ignore
         def __new__(cls, *args, **kwargs):
 
             if not cls._is_subclass_formatted():
-                cls._fmt_on_subclass_init_(expected_id)
+                cls._format_subclass_on_init()
             return object.__new__(cls)
 
     @classmethod
@@ -351,7 +351,7 @@ class Widget:  # type: ignore
         while curcls is not object:
             if "_subclass_format_" in curcls.__dict__:
                 order.append(curcls)
-            curcls = curcls.__base__
+            curcls = curcls.__bases__[0]
         else:
             for basecls in reversed(order):
                 basecls._subclass_format_(cls)
