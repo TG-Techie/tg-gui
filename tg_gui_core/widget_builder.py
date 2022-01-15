@@ -130,7 +130,7 @@ class _BuildProxy(Generic[_W]):
         self._debug = repr(" debug:" + _debug) if _debug and __debug__ else ""
 
     def __repr__(self):
-        return f"<{type(self).__name__}: {self._id_}{self._debug}>"
+        return f"<{type(self).__name__}: {self._id_} {self._proxied} {self._debug}>"
 
     def _close_build_(self):
         # close any build objects
