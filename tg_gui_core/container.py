@@ -31,42 +31,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Callable, Type, ClassVar
-    from .theming import ThemeDict
-
-
-if TYPE_CHECKING:
-    # this function is a no-op for typing transparancy when using mypy but is overwritten below.
-    # DO NOT add typing annotations or doc strings to this function.
-    def declarable(cls):
-        return cls
-
-else:
-
-    def declarable(cls: Type["Widget"]) -> Type["Widget"]:
-        """
-        dcecorator to mark that a contianer is declarable (like layout or Pages).
-        this is used for attr_specs to finf the referenced self in `self.blah`
-        """
-        assert isinstance(cls, type), f"can only decorate classes"
-        assert issubclass(
-            cls, Container
-        ), f"{cls} does not subclass Container, it must to be @declarable"
-        cls._declarable_ = True
-
-        return cls
-
-
-def isdeclarable(obj: object) -> bool:
-    assert isinstance(obj, type) and issubclass(obj, Widget), (
-        "can only test sublcasses of the Widget class" + ", got type {obj}"
-    )
-
-    return (
-        isinstance(obj, type)
-        and issubclass(obj, Container)
-        and hasattr(obj, "_declarable_")
-        and obj._declarable_  # type: ignore
-    )
+    from .theming import ThemeCompatible
 
 
 class Container(Widget):
@@ -77,9 +42,9 @@ class Container(Widget):
     _is_app_: ClassVar[bool] = False
     _declarable_: bool | ClassVar[bool] = False
 
-    _theme_: None | Theme | ThemeDict = None
+    _theme_: None | ThemeCompatible = None
 
-    def __init__(self, theme: Theme | ThemeDict | None = None) -> None:
+    def __init__(self, theme: ThemeCompatible | None = None) -> None:
         super().__init__(_margin_=0)
 
         if isinstance(theme, dict) and __debug__:

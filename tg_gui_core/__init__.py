@@ -27,7 +27,7 @@ import sys
 # -- start exposed api imports ---
 
 # base classes and application environment
-from ._platform_support import (
+from ._implementation_support import (
     guiexit,
     isoncircuitpython,
     enum_compat,
@@ -42,7 +42,7 @@ from .base import (
 )
 
 from .container import Container
-from .layout import Layout, layoutwidget
+from .layout import Layout
 
 from .stateful import (
     State,
@@ -80,10 +80,10 @@ from .dimension_specifiers import (
 # --- std lib and impl tool ---
 
 # classes and functions for making widget classes
-from ._platform_support import enum_compat
+from ._implementation_support import enum_compat
 from .base import uid, UID, _Screen_
-from .container import declarable, isdeclarable
 from .root_widget import Root
+from .widget_builder import Declarable
 from .styled_widget import StyledWidget, align, Color, color
 from .theming import Theme, themedwidget
 

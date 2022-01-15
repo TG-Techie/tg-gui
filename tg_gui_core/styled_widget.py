@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from .base import Widget
-from ._platform_support import enum_compat, isoncircuitpython
+from ._implementation_support import enum_compat, isoncircuitpython
 from .stateful import State
 
 # from .specifiers import specify, Specifier
