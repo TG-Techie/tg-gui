@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from ._platform_support import use_typing, isoncircuitpython
+from ._implementation_support import use_typing, isoncircuitpython
 from .base import uid, UID, Widget
 from .stateful import State
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from .stateful import State
 
     ThemeAttrsDict = Dict["ThemedAttribute", Any]
-    ThemeDict = dict[StyledWidget, ThemeAttrsDict]
+    ThemeCompatible = Union["Theme", dict[StyledWidget, ThemeAttrsDict]]
 
 
 _NotFound = object()
@@ -100,7 +100,7 @@ else:
 class ThemedAttribute(Generic[T]):
     isbuildattr: ClassVar[bool]
 
-    if __debug__ and not TYPE_CHECKING:
+    if __debug__:
 
         def __new__(cls: Type[ThemedAttribute], *_, **__) -> ThemedAttribute:
             assert (
@@ -205,6 +205,12 @@ else:
 
 class Theme(dict):
     _themed_widget_types_: ClassVar[set[Type[StyledWidget]]] = set()
+
+    # optimization for memory usage
+    if not __debug__:
+
+        def __new__(self, specs, *, _debug_name_: str | None = None):
+            return specs
 
     def __init__(self, specs, *, _debug_name_: str | None = None) -> None:
         self._id_ = uid()
