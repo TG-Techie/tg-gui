@@ -3,7 +3,6 @@ import sys
 import time
 
 # import micropython
-
 # micropython.opt_level(3)
 
 if sys.implementation.name in {"circuitpython", "micropython"}:
@@ -11,10 +10,6 @@ if sys.implementation.name in {"circuitpython", "micropython"}:
 
 from tg_gui.prelude import *
 
-
-# from tg_gui_core._step_print_debugging_ import use_step_print_debugging
-
-# use_step_print_debugging(True)
 
 if isoncircuitpython():
     gc.collect()

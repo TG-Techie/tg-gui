@@ -38,5 +38,4 @@ class View(Layout):
     body: ClassVar[Callable[[], Widget]]
 
     def _layout_(self):
-        print("<^1>", self)
         body = self.body(center, self.dims)

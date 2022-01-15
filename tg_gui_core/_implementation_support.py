@@ -50,8 +50,7 @@ if sys.implementation.name == "circuitpython":
     isoncpython = lambda: False
     enum_compat = _cpython_bypass.enum_compat
 
-    # cls_unique_id = lambda cls: hash(f":{cls.__module__}.{cls.__name__}")
-    cls_unique_id = lambda cls: (f":{cls.__module__}.{cls.__name__}")
+    cls_unique_id = lambda cls: hash(f":{cls.__module__}.{cls.__name__}")
 
 elif sys.implementation.name == "cpython":
     from sys import exit as guiexit
@@ -70,5 +69,3 @@ else:
         + "please open an issue at https://github.com/TG-Techie/tg-gui/issues/new?"
         + "title=unsupported%20python%20implementation%3A%20{sys.implementation.name}"
     )
-
-cls_unique_id = lambda cls: (f":{cls.__module__}.{cls.__name__}")

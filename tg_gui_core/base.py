@@ -597,4 +597,3 @@ class Widget:  # type: ignore
 
 
 Widget._format_subclass_on_init()
-print(f"{Widget._subcls_gui_id_=}")
