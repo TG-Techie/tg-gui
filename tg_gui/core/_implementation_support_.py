@@ -1,16 +1,30 @@
 import sys
 
+
 # TODO: maybe pre-process `sys.implementation.name` here?
 if sys.implementation.name == "cpython":
-    isoncircuitpython = lambda: False
+    from typing import TypeVar, Generic, Callable
+    from abc import ABCMeta
+
+    def isoncircuitpython() -> bool:
+        return False
+
     class_id = id
     enum_compat = lambda cls: cls
 
     def warn(msg: str) -> None:
         raise Warning(msg)
 
+    _T = TypeVar("_T")
+
+    class GenericABC(Generic[_T], metaclass=ABCMeta):
+        pass
+
 elif sys.implementation.name == "circuitpython":
-    isoncircuitpython = lambda: True
+
+    def isoncircuitpython() -> bool:
+        return True
+
     class_id = lambda cls: hash(f"(:{cls.__module__}.{cls.__qualname__})")  # type: ignore
 
     from . import _cpython_bypass
@@ -21,6 +35,8 @@ elif sys.implementation.name == "circuitpython":
 
     def warn(msg: str) -> None:
         print("WARNING: {msg}")
+
+    from ._cpython_bypass import Generic as GenericABC
 
 else:
     raise NotImplementedError(

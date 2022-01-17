@@ -41,6 +41,25 @@ def enum_compat(cls):
 # module: abc:
 # ABC, abstractmethod, abstractproperty
 
+ABC = object
+if __debug__:
+
+    def _raise(e: Exception) -> None:
+        raise e
+
+    abstractmethod = lambda fn: (
+        lambda *_, **__: _raise(
+            NotImplementedError(
+                f"{fn.__globals__['__name__']}.<class>.{fn.__name__}(...) not implemented"
+            )
+        )
+    )
+
+    abstractproperty = lambda fn: property(abstractmethod(fn))
+
+else:
+    abstractmethod = lambda fn: fn
+    abstractproperty = lambda fn: property(fn)
 
 _bypassed_modules_ = (
     "__future__",

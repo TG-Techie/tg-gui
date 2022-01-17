@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ._implementation_support_ import isoncircuitpython
 from ._shared_ import uid, UID
-from .widget import Widget, InitAttr
+from .widget import Widget, InitAttr, _Missing
 
 
 from typing import TYPE_CHECKING, TypeVar, Generic
@@ -12,64 +12,95 @@ _T = TypeVar("_T")
 
 # circular and annotation-only imports
 if TYPE_CHECKING:
-    from typing import Type, Any, overload, Literal
+    from typing import Type, Any, overload, Literal, ClassVar
+
+    ThemeEntry = dict[InitAttr[_T], _T]
+    ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
 class Theme:
 
     if not __debug__:
 
-        def __new__(self, __entries: dict, _debug: str | None = None):
+        def __new__(self, __entries: ThemeDict, _debug_name: str | None = None):
             return __entries
 
-    def __init__(self, __entries, _debug: str | None = None) -> None:
-        self._entries = __entries
-        self._debug = _debug
+    def __init__(self, __entries: ThemeDict, _debug_name: str = "") -> None:
+        self._id_ = uid()
+        self._entries: ThemeDict = __entries
+        self._debug_name: str = _debug_name
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: Type[Widget]) -> Any:
         return self._entries[key]
 
     def get(self, *args, **kwargs) -> Any:
         return self._entries.get(*args, **kwargs)
 
-    def __repr__(self) -> str:
-        raise NotImplementedError(super().__repr__())
+    if __debug__:
+
+        def __set_name__(self, ownercls: type[Widget], name: str) -> None:
+            self._debug_name = f"{ownercls.__module__}.{ownercls.__qualname__}.{name}"
+
+        def __repr__(self) -> str:
+            return f"<{type(self).__qualname__}: {self._id_} debug:{repr(self._debug_name or None)}>"
+
+    else:
+
+        def __repr__(self) -> str:
+            return f"<{type(self).__qualname__}: {self._id_}>"
 
 
-# circuitpython compat or generic InitAttribute
+# circuitpython compat(InitAttr.__class_getitem__) not supported
 if not TYPE_CHECKING and isoncircuitpython():
-    _InitAttribute = InitAttribute
-    InitAttribute = {_T: _InitAttribute}
+    _InitAttr = InitAttr
+    InitAttr = {_T: _InitAttr}
 
 
-class ThemedAttribute(InitAttr[_T]):
+class ThemedAttr(InitAttr[_T]):
 
-    _stateful = False
+    _required_: bool = False
+    _positional_: bool = False
+    _build_: bool
 
-    def __init__(self, *, default: _T, private_name: str | None = None) -> None:
-        self._default = default
-        super().__init__(private_name=private_name)
+    def __init__(
+        self,
+        *,
+        default: _T,
+        build: bool = False,
+        repr: bool = False,
+        private_name: str | None = None,
+    ) -> None:
+        self._build_ = build
+        self._default: _T = default
+        super().__init__(repr=repr, private_name=private_name)
 
-    def get(self, *_, **__):
-        raise NotImplementedError
+    def get(self, owner: Widget) -> _T:
+        attr = getattr(owner, self._private_name, _Missing)
+
+        if attr is not attr:
+            return attr
+
+        # climb up the widger tree to find themes
+        superior = owner._superior_
+        while superior is not None:
+            theme = superior._theme_
+            if theme is None:
+                continue
+            for widcls in owner._iter_widgetcls_resolution():
+                if theme.get(widcls, None) is not None:
+                    attr = theme[widcls].get(self, _Missing)
+                    if _Missing is not attr:
+                        return attr
+            else:
+                superior = superior._superior_
+        else:
+            return self._default
+
+    def _set_(self, owner: Widget, value: _T) -> None:
+        setattr(owner, self._private_name, value)
 
 
-# circuitpython compat or generic ThemedAttribute
+# circuitpython compat(InitAttr.__class_getitem__) finish
 if not TYPE_CHECKING and isoncircuitpython():
-    _ThemedAttribute = ThemedAttribute
-    ThemedAttribute = {_T: _ThemedAttribute}
-
-
-class BuildAttribute(ThemedAttribute[_T]):
-    pass
-
-
-class StyleAttribute(ThemedAttribute[_T]):
-    def __init__(self, *, default: _T, stateful: bool = True) -> None:
-        self._stateful = stateful
-        super().__init__(default=default)
-
-
-if not TYPE_CHECKING and isoncircuitpython():
-    InitAttribute = _InitAttribute
-    del _InitAttribute
+    InitAttr = _InitAttr
+    del _InitAttr

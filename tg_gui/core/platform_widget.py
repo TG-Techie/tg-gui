@@ -3,8 +3,8 @@ from __future__ import annotations
 from ._implementation_support_ import isoncircuitpython
 from ._shared_ import uid, UID, Pixels
 from ._platform_support_ import Platform, requiredplatformmethod
-from .widget import Widget
-from .themeing import BuildAttribute, StyleAttribute
+from .widget import Widget, widget
+from .themeing import ThemedAttr
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 from abc import ABC, abstractmethod, abstractproperty
@@ -25,10 +25,11 @@ class State(Generic[_T]):
 
 # --- platform widget ---
 # TODO: Rename to PlatformWidget to something cooler (ie clearer and less boring)
+@widget
 class PlatformWidget(Widget):
 
     # --- widget attributes ---
-    _margin_: Pixels = BuildAttribute(default=5)  # type: ignore[assignment]
+    _margin_: Pixels = ThemedAttr(default=5)  # type: ignore[assignment]
 
     def __init__(self, **kwargs):
         self._native_ = None
@@ -36,13 +37,6 @@ class PlatformWidget(Widget):
         self._extract_kwargs(kwargs)
 
         super().__init__(**kwargs)
-
-    def _extract_kwargs(self, kwargs: dict[str, Any]) -> None:
-        # TODO: convert this to use a _subclass_sugar_ silter to extract a list of allowed args
-        cls = type(self)
-        for key in set(kwargs):
-            if isinstance(getattr(cls, key, None), (BuildAttribute, StyledAttribute)):
-                setattr(self, key, kwargs.pop(key))
 
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
         assert self._is_nested()
