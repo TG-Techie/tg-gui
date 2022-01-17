@@ -36,114 +36,111 @@ else:
 
 _getname = lambda attr: attr._name_
 
+if TYPE_CHECKING:
+    from dataclasses import dataclass as widget, field as _field
 
-def widget(cls):
-    """
-    !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
-    !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
-    This is a decotator for that all widgets need to be decorated with to apply sugar
-    when asserts are on decoration is strictly enforced at runtime.
-    TODO: add better docstring
-    """
-    # if TYPE_CHECKING:
-    #     return cls
-    # else:
-    #     assert isinstance(cls, type) and issubclass(cls, Widget)
+    def buildattr(*, repr=False, private_name=None):
+        return _field(  # type: ignore[call-overload]
+            repr=repr,
+            kw_only=True,
+        )
 
-    clsid = _class_id(cls)
+else:
 
-    assert (
-        "_widget_cls_id_" not in cls.__dict__
-        and cls.__dict__.get("_widget_cls_id_", None) is not clsid
-    ), f"{cls.__name__} already decorated with @widget (or other widget decorator)"
+    def buildattr(*, repr=False, private_name=None):
+        return _BuildAttr(repr=repr, private_name=private_name)
 
-    assert 1 == sum(
-        issubclass(basecls, Widget) for basecls in cls.__bases__
-    ), f"{cls} must inherit from one Widget class"
-    assert issubclass(
-        cls.__bases__[0], Widget
-    ), f"{cls} must inherit from one Widget class"
+    def widget(cls):
+        """
+        !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
+        !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
+        This is a decotator for that all widgets need to be decorated with to apply sugar
+        when asserts are on decoration is strictly enforced at runtime.
+        TODO: add better docstring
+        """
+        # if TYPE_CHECKING:
+        #     return cls
+        # else:
+        #     assert isinstance(cls, type) and issubclass(cls, Widget)
 
-    # circuitpython does not support __set_name__ for descriptors, add it manually
-    if isoncircuitpython():
-        for name, attr in cls.__dict__.items():
-            if hasattr(attr, "__set_name__"):
-                attr.__set_name__(cls, name)
-
-    # climb up the inheritance tree and find the first Widget class and apply the subclass inits in the right order
-    sugar_classes: list[Type[Widget]] = []
-    for basecls in cls._iter_widgetcls_resolution():
-        formatter = basecls.__dict__.get("_subclass_sugar_", None)
-        if isinstance(formatter, (classmethod, staticmethod, FunctionType)):
-            sugar_classes.append(basecls)
-        else:
-            assert formatter is None, (
-                f"{basecls} has an invalid _subclass_sugar_ attribute ({FunctionType}). "
-                + "must be a classmethod or staticmethod"
-            )
-
-    for basecls in reversed(sugar_classes):
-        basecls._subclass_sugar_(cls)
-
-    _apply_init_sugar(cls)
-
-    if __debug__:
-        cls._widget_cls_id_ = clsid
-
-    return cls
-
-
-def _apply_init_sugar(cls: Type[Widget]):
-    # apply init sugar
-    prevargs = cls._initargs_
-    prevkwargs = cls._initkwargs_
-
-    newargs: list[InitAttr] = []
-    newkwargs: dict[str, InitAttr] = {}
-
-    newattrs: list[tuple[str, InitAttr]] = sorted(
-        filter(lambda item: isinstance(item[1], InitAttr), cls.__dict__.items()),
-        key=lambda item: item[1]._id_,
-    )
-    prev = "<none>"
-    for name, attr in newattrs:
-        if name in prevkwargs:
-            raise TypeError(
-                f"init attribute {name} already defined in {cls.__bases__[0]}, overloading not supported (at least for now ?)"
-            )
-        if attr._positional_:
-            if len(newkwargs):
-                raise TypeError(
-                    f"{cls} has positional init attribute .{name} after keyword init attribute .{prev}"
-                )
-            newargs.append(attr)
+        clsid = _class_id(cls)
 
         assert (
-            name not in newkwargs
-        ), f"{name} already in new kwargs (within the same class body!?)"
-        newkwargs[attr._name_] = attr
+            "_widget_cls_id_" not in cls.__dict__
+            and cls.__dict__.get("_widget_cls_id_", None) is not clsid
+        ), f"{cls.__name__} already decorated with @widget (or other widget decorator)"
 
-        prev = name
+        assert 1 == sum(
+            issubclass(basecls, Widget) for basecls in cls.__bases__
+        ), f"{cls} must inherit from one Widget class"
+        assert issubclass(
+            cls.__bases__[0], Widget
+        ), f"{cls} must inherit from one Widget class"
 
-    # validate
-    if len(newargs):
-        cls._initargs_ = prevargs + tuple(newargs)
+        # circuitpython does not support __set_name__ for descriptors, add it manually
+        if isoncircuitpython():
+            for name, attr in cls.__dict__.items():
+                if hasattr(attr, "__set_name__"):
+                    attr.__set_name__(cls, name)
 
-    # insert kwargs
-    if len(newkwargs):
-        kwargs = prevkwargs.copy()
-        kwargs.update(newkwargs)
-        cls._initkwargs_ = kwargs
-        cls._initreqs_ = {name for name, attr in newattrs if attr._required_}
+        # climb up the inheritance tree and find the first Widget class and apply the subclass inits in the right order
+        sugar_classes: list[Type[Widget]] = []
+        for basecls in cls._iter_widgetcls_resolution():
+            formatter = basecls.__dict__.get("_subclass_sugar_", None)
+            if isinstance(formatter, (classmethod, staticmethod, FunctionType)):
+                sugar_classes.append(basecls)
+            else:
+                assert formatter is None, (
+                    f"{basecls} has an invalid _subclass_sugar_ attribute ({FunctionType}). "
+                    + "must be a classmethod or staticmethod"
+                )
+
+        for basecls in reversed(sugar_classes):
+            basecls._subclass_sugar_(cls)
+
+        # create a flattened dict of the allowed init args
+        # only add a dict if there are any new init args
+        newkwargs: dict[str, InitAttr] = {
+            name: attr
+            for name, attr in cls.__dict__.items()
+            if isinstance(attr, InitAttr)
+        }
+        if len(newkwargs):
+            kwargs = cls._initkwargs_.copy()
+            kwargs.update(newkwargs)
+            cls._initkwargs_ = kwargs
+
+        if __debug__:
+            cls._widget_cls_id_ = clsid
+
+        return cls
+
+
+if __debug__ and not isoncircuitpython() and not TYPE_CHECKING:
+    from functools import wraps as _wraps
+
+    def _widget_init_debug_wrap(fn):
+        @_wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            if len(args):
+                raise TypeError(
+                    f"{type(self)} does not take positional arguments, "
+                    + f"got `{type(self).__qualname__}{repr(args)}`"
+                )
+            else:
+                return fn(self, **kwargs)
+
+        return wrapper
+
+else:
+    _widget_init_debug_wrap = lambda fn: fn
 
 
 class Widget(ABC):
 
     _id_: UID
 
-    _initargs_: ClassVar[tuple[InitAttr, ...]] = ()
     _initkwargs_: ClassVar[dict[str, InitAttr]] = {}
-    _initreqs_: ClassVar[set[str]] = set()
     _subclass_sugar_: ClassVar[Callable[[Type[Widget]], None]]
 
     # --- nest phase ---
@@ -165,7 +162,7 @@ class Widget(ABC):
     _pos_: tuple[Pixels, Pixels] | None = None
     _abs_pos_: tuple[Pixels, Pixels] | None = None
 
-    if __debug__:
+    if __debug__ and not TYPE_CHECKING:
 
         def __new__(cls, *args, **kwargs):
             # widget classes must be decorated
@@ -174,7 +171,8 @@ class Widget(ABC):
             ), f"{cls} not decorated with @widgert (or other widget decorator)"
             return object.__new__(cls)
 
-    def __init__(self, *args, **kwargs):
+    @_widget_init_debug_wrap
+    def __init__(self, **kwargs):
         self._id_ = uid()
         # nest
         self._superior_ = None
@@ -185,41 +183,22 @@ class Widget(ABC):
         self._pos_ = None
         self._abs_pos_ = None
 
-        cover_req_pos = []
-
-        if len(args) > len(self._initargs_):
+        if len(extra := set(kwargs) - set(self._initkwargs_)):
             raise TypeError(
-                f"{type(self)} takes {len(self._initargs_)} positional arguments but {len(args)} were given"
+                f"{type(self).__name__}() got an unexpected keyword argument(s): {'=, '.join(extra)}="
             )
 
-        for arg, attr in zip(args, self._initargs_):
-            attr._set_(self, arg)
-            if attr._required_:
-                cover_req_pos.append(attr._name_)
-
-        cover_req_kwargs = set()
+        missing = set()
         for name, attr in self._initkwargs_.items():
-            if name in kwargs:
-                assert (
-                    name not in cover_req_pos
-                ), f"{name} already covered by positional argument {cover_req_pos.index(name)}"
+            if attr._required_ and name not in kwargs:
+                missing.add(name)
+            elif name in kwargs:
                 attr._set_(self, kwargs[name])
-                if attr._required_:
-                    cover_req_kwargs.add(attr._name_)
 
-        # if len(extra := set(kwargs) - set(self._initkwargs_)):
-        #     raise TypeError(
-        #         f"{type(self)} got an unexpected keyword argument(s) {', '.join(extra)}"
-        #     )
-
-        # if len(missing := set(self._initkwargs_) - set(kwargs)):
-        #     raise TypeError(
-        #         f"{type(self)} missing required keyword argument(s) {', '.join(missing)}"
-        #     )
-
-        # for attr_name, attr in self._initkwargs_.items():
-        #     if attr_name in kwargs:
-        #         attr._set_(self, kwargs[attr_name])
+        if len(missing):
+            raise TypeError(
+                f"{type(self).__name__}() missing required keyword argument(s): {'=, '.join(missing)}="
+            )
 
     if __debug__:
 
@@ -298,11 +277,13 @@ class Widget(ABC):
         """
         iterate over the widget classes in the resolution order
         """
-        yield cls
         curcls = cls.__bases__[0]
-        while curcls is not object:
+        while curcls is not Widget:
+            assert issubclass(curcls, Widget), f"{curcls} is not a Widget, {curcls}"
             yield curcls
             curcls = curcls.__bases__[0]
+        else:
+            yield Widget
 
 
 class InitAttr(GenericABC[_T]):
@@ -363,8 +344,9 @@ class InitAttr(GenericABC[_T]):
 
     def __get__(self, owner: Widget, ownertype: Type[Widget]) -> _T:
         assert self._name_ is not None, f"{self} not initialized with __set_name__"
+        # circuitpython-compat(__get__)
         if owner is None:
-            return self
+            return self  # type: ignore[return-value]
         return self.get(owner)
 
     @abstractmethod
@@ -376,32 +358,16 @@ class InitAttr(GenericABC[_T]):
         raise NotImplementedError
 
 
-# circuitpython compat(InitAttr.__class_getitem__) not supported, so we have to do this
+# circuitpython-compat(__class_getitem__) not supported, so we have to do this
 if not TYPE_CHECKING and isoncircuitpython():
     _InitAttr = InitAttr
     InitAttr = {_T: _InitAttr}
 
 
-class BuildAttr(InitAttr[_T]):
+class _BuildAttr(InitAttr[_T]):
 
     _required_: bool = True
-    _positional_: bool
     _build_: bool = True
-
-    def __init__(
-        self,
-        *,
-        positional: bool = False,
-        repr: bool = False,
-        private_name: str | None = None,
-    ) -> None:
-        self._positional_ = positional
-        # self._override_ = override
-
-        # if override and not positional:
-        #     raise TypeError(f"{type(self)} overrides must be positional")
-
-        super().__init__(repr=repr, private_name=private_name)
 
     def get(self, owner: Widget) -> _T:
         return getattr(owner, self._private_name)
@@ -410,7 +376,7 @@ class BuildAttr(InitAttr[_T]):
         setattr(owner, self._private_name, value)
 
 
-# circuitpython compat(InitAttr.__class_getitem__) finish
+# circuitpython-compat(__class_getitem__) finish
 if not TYPE_CHECKING and isoncircuitpython():
     InitAttr = _InitAttr
     del _InitAttr

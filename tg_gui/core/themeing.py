@@ -18,11 +18,27 @@ if TYPE_CHECKING:
     ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
+if TYPE_CHECKING:
+    from dataclasses import field as _field
+
+    def themedattr(*, default, repr=False, private_name=None):
+        return _field(
+            default=default,
+            repr=repr,
+            kw_only=True,
+        )
+
+else:
+
+    def themedattr(*, default, epr=False, private_name=None):
+        return _BuildAttr(default=default, repr=repr, private_name=private_name)
+
+
 class Theme:
 
     if not __debug__:
 
-        def __new__(self, __entries: ThemeDict, _debug_name: str | None = None):
+        def __new__(cls, __entries: ThemeDict, _debug_name: str | None = None):
             return __entries
 
     def __init__(self, __entries: ThemeDict, _debug_name: str = "") -> None:
@@ -50,13 +66,13 @@ class Theme:
             return f"<{type(self).__qualname__}: {self._id_}>"
 
 
-# circuitpython compat(InitAttr.__class_getitem__) not supported
+# circuitpython-compat(__class_getitem__) not supported
 if not TYPE_CHECKING and isoncircuitpython():
     _InitAttr = InitAttr
     InitAttr = {_T: _InitAttr}
 
 
-class ThemedAttr(InitAttr[_T]):
+class _ThemeAttr(InitAttr[_T]):
 
     _required_: bool = False
     _positional_: bool = False
@@ -77,7 +93,7 @@ class ThemedAttr(InitAttr[_T]):
     def get(self, owner: Widget) -> _T:
         attr = getattr(owner, self._private_name, _Missing)
 
-        if attr is not attr:
+        if attr is not _Missing:
             return attr
 
         # climb up the widger tree to find themes
@@ -100,7 +116,7 @@ class ThemedAttr(InitAttr[_T]):
         setattr(owner, self._private_name, value)
 
 
-# circuitpython compat(InitAttr.__class_getitem__) finish
+# circuitpython-compat(__class_getitem__) finish
 if not TYPE_CHECKING and isoncircuitpython():
     InitAttr = _InitAttr
     del _InitAttr
