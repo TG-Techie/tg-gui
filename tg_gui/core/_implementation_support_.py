@@ -20,6 +20,9 @@ if sys.implementation.name == "cpython":
     class GenericABC(Generic[_T], metaclass=ABCMeta):
         pass
 
+    from functools import wraps as _wraps
+
+
 elif sys.implementation.name == "circuitpython":
 
     def isoncircuitpython() -> bool:
@@ -36,7 +39,8 @@ elif sys.implementation.name == "circuitpython":
     def warn(msg: str) -> None:
         print("WARNING: {msg}")
 
-    from ._cpython_bypass import Generic as GenericABC
+    from ._cpython_bypass import Generic as GenericABC  # type: ignore[attr-defined, misc]
+
 
 else:
     raise NotImplementedError(

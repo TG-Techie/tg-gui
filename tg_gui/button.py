@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from .core import PlatformWidget, InitAttr, StatefulAttr
-from .core._platform_support_ import requiredplatformmethod, platformwidget
+from .core import PlatformWidget, buildattr, themedattr, Pixels, widget
+from .core._platform_support_ import platformwidget
+
 from . import _platform_
+from .styling import Color, color
 
 from typing import TYPE_CHECKING
 
@@ -14,11 +16,17 @@ if TYPE_CHECKING:
 @platformwidget(_platform_.button)
 class CapsuleButton(PlatformWidget):
 
-    text: str = BuildAttr(positional=True)  # type: ignore[assignment]
-    action: Callable[[], None] = BuildAttr()  # type: ignore[assignment]
-    radius: float = ThemedAttr(default=1.0, build=True)  # type: ignore[assignment]
+    text: str = buildattr(repr=True)
+    action: Callable[[], None] = buildattr()
 
-    fill: Color = ThemedAttr(default=color.system_fill)  # type: ignore[assignment]
-    foreground: Color = ThemedAttr(default=color.system_foreground)  # type: ignore[assignment]
-    active_fill: Color = ThemedAttr(default=color.system_active_fill)  # type: ignore[assignment]
-    active_foreground: Color = ThemedAttr(default=color.system_active_foreground)  # type: ignore[assignment]
+    radius: float = themedattr(default=1.0)
+    fill: Color = themedattr(default=color.system_fill)
+    foreground: Color = themedattr(default=color.system_foreground)
+    active_fill: Color = themedattr(default=color.system_active_fill)
+    active_foreground: Color = themedattr(default=color.system_active_foreground)
+
+
+# future proofing
+@widget
+class Button(CapsuleButton):
+    pass

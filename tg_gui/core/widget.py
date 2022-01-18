@@ -5,7 +5,7 @@ from ._implementation_support_ import (
     class_id as _class_id,
     GenericABC,
 )
-from ._shared_ import uid, UID, Pixels
+from ._shared import uid, UID, Pixels, _Missing
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 from abc import ABC, abstractmethod, abstractproperty
@@ -16,6 +16,7 @@ _T = TypeVar("_T")
 
 # circular and annotation-only imports
 if TYPE_CHECKING:
+    from ._shared import _Missing
     from typing import ClassVar, Type, Iterator, Callable
 
     from .superior_widget import SuperiorWidget
@@ -25,18 +26,11 @@ if TYPE_CHECKING:
         NativeContainer,
     )
 
-if TYPE_CHECKING or not isoncircuitpython():
-
-    class _MissingType(Enum):
-        missing = auto()
-
-    _Missing = _MissingType.missing
-else:
-    _Missing = type("MissingType", (), {})() if __debug__ or TYPE_CHECKING else object()
-
 _getname = lambda attr: attr._name_
 
 if TYPE_CHECKING:
+    # !! for now, we lie to the type system and use the built in support for dataclasses !!
+    # TODO: write a mypy (and/or) pylance extension to widget attr syntax
     from dataclasses import dataclass as widget, field as _field
 
     def buildattr(*, repr=False, private_name=None):
@@ -48,7 +42,7 @@ if TYPE_CHECKING:
 else:
 
     def buildattr(*, repr=False, private_name=None):
-        return _BuildAttr(repr=repr, private_name=private_name)
+        return BuildAttr(repr=repr, private_name=private_name)
 
     def widget(cls):
         """
@@ -116,26 +110,6 @@ else:
         return cls
 
 
-if __debug__ and not isoncircuitpython() and not TYPE_CHECKING:
-    from functools import wraps as _wraps
-
-    def _widget_init_debug_wrap(fn):
-        @_wraps(fn)
-        def wrapper(self, *args, **kwargs):
-            if len(args):
-                raise TypeError(
-                    f"{type(self)} does not take positional arguments, "
-                    + f"got `{type(self).__qualname__}{repr(args)}`"
-                )
-            else:
-                return fn(self, **kwargs)
-
-        return wrapper
-
-else:
-    _widget_init_debug_wrap = lambda fn: fn
-
-
 class Widget(ABC):
 
     _id_: UID
@@ -166,12 +140,16 @@ class Widget(ABC):
 
         def __new__(cls, *args, **kwargs):
             # widget classes must be decorated
-            assert cls.__dict__.get("_widget_cls_id_", None) == _class_id(
-                cls
-            ), f"{cls} not decorated with @widgert (or other widget decorator)"
+            if cls.__dict__.get("_widget_cls_id_", None) != _class_id(cls):
+                raise TypeError(
+                    f"{cls} not decorated with @widgert (or other widget decorator)"
+                )
+
+            if cls.__init__ is Widget.__init__ and len(args):
+                raise TypeError(f"{cls} does not accept positional arguments")
+
             return object.__new__(cls)
 
-    @_widget_init_debug_wrap
     def __init__(self, **kwargs):
         self._id_ = uid()
         # nest
@@ -294,7 +272,6 @@ class InitAttr(GenericABC[_T]):
 
     # --- abstract attributes ---
     _required_: bool
-    _positional_: bool
     _build_: bool
 
     # --- private concrete attributes ---
@@ -364,7 +341,7 @@ if not TYPE_CHECKING and isoncircuitpython():
     InitAttr = {_T: _InitAttr}
 
 
-class _BuildAttr(InitAttr[_T]):
+class BuildAttr(InitAttr[_T]):
 
     _required_: bool = True
     _build_: bool = True

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ._implementation_support_ import isoncircuitpython
-from ._shared_ import uid, UID
+from ._shared import uid, UID
 from .widget import Widget, InitAttr, _Missing
 
 
@@ -12,13 +12,14 @@ _T = TypeVar("_T")
 
 # circular and annotation-only imports
 if TYPE_CHECKING:
-    from typing import Type, Any, overload, Literal, ClassVar
+    from typing import Type, Any
 
     ThemeEntry = dict[InitAttr[_T], _T]
     ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
 if TYPE_CHECKING:
+    # !! for now, we lie to the type system and use the built in support for dataclasses !!
     from dataclasses import field as _field
 
     def themedattr(*, default, repr=False, private_name=None):
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 else:
 
     def themedattr(*, default, epr=False, private_name=None):
-        return _BuildAttr(default=default, repr=repr, private_name=private_name)
+        return ThemeAttr(default=default, repr=repr, private_name=private_name)
 
 
 class Theme:
@@ -44,7 +45,8 @@ class Theme:
     def __init__(self, __entries: ThemeDict, _debug_name: str = "") -> None:
         self._id_ = uid()
         self._entries: ThemeDict = __entries
-        self._debug_name: str = _debug_name
+        if __debug__:
+            self._debug_name: str = _debug_name
 
     def __getitem__(self, key: Type[Widget]) -> Any:
         return self._entries[key]
@@ -72,7 +74,7 @@ if not TYPE_CHECKING and isoncircuitpython():
     InitAttr = {_T: _InitAttr}
 
 
-class _ThemeAttr(InitAttr[_T]):
+class ThemeAttr(InitAttr[_T]):
 
     _required_: bool = False
     _positional_: bool = False
