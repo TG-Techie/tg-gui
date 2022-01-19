@@ -20,14 +20,14 @@ _T = TypeVar("_T")
 # TODO: Rename to PlatformWidget to something cooler (ie clearer and less boring)
 @widget
 class PlatformWidget(Widget):
+    _native_: None | NativeElement = None
 
     # --- widget attributes ---
     _platform_module_name_: ClassVar[str | None] = None
-    _margin_: Pixels = themedattr(default=5, init=False)  # type: ignore[assignment]
+    _margin_: Pixels = themedattr(default=5, init=False)
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._native_ = None
 
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
         assert self._is_nested()

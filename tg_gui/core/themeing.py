@@ -18,22 +18,8 @@ if TYPE_CHECKING:
     ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
-if TYPE_CHECKING:
-    # !! for now, we lie to the type system and use the built in support for dataclasses !!
-    from dataclasses import field as _field
-
-    def themedattr(*, default, repr=False, private_name=None, init=True):
-        return _field(
-            init=init,
-            default=default,
-            repr=repr,
-            kw_only=True,
-        )
-
-else:
-
-    def themedattr(*, default, repr=False, private_name=None, init=True):
-        return ThemeAttr(default=default, repr=repr, private_name=private_name)
+def themedattr(*, default, repr=False, private_name=None, init=True):
+    return ThemeAttr(default=default, repr=repr, private_name=private_name)
 
 
 class Theme:

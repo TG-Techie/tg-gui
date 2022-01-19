@@ -28,87 +28,73 @@ if TYPE_CHECKING:
 
 _getname = lambda attr: attr._name_
 
-if TYPE_CHECKING:
-    # !! for now, we lie to the type system and use the built in support for dataclasses !!
-    # TODO: write a mypy (and/or) pylance extension to widget attr syntax
-    from dataclasses import dataclass as widget, field as _field
 
-    def buildattr(*, repr=False, private_name=None):
-        return _field(  # type: ignore[call-overload]
-            init=True,
-            repr=repr,
-            kw_only=True,
-        )
+def buildattr(*, repr=False, private_name=None):
+    return BuildAttr(repr=repr, private_name=private_name)
 
-else:
 
-    def buildattr(*, repr=False, private_name=None):
-        return BuildAttr(repr=repr, private_name=private_name)
+def widget(cls):
+    """
+    !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
+    !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
+    This is a decotator for that all widgets need to be decorated with to apply sugar
+    when asserts are on decoration is strictly enforced at runtime.
+    TODO: add better docstring
+    """
+    # if TYPE_CHECKING:
+    #     return cls
+    # else:
+    #     assert isinstance(cls, type) and issubclass(cls, Widget)
 
-    def widget(cls):
-        """
-        !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
-        !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
-        This is a decotator for that all widgets need to be decorated with to apply sugar
-        when asserts are on decoration is strictly enforced at runtime.
-        TODO: add better docstring
-        """
-        # if TYPE_CHECKING:
-        #     return cls
-        # else:
-        #     assert isinstance(cls, type) and issubclass(cls, Widget)
+    clsid = _class_id(cls)
 
-        clsid = _class_id(cls)
+    assert (
+        "_widget_cls_id_" not in cls.__dict__
+        and cls.__dict__.get("_widget_cls_id_", None) is not clsid
+    ), f"{cls.__name__} already decorated with @widget (or other widget decorator)"
 
-        assert (
-            "_widget_cls_id_" not in cls.__dict__
-            and cls.__dict__.get("_widget_cls_id_", None) is not clsid
-        ), f"{cls.__name__} already decorated with @widget (or other widget decorator)"
+    assert 1 == sum(
+        issubclass(basecls, Widget) for basecls in cls.__bases__
+    ), f"{cls} must inherit from one Widget class"
+    assert issubclass(
+        cls.__bases__[0], Widget
+    ), f"{cls} must inherit from one Widget class"
 
-        assert 1 == sum(
-            issubclass(basecls, Widget) for basecls in cls.__bases__
-        ), f"{cls} must inherit from one Widget class"
-        assert issubclass(
-            cls.__bases__[0], Widget
-        ), f"{cls} must inherit from one Widget class"
+    # circuitpython does not support __set_name__ for descriptors, add it manually
+    if isoncircuitpython():
+        for name, attr in cls.__dict__.items():
+            if hasattr(attr, "__set_name__"):
+                attr.__set_name__(cls, name)
 
-        # circuitpython does not support __set_name__ for descriptors, add it manually
-        if isoncircuitpython():
-            for name, attr in cls.__dict__.items():
-                if hasattr(attr, "__set_name__"):
-                    attr.__set_name__(cls, name)
+    # climb up the inheritance tree and find the first Widget class and apply the subclass inits in the right order
+    sugar_classes: list[Type[Widget]] = []
+    for basecls in cls._iter_widgetcls_resolution():
+        formatter = basecls.__dict__.get("_subclass_sugar_", None)
+        if isinstance(formatter, (classmethod, staticmethod, FunctionType)):
+            sugar_classes.append(basecls)
+        else:
+            assert formatter is None, (
+                f"{basecls} has an invalid _subclass_sugar_ attribute ({FunctionType}). "
+                + "must be a classmethod or staticmethod"
+            )
 
-        # climb up the inheritance tree and find the first Widget class and apply the subclass inits in the right order
-        sugar_classes: list[Type[Widget]] = []
-        for basecls in cls._iter_widgetcls_resolution():
-            formatter = basecls.__dict__.get("_subclass_sugar_", None)
-            if isinstance(formatter, (classmethod, staticmethod, FunctionType)):
-                sugar_classes.append(basecls)
-            else:
-                assert formatter is None, (
-                    f"{basecls} has an invalid _subclass_sugar_ attribute ({FunctionType}). "
-                    + "must be a classmethod or staticmethod"
-                )
+    for basecls in reversed(sugar_classes):
+        basecls._subclass_sugar_(cls)
 
-        for basecls in reversed(sugar_classes):
-            basecls._subclass_sugar_(cls)
+    # create a flattened dict of the allowed init args
+    # only add a dict if there are any new init args
+    newkwargs: dict[str, InitAttr] = {
+        name: attr for name, attr in cls.__dict__.items() if isinstance(attr, InitAttr)
+    }
+    if len(newkwargs):
+        kwargs = cls._initkwargs_.copy()
+        kwargs.update(newkwargs)
+        cls._initkwargs_ = kwargs
 
-        # create a flattened dict of the allowed init args
-        # only add a dict if there are any new init args
-        newkwargs: dict[str, InitAttr] = {
-            name: attr
-            for name, attr in cls.__dict__.items()
-            if isinstance(attr, InitAttr)
-        }
-        if len(newkwargs):
-            kwargs = cls._initkwargs_.copy()
-            kwargs.update(newkwargs)
-            cls._initkwargs_ = kwargs
+    if __debug__:
+        cls._widget_cls_id_ = clsid
 
-        if __debug__:
-            cls._widget_cls_id_ = clsid
-
-        return cls
+    return cls
 
 
 class Widget(ABC):

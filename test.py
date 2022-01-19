@@ -16,7 +16,19 @@ print(
 from tg_gui import *
 
 
-@main
-class Application(Layout):
+def VStack(w):
+    return w
 
-    builder = lambda self: Button()
+
+# @main
+class Application(View):
+
+    body = lambda self: VStack(
+        Button("hello", action=self.say("hello")),
+    )
+
+    def say(self, text: str) -> None:
+        print(text)
+
+
+Application().build()

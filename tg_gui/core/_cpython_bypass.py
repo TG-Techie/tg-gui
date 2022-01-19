@@ -1,6 +1,16 @@
 # shared
 import builtins
 
+
+class _GetItemBypass:
+    def __init__(self, name: str, value: object) -> None:
+        self._name = name
+        self._value = value
+
+    def __getitem__(self, *_, **__):
+        return self._value
+
+
 # module: __future__
 annotations = None
 
@@ -10,7 +20,7 @@ annotations = None
 TYPE_CHECKING = False
 
 # TODO: make this accept any number of index args
-Generic = {None: object}
+Generic = _GetItemBypass("Generic", object)
 
 TypeVar = lambda *_, **__: None
 
@@ -25,6 +35,8 @@ LambdaType = type(lambda: None)
 BuiltinFunctionType = type(print)
 
 ModuleType = type(builtins)
+
+Any = object
 
 # module: enum
 # enum, auto
