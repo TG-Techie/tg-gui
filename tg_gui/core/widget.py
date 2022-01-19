@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._implementation_support_ import (
+from .implementation_support import (
     isoncircuitpython,
     class_id as _class_id,
     GenericABC,
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
     def buildattr(*, repr=False, private_name=None):
         return _field(  # type: ignore[call-overload]
+            init=True,
             repr=repr,
             kw_only=True,
         )

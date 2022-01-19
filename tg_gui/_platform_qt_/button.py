@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+from tg_gui._platform_support_ import platformmethod, platformimports
+from typing import TYPE_CHECKING
+
+# circular and annotation-only imports
+if TYPE_CHECKING:
+    from tg_gui.button import CapsuleButton
+    from typing import Callable
+
+with platformimports():
+    from tg_gui.core import Pixels
+    from tg_gui.styling import Color
+
+    from PySide6 import QtWidgets
+    from PySide6.QtWidgets import QPushButton
+
+    NativeElement = QPushButton
+
+
+@platformmethod
+def _build_native_(
+    self: CapsuleButton,
+    suggestion: tuple[Pixels, Pixels],
+    *,
+    text: str,
+    action: Callable[[], None],
+) -> tuple[NativeElement, tuple[Pixels, Pixels],]:
+    raise NotImplementedError
+
+
+@platformmethod
+def _native_style_(
+    self: CapsuleButton,
+    *,
+    radius: float,
+    fill: Color,
+    foreground: Color,
+    active_fill: Color,
+    active_foreground: Color,
+) -> tuple[NativeElement, tuple[Pixels, Pixels],]:
+    raise NotImplementedError

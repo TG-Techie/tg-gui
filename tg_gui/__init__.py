@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 # --- set the concrete platform implementation ---
 if TYPE_CHECKING:
     from . import _platform_
-elif _core._implementation_support_.isoncircuitpython():
+elif _core.implementation_support.isoncircuitpython():
     from . import _platform_displayio_ as _platform_  # type: ignore[no-redef]
 else:
     from . import _platform_qt_ as _platform_  # type: ignore[no-redef]

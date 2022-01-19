@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .core import PlatformWidget, buildattr, themedattr, Pixels, widget
-from .core._platform_support_ import platformwidget
+from .core.platform_support import platformwidget
 
 from . import _platform_
 from .styling import Color, color
@@ -24,6 +24,9 @@ class CapsuleButton(PlatformWidget):
     foreground: Color = themedattr(default=color.system_foreground)
     active_fill: Color = themedattr(default=color.system_active_fill)
     active_foreground: Color = themedattr(default=color.system_active_foreground)
+
+    def __init__(self, text: str, action: Callable[[], None], **kwargs) -> None:
+        super().__init__(text=text, action=action, **kwargs)
 
 
 # future proofing

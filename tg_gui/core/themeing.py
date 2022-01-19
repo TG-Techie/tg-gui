@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._implementation_support_ import isoncircuitpython
+from .implementation_support import isoncircuitpython
 from ._shared import uid, UID
 from .widget import Widget, InitAttr, _Missing
 
@@ -22,8 +22,9 @@ if TYPE_CHECKING:
     # !! for now, we lie to the type system and use the built in support for dataclasses !!
     from dataclasses import field as _field
 
-    def themedattr(*, default, repr=False, private_name=None):
+    def themedattr(*, default, repr=False, private_name=None, init=True):
         return _field(
+            init=init,
             default=default,
             repr=repr,
             kw_only=True,
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 else:
 
-    def themedattr(*, default, epr=False, private_name=None):
+    def themedattr(*, default, repr=False, private_name=None, init=True):
         return ThemeAttr(default=default, repr=repr, private_name=private_name)
 
 

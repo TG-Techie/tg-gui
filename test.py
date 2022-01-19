@@ -12,3 +12,11 @@ print(
     "}",
     sep="\n",
 )
+
+from tg_gui import *
+
+
+@main
+class Application(Layout):
+
+    builder = lambda self: Button()

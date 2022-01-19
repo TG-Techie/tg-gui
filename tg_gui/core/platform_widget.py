@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._implementation_support_ import isoncircuitpython
+from .platform_support import requiredplatformmethod
 from ._shared import uid, UID, Pixels
 from .widget import Widget, widget
 from .themeing import themedattr
@@ -10,9 +10,9 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 if TYPE_CHECKING:
-    from typing import Type, Any
+    from typing import ClassVar
 
-    from ._platform_support_ import Platform, NativeElement, NativeContainer
+    from .platform_support import Platform, NativeElement, NativeContainer
 
 _T = TypeVar("_T")
 
@@ -22,8 +22,12 @@ _T = TypeVar("_T")
 class PlatformWidget(Widget):
 
     # --- widget attributes ---
-    _platform_module_name_: str | None = None
-    _margin_: Pixels = themedattr(default=5)  # type: ignore[assignment]
+    _platform_module_name_: ClassVar[str | None] = None
+    _margin_: Pixels = themedattr(default=5, init=False)  # type: ignore[assignment]
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._native_ = None
 
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
         assert self._is_nested()
@@ -45,6 +49,7 @@ class PlatformWidget(Widget):
 
     # --- platform methods ---
     # these are implemented in the platform-specific module
+    @requiredplatformmethod
     def _build_native_(
         self,
         suggestion: tuple[Pixels, Pixels],
@@ -52,22 +57,6 @@ class PlatformWidget(Widget):
     ) -> tuple[NativeElement, tuple[Pixels, Pixels]]:
         raise NotImplementedError
 
+    @requiredplatformmethod
     def _native_style_(self, **styleattsr) -> None:
         raise NotImplementedError
-
-    # --- check that platform methods were implemented ---
-    @classmethod
-    def _subclass_sugar_(cls, subcls: Type[PlatformWidget]) -> None:
-        if cls is subcls:
-            return
-
-        assert subcls._build_native_ is not cls._build_native_, (
-            f"{subcls} does not must define ._build_native_(...) method, it may not be defined "
-            + f"in the platform-specific module '{subcls._platform_module_name_}'"
-            + f' "(probably at {subcls._platform_module_name_.replace(".", "/")}.py)"'
-        )
-        assert subcls._native_style_ is not cls._native_style_, (
-            f"{subcls} does not must define ._native_style_(...) method, it may not be defined "
-            + f"in the platform-specific module '{subcls._platform_module_name_}'"
-            + f' "(probably at {subcls._platform_module_name_.replace(".", "/")}.py)"'
-        )

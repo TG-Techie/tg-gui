@@ -1,7 +1,7 @@
 # This has to be imported first, otherwise to circuitpython will not work
-from . import _implementation_support_
+from . import implementation_support
 
-from ._implementation_support_ import enum_compat
+from .implementation_support import enum_compat
 
 from ._shared import uid, UID, Pixels
 
