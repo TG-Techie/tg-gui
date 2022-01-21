@@ -19,6 +19,10 @@ if TYPE_CHECKING:
     class NativeContainer(NativeElement):
         pass
 
+else:
+    NativeElement = object
+    NativeContainer = object
+
 
 _Fn = TypeVar("_Fn", bound=FunctionType)
 
@@ -40,6 +44,8 @@ def platformwidget(mod: ModuleType):
     > :warning: this decorator is potentially designed to be pre-processed:
     > call it with `@platformwidget(_platform_.<module name>)`
     """
+    if TYPE_CHECKING:
+        return lambda cls: cls
     return lambda cls: _platform_widget(cls, mod)
 
 

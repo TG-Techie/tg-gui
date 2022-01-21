@@ -17,4 +17,7 @@ else:
 _sys.modules[f"{__name__}._platform_"] = _platform_
 
 # --- etc... ? ---
+from .view import View
+
+# --- platform widgets ---
 from .button import Button, CapsuleButton

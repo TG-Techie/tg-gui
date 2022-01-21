@@ -41,12 +41,17 @@ def widget(cls):
     when asserts are on decoration is strictly enforced at runtime.
     TODO: add better docstring
     """
-    # if TYPE_CHECKING:
-    #     return cls
-    # else:
-    #     assert isinstance(cls, type) and issubclass(cls, Widget)
+    if TYPE_CHECKING:
+        return cls
+
+    assert isinstance(cls, type) and issubclass(cls, Widget)
 
     clsid = _class_id(cls)
+
+    # circuitpython-compat(__mro__) not supported
+    assert 1 == len(
+        overlap := set(filter(lambda c: issubclass(c, Widget), cls.__bases__))
+    ), f"widgets cannot subclass multiple widgets types: "
 
     assert (
         "_widget_cls_id_" not in cls.__dict__
@@ -113,10 +118,6 @@ class Widget(ABC):
 
     @abstractproperty
     def _native_(self) -> NativeElement | None:
-        raise NotImplementedError
-
-    @_native_.setter
-    def _native_(self, native: NativeElement | None) -> None:
         raise NotImplementedError
 
     # --- place phase ---
@@ -239,8 +240,12 @@ class Widget(ABC):
 
     @classmethod
     def _iter_widgetcls_resolution(cls) -> Iterator[Type[Widget]]:
+        # tg-gui-feature(future): use mro for theme resoultion once circuitpython supports it
         """
-        iterate over the widget classes in the resolution order
+        iterate over the widget classes in the resolution order.
+        This was implemented to replace .mro() on widget classes since it is not supported on circuitpython.
+        ThemeAttrs use this to iterate over the widget classes so that (for instance)
+        themed attrs for a Date would resolve before the Label (provided Date subclassed label).
         """
         curcls = cls.__bases__[0]
         while curcls is not Widget:

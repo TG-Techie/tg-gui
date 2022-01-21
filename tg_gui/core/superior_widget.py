@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+
 from .widget import Widget
 from .themeing import Theme
 
 from typing import TYPE_CHECKING
+from abc import ABC, abstractproperty
 
 # annotation-only imports
 if TYPE_CHECKING:
-    from typing import ClassVar
+    from typing import ClassVar, Iterable
 
 
 class SuperiorWidget(Widget):
@@ -17,4 +19,6 @@ class SuperiorWidget(Widget):
 
     # _environment_: Environment | ClassVar[Environment] | None = None
 
-    pass
+    @abstractproperty
+    def _nested_widgets_(self) -> Iterable[Widget]:
+        raise NotImplementedError

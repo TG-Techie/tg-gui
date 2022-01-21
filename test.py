@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 import tg_gui
 
 
@@ -16,19 +19,26 @@ print(
 from tg_gui import *
 
 
+from typing import *
+
+
 def VStack(w):
     return w
 
 
 # @main
+@widget
 class Application(View):
 
-    body = lambda self: VStack(
-        Button("hello", action=self.say("hello")),
+    body = lambda self: Button(
+        "hello",
+        action=self.say("hello"),
     )
 
     def say(self, text: str) -> None:
         print(text)
 
 
-Application().build()
+Application.body
+
+app = Application()

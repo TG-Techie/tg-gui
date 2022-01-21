@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING, ClassVar, Type, TypeVar, Generic, Callable, An
 from types import FunctionType
 
 from .widget import Widget
-from .superior_widget import SuperiorWidget
+
+# from .superior_widget import SuperiorWidget
 from .stateful import State
 
-_SW = TypeVar("_SW", bound=SuperiorWidget)
+# _SW = TypeVar("_SW", bound=SuperiorWidget)
 _W = TypeVar("_W", bound=Widget)
+_SW = TypeVar("_SW", bound=Widget)
 _Fn = TypeVar("_Fn", bound=Callable)
 
 
@@ -17,6 +19,16 @@ class BuildError(Exception):
 
 
 class WidgetBuilder(Generic[_SW, _W]):
+    """
+    A descriptor that can be used to build a widget with a given owner.
+    wrap this around build lamdas to make them buildable, e.g.
+    ```python
+    @widget
+    class MyWidget(...):
+        body = WidgetBuilder(lambda self: ...)
+    ```
+    """
+
     def __init__(self, fn: Callable[[_SW], _W]) -> None:
         # impl-test(assert (lambda:None).__name__ == "<lambda>")
         assert fn.__name__ == "<lambda>"
@@ -26,14 +38,14 @@ class WidgetBuilder(Generic[_SW, _W]):
         return lambda *, __owner=owner, __widbuilder=self: __widbuilder.build(owner)  # type: ignore
 
     def build(self, owner: _SW) -> _W:
-        proxy = _BuildProxy(owner)
+        proxy = BuildProxy(owner)
         # this is explicitly the wrong type
         widget = self._fn(proxy)  # type: ignore[arg-type]
         proxy._close_build_()
         return widget
 
 
-class _BuildProxy(Generic[_SW]):
+class BuildProxy(Generic[_SW]):
     def __init__(self, proxied: _SW) -> None:
         self._proxied = proxied
         self._cache: dict[str, Any] = {}
@@ -47,16 +59,17 @@ class _BuildProxy(Generic[_SW]):
         proxied = self._proxied
 
         cls = type(proxied)
-        clasattr = getattr(cls, name, None)
-        if issubclass(clasattr, State):
+        clasattr: Any = getattr(cls, name, None)
+        proxiedattr: Any
+        if isinstance(clasattr, State):
             proxiedattr = clasattr
         elif isinstance(clasattr, FunctionType):
-            proxiedattr = _ForwardMethodCall(
+            proxiedattr = ForwardMethodCall(
                 bound=getattr(proxied, name),
                 methodname=clasattr.__name__,
                 clsname=f"{cls.__module__}.{cls.__qualname__}",
             )
-        # tg-gui-featutre(experimental)
+        # tg-gui-feature(experimental): protocol for behavior in widget builder proxies
         elif hasattr(clasattr, "_build_proxy_"):
             # TODO: is this is implemented, add it to the State class
             return getattr(proxied, name)._build_proxy_()
@@ -74,7 +87,7 @@ class _BuildProxy(Generic[_SW]):
         self._cache = {}
 
 
-class _ForwardMethodCall(Generic[_Fn]):
+class ForwardMethodCall(Generic[_Fn]):
     def __init__(
         self,
         bound: _Fn,
@@ -85,8 +98,6 @@ class _ForwardMethodCall(Generic[_Fn]):
         self._mthdname: str = methodname
         self._clsname: str = clsname
         self._calls: int = 0
-
-        raise NotImplementedError
 
     def __call__(self, *args: Any, **kwargs: Any) -> Callable[[], Any]:
 

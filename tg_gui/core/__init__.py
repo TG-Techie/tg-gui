@@ -11,8 +11,13 @@ from .themeing import Theme, themedattr
 from .stateful import State
 
 # TODO: these are not finished yet
-from .superior_widget import SuperiorWidget
+# from .superior_widget import SuperiorWidget
+
+
+from .platform_support import NativeElement, NativeContainer
 
 from .platform_widget import (
     PlatformWidget,
 )
+
+from .widget_builder import WidgetBuilder, BuildError, BuildProxy, ForwardMethodCall
