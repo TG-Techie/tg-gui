@@ -29,7 +29,7 @@ class WidgetBuilder(Generic[_SW, _W]):
     ```
     """
 
-    def __init__(self, fn: Callable[[_SW], _W]) -> None:
+    def __init__(self, fn: Callable[[BuildProxy[_SW]], _W]) -> None:
         # impl-test(assert (lambda:None).__name__ == "<lambda>")
         assert fn.__name__ == "<lambda>"
         self._fn = fn

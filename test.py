@@ -26,6 +26,8 @@ def VStack(w):
     return w
 
 
+SomeWidget = TypeVar("SomeWidget", bound=Widget)
+
 # @main
 @widget
 class Application(View):
@@ -40,5 +42,7 @@ class Application(View):
 
 
 Application.body
+Application.say
 
 app = Application()
+b = app.body()
