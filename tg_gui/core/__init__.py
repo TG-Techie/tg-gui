@@ -3,7 +3,7 @@ from . import implementation_support
 
 from .implementation_support import enum_compat
 
-from ._shared import uid, UID, Pixels
+from ._shared import uid, UID, Pixels, add_elemets
 
 from .widget import Widget, widget, buildattr
 from .themeing import Theme, themedattr
@@ -14,10 +14,14 @@ from .stateful import State
 # from .superior_widget import SuperiorWidget
 
 
-from .platform_support import NativeElement, NativeContainer
+from . import platform_support
 
 from .platform_widget import (
     PlatformWidget,
 )
 
 from .widget_builder import WidgetBuilder, BuildError, BuildProxy, ForwardMethodCall
+
+from .container_widget import ContainerWidget
+
+from .root_widget import RootWidget

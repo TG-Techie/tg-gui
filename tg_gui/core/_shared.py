@@ -7,6 +7,12 @@ from .implementation_support import isoncircuitpython
 from typing import TYPE_CHECKING, TypeVar, Generic
 from abc import ABC, abstractmethod
 
+# add_elemets = lambda *args: tuple(map(sum, zip(*args)))
+add_elemets = lambda a, b, c=(0, 0): (
+    a[0] + b[0] + c[0],
+    a[1] + b[1] + c[1],
+)
+
 DescT = TypeVar("DescT")
 
 if TYPE_CHECKING:

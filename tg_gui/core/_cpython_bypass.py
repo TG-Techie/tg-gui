@@ -59,7 +59,7 @@ if __debug__:
     def _raise(e: Exception) -> None:
         raise e
 
-    abstractmethod = lambda fn: (
+    abstractmethod = lambda fn, *_, **__: (
         lambda *_, **__: _raise(
             NotImplementedError(
                 f"{fn.__globals__['__name__']}.<class>.{fn.__name__}(...) not implemented"
@@ -67,11 +67,13 @@ if __debug__:
         )
     )
 
-    abstractproperty = lambda fn: property(abstractmethod(fn))
+    abstractclassmethod = lambda fn, *_, **__: classmethod(abstractmethod(fn))
+    abstractproperty = lambda fget, *_, **__: property(abstractmethod(fget))
 
 else:
     abstractmethod = lambda fn: fn
-    abstractproperty = lambda fn: property(fn)
+    abstractclassmethod = classmethod
+    abstractproperty = property
 
 _bypassed_modules_ = (
     "__future__",

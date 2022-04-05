@@ -26,7 +26,12 @@ def _build_native_(
     text: str,
     action: Callable[[], None],
 ) -> tuple[NativeElement, tuple[Pixels, Pixels],]:
-    raise NotImplementedError
+    """
+    Build the native button widget, set the text and connect the click event.
+    """
+    button = QPushButton(text)
+    button.clicked.connect(action)
+    return button, button.size().toTuple()
 
 
 @platformmethod

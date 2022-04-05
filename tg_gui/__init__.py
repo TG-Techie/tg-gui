@@ -16,8 +16,11 @@ else:
 
 _sys.modules[f"{__name__}._platform_"] = _platform_
 
+# --- prelude info ---
+from .prelude import main
+
 # --- etc... ? ---
 from .view import View
 
 # --- platform widgets ---
-from .button import Button, CapsuleButton
+from .button import Button

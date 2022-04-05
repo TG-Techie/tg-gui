@@ -28,21 +28,22 @@ def VStack(w):
 
 SomeWidget = TypeVar("SomeWidget", bound=Widget)
 
-# @main
-@widget
+from tg_gui import *
+
+
+@main
 class Application(View):
 
-    body = lambda self: Button(
-        "hello",
-        action=self.say("hello"),
-    )
+    body = lambda self: Button("hello", action=self.say("hello"))
 
     def say(self, text: str) -> None:
         print(text)
 
 
-Application.body
-Application.say
+# @main(setup=__name__ == "__main__")
+App = Application
 
-app = Application()
-b = app.body()
+print(App)
+
+if __name__ == "__main__":
+    App._superior_.run()

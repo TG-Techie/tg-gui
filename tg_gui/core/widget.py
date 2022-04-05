@@ -17,14 +17,11 @@ _T = TypeVar("_T")
 # circular and annotation-only imports
 if TYPE_CHECKING:
     from ._shared import _Missing
-    from typing import ClassVar, Type, Iterator, Callable
+    from typing import ClassVar, Type, Iterator, Callable, Any
 
-    from .superior_widget import SuperiorWidget
-    from .platform_widget import (
-        Platform,
-        NativeElement,
-        NativeContainer,
-    )
+    from .container_widget import ContainerWidget
+    from .platform_widget import NativeElement, NativeContainer
+    from .._platform_.platform import Platform
 
 _getname = lambda attr: attr._name_
 
@@ -110,19 +107,19 @@ class Widget(ABC):
     _subclass_sugar_: ClassVar[Callable[[Type[Widget]], None]]
 
     # --- nest phase ---
-    _superior_: SuperiorWidget | None = None
-    _platform_: Platform | None = None
+    _superior_: ContainerWidget = None  # type: ignore[assignment]
+    _platform_: Platform = None  # type: ignore[assignment]
 
     # --- build phase ---
-    _dims_: tuple[Pixels, Pixels] | None = None
+    _dims_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
 
-    @abstractproperty
-    def _native_(self) -> NativeElement | None:
-        raise NotImplementedError
+    _native_: NativeElement | None = abstractproperty(  # type: ignore[assignment]
+        lambda self: None, lambda self, value: None
+    )
 
     # --- place phase ---
-    _pos_: tuple[Pixels, Pixels] | None = None
-    _abs_pos_: tuple[Pixels, Pixels] | None = None
+    _pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
+    _abs_pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
 
     if __debug__ and not TYPE_CHECKING:
 
@@ -130,7 +127,7 @@ class Widget(ABC):
             # widget classes must be decorated
             if cls.__dict__.get("_widget_cls_id_", None) != _class_id(cls):
                 raise TypeError(
-                    f"{cls} not decorated with @widgert (or other widget decorator)"
+                    f"{cls} not decorated with @widget (or other widget decorator)"
                 )
 
             if cls.__init__ is Widget.__init__ and len(args):
@@ -141,13 +138,13 @@ class Widget(ABC):
     def __init__(self, **kwargs):
         self._id_ = uid()
         # nest
-        self._superior_ = None
-        self._platform_ = None
+        self._superior_ = None  # type: ignore[assignment]
+        self._platform_ = None  # type: ignore[assignment]
         # build
-        self._dims_ = None
+        self._dims_ = None  # type: ignore[assignment]
         # place
-        self._pos_ = None
-        self._abs_pos_ = None
+        self._pos_ = None  # type: ignore[assignment]
+        self._abs_pos_ = None  # type: ignore[assignment]
 
         if len(extra := set(kwargs) - set(self._initkwargs_)):
             raise TypeError(
@@ -174,7 +171,6 @@ class Widget(ABC):
                 for k, v in self._initkwargs_.items()
                 if v._repr
             )
-
             return f"<widget:{self._id_} {type(self).__name__}({attrdebug or '...'})>"
 
     else:
@@ -182,32 +178,49 @@ class Widget(ABC):
         def __repr__(self) -> str:
             return f"<{type(self).__name__}: {self._id_}>"
 
-    if __debug__:
+    def _get_init_args(
+        self, kind: Type[InitAttr] | tuple[Type[InitAttr], ...]
+    ) -> dict[str, Any]:
+        return {
+            name: getattr(self, name)
+            for name, attr in self._initkwargs_.items()
+            if isinstance(attr, kind)
+        }
 
-        def _is_nested(self) -> bool:
-            assert (self._superior_ is None) == (self._platform_ is None)
-            return self._superior_ is not None
+    def _is_nested(self) -> bool:
+        assert (self._superior_ is None) == (self._platform_ is None)
+        return self._superior_ is not None
 
-        def _is_built(self) -> bool:
-            return self._dims_ is not None
+    def _is_built(self) -> bool:
+        return self._dims_ is not None
 
-        def _is_placed(self) -> bool:
-            assert (self._pos_ is None) == (self._abs_pos_ is None)
-            return self._pos_ is not None
+    def _is_placed(self) -> bool:
+        assert (self._pos_ is None) == (self._abs_pos_ is None)
+        return self._pos_ is not None
 
-    def _nest_in_(self, superior: SuperiorWidget, platform: Platform) -> None:
+    def _nest_in_(self, superior: ContainerWidget, platform: Platform) -> None:
         assert not self._is_nested()
         self._superior_ = superior
         self._platform_ = platform
+        self._on_nest_(superior, platform)
 
-    def _unnest_from_(self, superior: SuperiorWidget, platform: Platform) -> None:
+    def _unnest_from_(self, superior: ContainerWidget, platform: Platform) -> None:
         assert self._is_nested()
         assert (
             self._superior_ is superior
         ), f"{self} nested in {self._superior_}, cannot unnest from {superior}"
         assert self._platform_ is platform
-        self._superior_ = None
-        self._platform_ = None
+        self._on_unnest_(superior, platform)
+        self._superior_ = None  # type: ignore[assignment]
+        self._platform_ = None  # type: ignore[assignment]
+
+    @abstractmethod
+    def _on_nest_(self, superior: ContainerWidget, platform: Platform) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _on_unnest_(self, superior: ContainerWidget, platform: Platform) -> None:
+        raise NotImplementedError
 
     @abstractmethod
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
@@ -235,6 +248,20 @@ class Widget(ABC):
     def _pickup_(self) -> None:
         """
         must set _pos_ and _abs_pos_ to None
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _show_(self) -> None:
+        """
+        must show the widget on the platform
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _hide_(self) -> None:
+        """
+        must hide the widget on the platform
         """
         raise NotImplementedError
 

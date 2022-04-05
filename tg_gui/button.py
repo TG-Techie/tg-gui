@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @platformwidget(_platform_.button)
-class CapsuleButton(PlatformWidget):
+class Button(PlatformWidget):
 
     text: str = buildattr(repr=True)
     action: Callable[[], None] = buildattr()
@@ -27,9 +27,3 @@ class CapsuleButton(PlatformWidget):
 
     def __init__(self, text: str, action: Callable[[], None], **kwargs) -> None:
         super().__init__(text=text, action=action, **kwargs)
-
-
-# future proofing
-@widget
-class Button(CapsuleButton):
-    pass

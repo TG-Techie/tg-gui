@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def themedattr(*, default, repr=False, private_name=None, init=True):
-    return ThemeAttr(default=default, repr=repr, private_name=private_name)
+    return ThemedAttr(default=default, repr=repr, private_name=private_name)
 
 
 class Theme:
@@ -61,7 +61,7 @@ if not TYPE_CHECKING and isoncircuitpython():
     InitAttr = {_T: _InitAttr}
 
 
-class ThemeAttr(InitAttr[_T]):
+class ThemedAttr(InitAttr[_T]):
 
     _required_: bool = False
     _positional_: bool = False

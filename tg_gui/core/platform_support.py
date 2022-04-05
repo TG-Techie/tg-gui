@@ -5,23 +5,20 @@ from .widget import Widget, widget
 
 from typing import TYPE_CHECKING, TypeVar
 from types import ModuleType, FunctionType
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractclassmethod
 
 # annotation only typing
 if TYPE_CHECKING:
-    from tg_gui.core.platform_widget import PlatformWidget
+    from .platform_widget import PlatformWidget
+    from .root_widget import RootWidget
 
-    from typing import Protocol, ClassVar, Callable, Type
+    from typing import ClassVar, Callable, Type
 
-    class NativeElement(Protocol):
-        pass
-
-    class NativeContainer(NativeElement):
-        pass
-
-else:
-    NativeElement = object
-    NativeContainer = object
+    from .._platform_.platform import (
+        NativeElement,
+        NativeContainer,
+        NativeRootContainer,
+    )
 
 
 _Fn = TypeVar("_Fn", bound=FunctionType)
@@ -42,7 +39,7 @@ def platformwidget(mod: ModuleType):
     decorator for classes that require platform specific functions,
     pass it the platform module that contains the platform specific methods
     > :warning: this decorator is potentially designed to be pre-processed:
-    > call it with `@platformwidget(_platform_.<module name>)`
+    > only call it with `@platformwidget(_platform_.<module name>)`
     """
     if TYPE_CHECKING:
         return lambda cls: cls
@@ -50,6 +47,12 @@ def platformwidget(mod: ModuleType):
 
 
 def platformmethod(fn) -> None:
+    """
+    decorator for functions to make them as platform specific implementations of a method
+    for a given widget. These are used in the _platform_ and related modules.
+    > :warning: this decorator is potentially designed to be pre-processed:
+    > only call it with `@platformwidget` or as otherwise documented
+    """
     # put the fn into the list of platform methods in the module's globals
 
     assert isinstance(fn, FunctionType), f"{fn} is not a function, got {repr(fn)}"
@@ -78,6 +81,11 @@ def platformmethod(fn) -> None:
 
 
 class requiredplatformmethod:
+    """
+    decorator for functions to make them as stubs that require a platform specific implementation
+    (those are decorated with `@platformmethod`).
+    """
+
     if __debug__:
 
         def __new__(cls, mthd: Callable) -> requiredplatformmethod:
@@ -101,6 +109,16 @@ class requiredplatformmethod:
 
 
 class platformimports:
+    """
+    context manager used to mark the imports required for implementation specific methods
+    wrap all imports excluding `__future__`, `TYPE_CHECKING`, and `_platform_support_` in this,
+    EX:
+    ```
+    with platformimports():
+        ...
+    ```
+    """
+
     _shared_inst: ClassVar[platformimports]
 
     def __enter__(self) -> None:
@@ -109,6 +127,7 @@ class platformimports:
     def __exit__(self, *_, **__):
         return None
 
+    # work-around for now, until (hopefully never) runtime import transplants are required
     def __new__(cls, *_, **__):
         if not hasattr(cls, "_shared_inst"):
             cls._shared_inst = super().__new__(cls)
@@ -155,15 +174,43 @@ def _platform_widget(cls, mod: ModuleType):
 
 
 # TODO: move this to a separate file
-class Platform(ABC):
+class _Platform_(ABC):
+    """
+    base class for platform support objects (thus the sunder name)
+    """
+
     _id_: UID
     name: ClassVar[str]
 
     def __init__(self) -> None:
         self._id_ = uid()
 
+    @abstractclassmethod
+    def default(cls) -> _Platform_:
+        """
+        return the default platform for this class
+        """
+        raise NotImplementedError
+
     @abstractmethod
-    def new_container(self, width: Pixels, height: Pixels) -> NativeContainer:
+    def default_size(self) -> tuple[Pixels, Pixels]:
+        """
+        return the default size for this platform
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def run(self, root: RootWidget) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def new_container(self, dimensions: tuple[Pixels, Pixels]) -> NativeContainer:
+        raise NotImplementedError
+
+    @abstractmethod
+    def new_root_container(
+        self, dimensions: tuple[Pixels, Pixels]
+    ) -> NativeRootContainer:
         raise NotImplementedError
 
     @abstractmethod
