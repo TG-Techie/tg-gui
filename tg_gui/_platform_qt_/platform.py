@@ -13,7 +13,7 @@ class Platform(platform_support._Platform_):
     def __init__(self) -> None:
         self._app = QtWidgets.QApplication([])
         self._window = QtWidgets.QMainWindow()
-        self._central_widget: NativeRootContainer  # type: ignore[assignment]
+        self._central_qtwidget: NativeRootContainer  # type: ignore[assignment]
 
     def run(self) -> None:
         self._window.show()
@@ -22,6 +22,10 @@ class Platform(platform_support._Platform_):
     @classmethod
     def default(cls) -> Platform:
         return cls()
+
+    @property
+    def native_root(self) -> NativeRootContainer | None:
+        return getattr(self, "_central_qtwidget", None)
 
     def default_size(self) -> tuple[Pixels, Pixels]:
         return (800, 600)
@@ -34,7 +38,7 @@ class Platform(platform_support._Platform_):
         widget.setFixedSize(dimensions[0], dimensions[1])
         return widget
 
-    def makeget_root_container(
+    def init_native_root_container(
         self,
         dimensions: tuple[Pixels, Pixels],
     ) -> NativeRootContainer:
@@ -42,11 +46,11 @@ class Platform(platform_support._Platform_):
         Returns an empty widget with the given dimensions and set it as the central widget
         in the application
         """
-        if getattr(self, "_central_widget", None) is not None:
-            return self._central_widget
+        if getattr(self, "_central_qtwidget", None) is not None:
+            return self._central_qtwidget
         else:
             # make the central widget
-            self._central_widget = widget = NativeRootContainer()
+            self._central_qtwidget = widget = NativeRootContainer()
             widget.setFixedSize(dimensions[0], dimensions[1])
             self._window.setCentralWidget(widget)
             return widget

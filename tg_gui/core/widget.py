@@ -30,6 +30,14 @@ def buildattr(*, repr=False, private_name=None):
     return BuildAttr(repr=repr, private_name=private_name)
 
 
+def iswidgetclass(cls: type) -> bool:
+    return (
+        isinstance(cls, type)
+        and issubclass(cls, Widget)
+        and getattr(cls, "_widget_cls_id_", None) == _class_id(cls)
+    )
+
+
 def widget(cls):
     """
     !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
@@ -45,28 +53,34 @@ def widget(cls):
 
     clsid = _class_id(cls)
 
+    # make sure widgets are single inheritance only
     # circuitpython-compat(__mro__) not supported
     assert 1 == len(
-        overlap := set(filter(lambda c: issubclass(c, Widget), cls.__bases__))
-    ), f"widgets cannot subclass multiple widgets types: "
+        overlap := set(
+            basecls for basecls in cls.__bases__ if issubclass(basecls, Widget)
+        )
+    ), f"widgets cannot subclass multiple widgets types: {overlap}"
 
+    # make sure the widget has not already been wrapped
     assert (
         "_widget_cls_id_" not in cls.__dict__
         and cls.__dict__.get("_widget_cls_id_", None) is not clsid
     ), f"{cls.__name__} already decorated with @widget (or other widget decorator)"
 
-    assert 1 == sum(
-        issubclass(basecls, Widget) for basecls in cls.__bases__
-    ), f"{cls} must inherit from one Widget class"
+    # make sure it's first base is a Widget subclass
     assert issubclass(
         cls.__bases__[0], Widget
-    ), f"{cls} must inherit from one Widget class"
+    ), f"{cls} must inherit from one Widget class as its first base class, found {cls.__bases__[0]}"
 
     # circuitpython does not support __set_name__ for descriptors, add it manually
+    # circuitpython-compat(__set_name__) not supported
     if isoncircuitpython():
         for name, attr in cls.__dict__.items():
             if hasattr(attr, "__set_name__"):
                 attr.__set_name__(cls, name)
+
+    # tg-gui allows for classes to have a "._subclass_sugar_(...)" class method used
+    # to format base classes after they have been wrapped.
 
     # climb up the inheritance tree and find the first Widget class and apply the subclass inits in the right order
     sugar_classes: list[Type[Widget]] = []
@@ -74,25 +88,32 @@ def widget(cls):
         formatter = basecls.__dict__.get("_subclass_sugar_", None)
         if isinstance(formatter, (classmethod, staticmethod, FunctionType)):
             sugar_classes.append(basecls)
+        # make sure it's not some other value
         else:
             assert formatter is None, (
                 f"{basecls} has an invalid _subclass_sugar_ attribute ({FunctionType}). "
-                + "must be a classmethod or staticmethod"
+                + f"must be a classmethod or staticmethod, got {formatter}"
             )
+    else:
+        for basecls in reversed(sugar_classes):
+            basecls._subclass_sugar_(cls)
 
-    for basecls in reversed(sugar_classes):
-        basecls._subclass_sugar_(cls)
+    # parameters for the tg-gui widget classes are delcared using
+    # buildattr and initattr descriptors. TO do this we pre-process the class attributes
+    # and extract the parameters ahead of time.
 
     # create a flattened dict of the allowed init args
     # only add a dict if there are any new init args
     newkwargs: dict[str, InitAttr] = {
         name: attr for name, attr in cls.__dict__.items() if isinstance(attr, InitAttr)
     }
+    # newer args of an existing arg replace the older ones
     if len(newkwargs):
         kwargs = cls._initkwargs_.copy()
         kwargs.update(newkwargs)
         cls._initkwargs_ = kwargs
 
+    # make the class as a widget and set the unique id
     if __debug__:
         cls._widget_cls_id_ = clsid
 

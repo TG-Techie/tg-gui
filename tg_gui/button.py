@@ -25,5 +25,5 @@ class Button(PlatformWidget):
     active_fill: Color = themedattr(default=color.system_active_fill)
     active_foreground: Color = themedattr(default=color.system_active_foreground)
 
-    def __init__(self, text: str, action: Callable[[], None], **kwargs) -> None:
+    def __init__(self, text: str, action: Callable[[], None] | None, **kwargs) -> None:
         super().__init__(text=text, action=action, **kwargs)

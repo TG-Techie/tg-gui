@@ -5,7 +5,7 @@ from .widget import Widget, widget
 
 from typing import TYPE_CHECKING, TypeVar
 from types import ModuleType, FunctionType
-from abc import ABC, abstractmethod, abstractclassmethod
+from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
 
 # annotation only typing
 if TYPE_CHECKING:
@@ -207,12 +207,23 @@ class _Platform_(ABC):
     def new_container(self, dimensions: tuple[Pixels, Pixels]) -> NativeContainer:
         raise NotImplementedError
 
+    @abstractproperty
+    def native_root(self) -> NativeRootContainer | None:
+        """
+        The root element for this platform, optional if not yet set.
+        Use `.init_native_root_container(...)` to make the root widget.
+        """
+        raise NotImplementedError
+
     @abstractmethod
-    def makeget_root_container(
+    def init_native_root_container(
         self, dimensions: tuple[Pixels, Pixels]
     ) -> NativeRootContainer:
         """
-        Makes and returns the root container for this platform instance
+        Makes and returns the root container for this platform instance.
+        :param dimensions: the dimensions of the root container in pixels (x, y)
+        :return: the root container
+        :raises: PlatformError if the root container cannot be created or already exists
         """
         raise NotImplementedError
 

@@ -1,4 +1,4 @@
-# shared
+# ---- shared ----
 import builtins
 
 
@@ -11,11 +11,11 @@ class _GetItemBypass:
         return self._value
 
 
-# module: __future__
+# ---- module: __future__ ----
 annotations = None
 
 
-# module: typing
+# ---- module: typing ----
 
 TYPE_CHECKING = False
 
@@ -24,7 +24,18 @@ Generic = _GetItemBypass("Generic", object)
 
 TypeVar = lambda *_, **__: None
 
-# module: types
+overload = lambda fn: (
+    None
+    if __debug__
+    else lambda *_, **__: _raise(
+        SyntaxError(
+            f"overloaded only function defined, "
+            + f"{fn.__globals__['__name__']}.{fn.__name__} is not defined without overloads"
+        )
+    )
+)
+
+# ---- module: types ----
 @type
 def FunctionType():
     pass
@@ -38,7 +49,7 @@ ModuleType = type(builtins)
 
 Any = object
 
-# module: enum
+# ---- module: enum ----
 # enum, auto
 
 
@@ -50,7 +61,7 @@ def enum_compat(cls):
     raise NotImplementedError
 
 
-# module: abc:
+# ---- module: abc ----
 # ABC, abstractmethod, abstractproperty
 
 ABC = object
@@ -71,10 +82,13 @@ if __debug__:
     abstractproperty = lambda fget, *_, **__: property(abstractmethod(fget))
 
 else:
-    abstractmethod = lambda fn: fn
-    abstractclassmethod = classmethod
-    abstractproperty = property
+    abstractmethod = lambda fn: fn  # type: ignore[misc, assignment]
+    abstractclassmethod = classmethod  # type: ignore[assignment]
+    abstractproperty = property  # type: ignore[assignment]
 
+
+# ---- misc ----
+# list of all modules this file replaces
 _bypassed_modules_ = (
     "__future__",
     "typing",

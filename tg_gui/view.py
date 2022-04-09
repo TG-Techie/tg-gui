@@ -12,38 +12,45 @@ from tg_gui.core import (
 )
 
 
-from typing import TypeVar, ClassVar, Callable
+from typing import TypeVar, ClassVar, Callable, ParamSpec
 from types import LambdaType
 from abc import ABC, abstractmethod, abstractstaticmethod
 
 
-from typing import TYPE_CHECKING, Generic, TypeVar, Callable
+from typing import TYPE_CHECKING, Generic, TypeVar, Callable, ForwardRef
 
 # annotation-only imports
 if TYPE_CHECKING:
     from typing import Iterable
     from ._platform_.platform import Platform, NativeElement, NativeContainer
 
-_W = TypeVar("_W", bound=Widget, covariant=True)
+_W = TypeVar("_W", bound=Widget)
 # _W = TypeVar("_W", bound=Widget, covariant=True)
 # _V = TypeVar("_V", bound="View", contravariant=True)
 
+Self = TypeVar("Self", bound="View")
+ViewBody = Callable[[Self], _W]
+
 
 @widget
-class View(ContainerWidget, Generic[_W]):
-    @abstractmethod
-    def body(self) -> _W:
-        raise NotImplementedError
+class View(ContainerWidget, Generic[_W, Self]):
+    # @abstractmethod
+    # def body(self: _SubSelf) -> Widget:
+    #     raise NotImplementedError
 
-    def __init__(self, *args, **kwargs):
+    body: ViewBody = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
+
+    def __init__(self: Self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         build_proxy = BuildProxy(self)
         cls = type(self)
-        assert hasattr(cls, "body"), f"{cls} has no .body method"
-        assert (
-            isinstance(cls.body, LambdaType) and cls.body.__name__ == "<lambda>"
-        ), f"{cls}.body is not a lambda, got {cls.body}"
+
+        if not TYPE_CHECKING:
+            assert hasattr(cls, "body"), f"{cls} has no .body method"
+            assert (
+                isinstance(cls.body, LambdaType) and cls.body.__name__ == "<lambda>"
+            ), f"{cls}.body is not a lambda, got {cls.body}"
 
         # assert (
         #     isinstance(cls.body, LambdaType)
@@ -51,7 +58,7 @@ class View(ContainerWidget, Generic[_W]):
         #     or isinstance(cls.body, WidgetBuilder)
         # ), f"{cls}.body is not a lambda or WidgetBuilder"
 
-        self._body: _W = cls.body(build_proxy)
+        self._body: _W = cls.body(build_proxy)  # type: ignore[assignment]
         build_proxy._close_build_()
 
     def _nested_widgets_(self) -> Iterable[Widget]:

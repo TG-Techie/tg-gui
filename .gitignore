@@ -1,5 +1,5 @@
 # --- custom ---
-.recal/ 
+.recal/
 *.mpy
 .DS_Store
 

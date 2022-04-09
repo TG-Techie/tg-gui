@@ -26,8 +26,36 @@ class color:
     system_active_foreground: Color | State[Color] = 0xFFFFFF
     system_background: Color | State[Color] = 0x000000
 
-    def fromfloats(r, g, b):
-        r = round(255 * r ** 1.125)
-        g = round(255 * g ** 1.125)
-        b = round(255 * b ** 1.125)
-        return (r << 16) | (g << 8) | (b << 0)
+    @staticmethod
+    def fromfloats(red: float, green: float, blue: float) -> Color:
+        """
+        Creates a color from red, green, and blue as floats between 0 and 1.
+
+        :param red: red component
+        :param green: green component
+        :param blue: blue component
+        :return: combined color
+        """
+        assert 0 <= red <= 1, f"r must be between 0 and 1, got {red}"
+        assert 0 <= green <= 1, f"g must be between 0 and 1, got {green}"
+        assert 0 <= blue <= 1, f"b must be between 0 and 1, got {blue}"
+        # use ** 1.125 as a faux gamma correction
+        red = round(255 * red ** 1.125)
+        green = round(255 * green ** 1.125)
+        blue = round(255 * blue ** 1.125)
+        return (red << 16) | (green << 8) | (blue << 0)
+
+    @staticmethod
+    def fromint(red: int, green: int, blue: int) -> Color:
+        """
+        Creates a color from red, green, and blue as integers between 0 and 255.
+
+        :param red: red component
+        :param green: green component
+        :param blue: blue component
+        :return: combined color
+        """
+        assert 0 <= red <= 255, f"r must be between 0 and 255, got {red}"
+        assert 0 <= green <= 255, f"g must be between 0 and 255, got {green}"
+        assert 0 <= blue <= 255, f"b must be between 0 and 255, got {blue}"
+        return (red << 16) | (green << 8) | (blue << 0)

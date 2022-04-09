@@ -4,17 +4,19 @@ from __future__ import annotations
 import tg_gui
 
 
-print(
-    "{",
-    "    "
-    + ",\n    ".join(
-        f"{k!r}: \t{v!r}"
-        for k, v in sorted(tg_gui.__dict__.items())
-        if not k.startswith("_")
-    ),
-    "}",
-    sep="\n",
-)
+def prettydict(d: dict[Any, Any]) -> str:
+    return (
+        "{\n    "
+        + ",\n    ".join(
+            f"{k!r}: \t{prettydict(v) if isinstance(v, dict) else repr(v)}"
+            for k, v in sorted(d.items())
+            if not k.startswith("_")
+        )
+        + "\n}"
+    )
+
+
+print(prettydict(tg_gui.__dict__))
 
 from tg_gui import *
 
@@ -30,20 +32,22 @@ SomeWidget = TypeVar("SomeWidget", bound=Widget)
 
 from tg_gui import *
 
+from tg_gui.view import ViewBody, Self
 
-@main
+
+@widget
 class Application(View):
 
-    body = lambda self: Button("hello", action=self.say("hello"))
+    body: ViewBody[Application] = lambda self: Button(
+        "hello",
+        action=self.say("hello"),
+    )
 
     def say(self, text: str) -> None:
         print(text)
 
 
-# @main(setup=__name__ == "__main__")
-App = Application
-
-print(App)
+print(Application)
 
 if __name__ == "__main__":
-    App._platform_.run()
+    main(Application).run()
