@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 # circular and annotation-only imports
 if TYPE_CHECKING:
-    from tg_gui.button import CapsuleButton
+    from tg_gui.button import Button
     from typing import Callable
 
 with platformimports():
@@ -20,7 +20,7 @@ with platformimports():
 
 @platformmethod
 def _build_native_(
-    self: CapsuleButton,
+    self: Button,
     suggestion: tuple[Pixels, Pixels],
     *,
     text: str,
@@ -36,7 +36,7 @@ def _build_native_(
 
 @platformmethod
 def _native_style_(
-    self: CapsuleButton,
+    self: Button,
     *,
     radius: float,
     fill: Color,
