@@ -1,6 +1,8 @@
 from ._shared import uid, UID, Pixels, _Missing
 from .widget import Widget, widget
 
+from .._platform_.platform import NativeElement, NativeContainer, NativeRootContainer
+
 from typing import (
     TYPE_CHECKING,
     TypeVar,
@@ -9,6 +11,7 @@ from typing import (
     Callable,
     Concatenate,
     Type,
+    ClassVar,
 )
 from types import (
     ModuleType as _ModuleType,
@@ -44,3 +47,62 @@ class platformimports:
         exc_value: BaseException,
         traceback: _TracebackType,
     ) -> None: ...
+
+# TODO: move this to a separate file
+class _Platform_(ABC):
+    """
+    base class for platform support objects (thus the sunder name)
+    """
+
+    _id_: UID
+    name: ClassVar[str]
+    def __init__(self) -> None:
+        self._id_ = uid()
+    @abstractclassmethod
+    def default(cls) -> _Platform_:
+
+        raise NotImplementedError
+    @abstractmethod
+    def default_size(self) -> tuple[Pixels, Pixels]:
+
+        raise NotImplementedError
+    @abstractmethod
+    def run(self) -> None:
+        raise NotImplementedError
+    @abstractmethod
+    def new_container(self, dimensions: tuple[Pixels, Pixels]) -> NativeContainer:
+        raise NotImplementedError
+    @abstractproperty
+    def native_root(self) -> NativeRootContainer | None:
+
+        raise NotImplementedError
+    @abstractmethod
+    def init_native_root_container(
+        self, dimensions: tuple[Pixels, Pixels]
+    ) -> NativeRootContainer:
+
+        raise NotImplementedError
+    @abstractmethod
+    def nest_element(
+        self, container: NativeContainer, element: NativeElement
+    ) -> NativeContainer:
+        raise NotImplementedError
+    @abstractmethod
+    def unnest_element(
+        self, container: NativeContainer, element: NativeElement
+    ) -> None:
+        raise NotImplementedError
+    @abstractmethod
+    def set_relative(
+        self,
+        container: NativeContainer,
+        element: NativeElement,
+        position: tuple[Pixels, Pixels],
+    ) -> None:
+        raise NotImplementedError
+    @abstractmethod
+    def hide_element(self, element: NativeElement) -> None:
+        raise NotImplementedError
+    @abstractmethod
+    def show_element(self, element: NativeElement) -> None:
+        raise NotImplementedError
