@@ -7,4 +7,9 @@
         "reportWildcardImportFromLibrary": "none"
     },
     "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.blackPath": "black",
+    "python.formatting.blackArgs": [
+        "--target-version",
+        "py310"
+    ],
 }

@@ -32,7 +32,7 @@ SomeWidget = TypeVar("SomeWidget", bound=Widget)
 
 from tg_gui import *
 
-from tg_gui.view import ViewBody, Self
+from tg_gui.view import ViewBody
 
 
 @widget
@@ -50,4 +50,5 @@ class Application(View):
 print(Application)
 
 if __name__ == "__main__":
-    main(Application).run()
+    app = main(Application, size=(100, 90))
+    app.run()

@@ -38,6 +38,27 @@ def main(
     ...
 
 
+@overload
+def main(
+    cls: Type[_MainWidget],
+    *,
+    platform: Platform | None = ...,
+    size: tuple[Pixels, Pixels] | None = ...,
+    setup: Literal[True] = True,
+) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
+    ...
+
+
+@overload
+def main(
+    cls: Type[_MainWidget],
+    *,
+    platform: Platform | None = ...,
+    setup: Literal[False] = ...,
+) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
+    ...
+
+
 def main(
     cls: Type[_MainWidget] | None = None,
     *,

@@ -25,22 +25,19 @@ if TYPE_CHECKING:
     from ._platform_.platform import Platform, NativeElement, NativeContainer
 
 _W = TypeVar("_W", bound=Widget)
-# _W = TypeVar("_W", bound=Widget, covariant=True)
-# _V = TypeVar("_V", bound="View", contravariant=True)
-
-Self = TypeVar("Self", bound="View")
-ViewBody = Callable[[Self], _W]
+_SomeView = TypeVar("_SomeView", bound="View")
+ViewBody = Callable[[_SomeView], _W]
 
 
 @widget
-class View(ContainerWidget, Generic[_W, Self]):
+class View(ContainerWidget, Generic[_W, _SomeView]):
     # @abstractmethod
     # def body(self: _SubSelf) -> Widget:
     #     raise NotImplementedError
 
     body: ViewBody = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
 
-    def __init__(self: Self, *args, **kwargs):
+    def __init__(self: _SomeView, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         build_proxy = BuildProxy(self)
