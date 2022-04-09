@@ -113,18 +113,19 @@ class Widget(ABC):
     # --- build phase ---
     _dims_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
 
-    _native_: NativeElement | None = abstractproperty(  # type: ignore[assignment]
-        lambda self: None, lambda self, value: None
-    )
+    @abstractproperty
+    def _native_(self) -> NativeElement | None:
+        raise NotImplementedError
 
     # --- place phase ---
     _pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
     _abs_pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
 
+    # --- runtime lint checks ---
     if __debug__ and not TYPE_CHECKING:
 
         def __new__(cls, *args, **kwargs):
-            # widget classes must be decorated
+            # widget classes must be decorated, _widget_cls_id_ is set if it is decorated
             if cls.__dict__.get("_widget_cls_id_", None) != _class_id(cls):
                 raise TypeError(
                     f"{cls} not decorated with @widget (or other widget decorator)"
@@ -136,7 +137,14 @@ class Widget(ABC):
             return object.__new__(cls)
 
     def __init__(self, **kwargs):
+
         self._id_ = uid()
+
+        # -- set attribute values ahead of time -
+        # circuitpython requires all attributes to be reserved in __init__ otherwise
+        # objects will be re-allocated more than necessary and run out of memory
+
+        #  use none as not int placeholders as it should not be there
         # nest
         self._superior_ = None  # type: ignore[assignment]
         self._platform_ = None  # type: ignore[assignment]
@@ -146,37 +154,25 @@ class Widget(ABC):
         self._pos_ = None  # type: ignore[assignment]
         self._abs_pos_ = None  # type: ignore[assignment]
 
+        # -- argument validation --
+        # unexpected keyword arguments
         if len(extra := set(kwargs) - set(self._initkwargs_)):
             raise TypeError(
-                f"{type(self).__name__}() got an unexpected keyword argument(s): {'=, '.join(extra)}="
+                f"{type(self).__name__}() got unexpected keyword argument(s): {'=, '.join(extra)}="
             )
 
+        # missing required arguments
         missing = set()
         for name, attr in self._initkwargs_.items():
             if attr._required_ and name not in kwargs:
                 missing.add(name)
             elif name in kwargs:
                 attr._set_(self, kwargs[name])
-
-        if len(missing):
-            raise TypeError(
-                f"{type(self).__name__}() missing required keyword argument(s): {'=, '.join(missing)}="
-            )
-
-    if __debug__:
-
-        def __repr__(self) -> str:
-            attrdebug = ", ".join(
-                f"{k}={repr(v.get(self))}"
-                for k, v in self._initkwargs_.items()
-                if v._repr
-            )
-            return f"<widget:{self._id_} {type(self).__name__}({attrdebug or '...'})>"
-
-    else:
-
-        def __repr__(self) -> str:
-            return f"<{type(self).__name__}: {self._id_}>"
+        else:
+            if len(missing):
+                raise TypeError(
+                    f"{type(self).__name__}() missing required keyword argument(s): {'=, '.join(missing)}="
+                )
 
     def _get_init_args(
         self, kind: Type[InitAttr] | tuple[Type[InitAttr], ...]
@@ -281,6 +277,21 @@ class Widget(ABC):
             curcls = curcls.__bases__[0]
         else:
             yield Widget
+
+    if __debug__:
+
+        def __repr__(self) -> str:
+            attrdebug = ", ".join(
+                f"{k}={repr(v.get(self))}"
+                for k, v in self._initkwargs_.items()
+                if v._repr
+            )
+            return f"<widget:{self._id_} {type(self).__name__}({attrdebug or '...'})>"
+
+    else:
+
+        def __repr__(self) -> str:
+            return f"<{type(self).__name__}: {self._id_}>"
 
 
 class InitAttr(GenericABC[_T]):

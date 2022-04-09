@@ -200,7 +200,7 @@ class _Platform_(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def run(self, root: RootWidget) -> None:
+    def run(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -208,9 +208,12 @@ class _Platform_(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def new_root_container(
+    def makeget_root_container(
         self, dimensions: tuple[Pixels, Pixels]
     ) -> NativeRootContainer:
+        """
+        Makes and returns the root container for this platform instance
+        """
         raise NotImplementedError
 
     @abstractmethod

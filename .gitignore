@@ -1,6 +1,7 @@
 # --- custom ---
 .recal/ 
 *.mpy
+.DS_Store
 
 # --- default ---
 

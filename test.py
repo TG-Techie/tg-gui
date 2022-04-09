@@ -46,4 +46,4 @@ App = Application
 print(App)
 
 if __name__ == "__main__":
-    App._superior_.run()
+    App._platform_.run()
