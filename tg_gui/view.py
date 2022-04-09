@@ -8,7 +8,7 @@ from tg_gui.core import (
     BuildProxy,
     ContainerWidget,
     Theme,
-    add_elemets,
+    add_elemets as _add_elemets,
 )
 
 
@@ -17,7 +17,7 @@ from types import LambdaType
 from abc import ABC, abstractmethod, abstractstaticmethod
 
 
-from typing import TYPE_CHECKING, Generic, TypeVar, Callable, ForwardRef
+from typing import TYPE_CHECKING, Generic, TypeVar, Callable
 
 # annotation-only imports
 if TYPE_CHECKING:
@@ -35,12 +35,12 @@ class View(ContainerWidget, Generic[_W, _SomeView]):
     # def body(self: _SubSelf) -> Widget:
     #     raise NotImplementedError
 
-    body: ViewBody = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
+    body: ClassVar[ViewBody] = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
 
-    def __init__(self: _SomeView, *args, **kwargs):
+    def __init__(self: _SomeView, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        build_proxy = BuildProxy(self)
+        build_proxy: BuildProxy[_SomeView] = BuildProxy(self)
         cls = type(self)
 
         if not TYPE_CHECKING:
@@ -88,7 +88,7 @@ class View(ContainerWidget, Generic[_W, _SomeView]):
         body = self._body
 
         self._pos_ = (0, 0)
-        self._abs_pos_ = add_elemets(self._superior_._abs_pos_, self._pos_)
+        self._abs_pos_ = _add_elemets(self._superior_._abs_pos_, self._pos_)
 
         self._body._place_(position)
 
