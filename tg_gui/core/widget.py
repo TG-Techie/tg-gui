@@ -317,6 +317,8 @@ class Widget(ABC):
 
 class InitAttr(GenericABC[_T]):
 
+    # TODO: add _build_proxy_ method to either throw error, return value, or bind to state
+
     # --- public attributes ---
     _id_: UID
     _name_: str

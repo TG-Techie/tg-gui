@@ -4,7 +4,7 @@ from ._shared import uid, UID, Pixels, _Missing
 from .widget import Widget, widget
 
 from typing import TYPE_CHECKING, TypeVar
-from types import ModuleType, FunctionType
+from types import ModuleType as _ModuleType, FunctionType as _FunctionType
 from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
 
 # annotation only typing
@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     )
 
 
-_Fn = TypeVar("_Fn", bound=FunctionType)
-
 _MODULE_CACHE = "_platform_methods_"
 
 
@@ -34,7 +32,7 @@ def _raise(e: Exception) -> None:
     raise e
 
 
-def platformwidget(mod: ModuleType):
+def platformwidget(mod: _ModuleType):
     """
     decorator for classes that require platform specific functions,
     pass it the platform module that contains the platform specific methods
@@ -55,11 +53,11 @@ def platformmethod(fn) -> None:
     """
     # put the fn into the list of platform methods in the module's globals
 
-    assert isinstance(fn, FunctionType), f"{fn} is not a function, got {repr(fn)}"
+    assert isinstance(fn, _FunctionType), f"{fn} is not a function, got {repr(fn)}"
 
     scope = fn.__globals__
 
-    cache: dict[str, FunctionType] = scope.setdefault(_MODULE_CACHE, {})
+    cache: dict[str, _FunctionType] = scope.setdefault(_MODULE_CACHE, {})
 
     assert fn.__name__ not in cache, (
         f"{scope['__name__']}.{fn.__name__} is already a platform method, "
@@ -135,7 +133,7 @@ class platformimports:
         return cls._shared_inst
 
 
-def _platform_widget(cls, mod: ModuleType):
+def _platform_widget(cls, mod: _ModuleType):
     # put the class into the list of platform classes in the module's globals
     assert (
         cls._platform_module_name_ is None
@@ -146,7 +144,7 @@ def _platform_widget(cls, mod: ModuleType):
             f"{mod.__name__} is not a platform module (or does not have any @platformmethod decorated functions)"
         )
 
-    cache: dict[str, FunctionType] | None = getattr(mod, _MODULE_CACHE, None)
+    cache: dict[str, _FunctionType] | None = getattr(mod, _MODULE_CACHE, None)
     if cache is None:
         raise PlatformError(
             f"{mod.__name__} already processed as a platform module, cannot be re-used"
