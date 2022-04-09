@@ -7,11 +7,12 @@ from .implementation_support import (
 )
 from ._shared import uid, UID, Pixels, _Missing
 
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic, overload
 from abc import ABC, abstractmethod, abstractproperty
 from types import FunctionType
 from enum import Enum, auto
 
+_W = TypeVar("_W", bound="Widget")
 _T = TypeVar("_T")
 
 # circular and annotation-only imports
@@ -20,14 +21,9 @@ if TYPE_CHECKING:
     from typing import ClassVar, Type, Iterator, Callable, Any
 
     from .container_widget import ContainerWidget
-    from .platform_widget import NativeElement, NativeContainer
-    from .._platform_.platform import Platform
+    from .._platform_.platform import Platform, NativeElement, NativeContainer
 
 _getname = lambda attr: attr._name_
-
-
-def buildattr(*, repr=False, private_name=None):
-    return BuildAttr(repr=repr, private_name=private_name)
 
 
 def iswidgetclass(cls: type) -> bool:
@@ -40,14 +36,26 @@ def iswidgetclass(cls: type) -> bool:
 
 def widget(cls):
     """
-    !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
-    !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
     This is a decotator for that all widgets need to be decorated with to apply sugar
     when asserts are on decoration is strictly enforced at runtime.
-    TODO: add better docstring
+    TODO: add a better docstring
+    !!DO NOT ADD TYPE ANNOTATIONS TO THIS FUNCTION (pylance)!!
+    !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
     """
     if TYPE_CHECKING:
-        return cls
+        from dataclasses import dataclass
+
+        return dataclass(
+            init=True,
+            repr=False,
+            eq=False,
+            order=False,
+            unsafe_hash=False,
+            frozen=False,
+            match_args=False,
+            kw_only=False,
+            slots=False,
+        )(cls)
 
     assert isinstance(cls, type) and issubclass(cls, Widget)
 
@@ -315,6 +323,9 @@ class Widget(ABC):
             return f"<{type(self).__name__}: {self._id_}>"
 
 
+_Self = TypeVar("_Self", bound="InitAttr")
+
+
 class InitAttr(GenericABC[_T]):
 
     # TODO: add _build_proxy_ method to either throw error, return value, or bind to state
@@ -372,7 +383,15 @@ class InitAttr(GenericABC[_T]):
             name != self._private_name
         ), f"{name} is the same as the private name in __set_name__"
 
-    def __get__(self, owner: Widget, ownertype: Type[Widget]) -> _T:
+    @overload
+    def __get__(self: _Self, owner: None, ownertype: Type[_W]) -> _Self:
+        ...
+
+    @overload
+    def __get__(self, owner: _W, ownertype: Type[_W]) -> _T:
+        ...
+
+    def __get__(self, owner: None | _W, ownertype: Type[_W]) -> _T | InitAttr[_T]:
         assert self._name_ is not None, f"{self} not initialized with __set_name__"
         # circuitpython-compat(__get__)
         if owner is None:
@@ -392,6 +411,10 @@ class InitAttr(GenericABC[_T]):
 if not TYPE_CHECKING and isoncircuitpython():
     _InitAttr = InitAttr
     InitAttr = {_T: _InitAttr}
+
+
+def buildattr(*, repr=False, private_name: str | None = None) -> BuildAttr:
+    return BuildAttr(repr=repr, private_name=private_name)  # type: ignore
 
 
 class BuildAttr(InitAttr[_T]):

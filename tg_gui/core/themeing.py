@@ -12,14 +12,21 @@ _T = TypeVar("_T")
 
 # circular and annotation-only imports
 if TYPE_CHECKING:
-    from typing import Type, Any
+    from typing import Type, Any, ClassVar, Literal
 
     ThemeEntry = dict[InitAttr[_T], _T]
     ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
-def themedattr(*, default, repr=False, private_name=None, init=True):
-    return ThemedAttr(default=default, repr=repr, private_name=private_name)
+def themedattr(
+    *, default, repr=False, private_name: str | None = None, build=False
+) -> ThemedAttr:
+    return ThemedAttr(
+        default=default,
+        repr=repr,
+        private_name=private_name,
+        build=build,
+    )
 
 
 class Theme:
@@ -63,8 +70,8 @@ if not TYPE_CHECKING and isoncircuitpython():
 
 class ThemedAttr(InitAttr[_T]):
 
-    _required_: bool = False
-    _positional_: bool = False
+    _required_: Literal[False] = False
+    _positional_: Literal[False] = False
     _build_: bool
 
     def __init__(

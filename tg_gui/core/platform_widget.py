@@ -12,9 +12,8 @@ from abc import ABC, abstractmethod, abstractproperty
 if TYPE_CHECKING:
     from typing import ClassVar
 
-    from .platform_support import _Platform_, NativeElement, NativeContainer
     from .container_widget import ContainerWidget
-    from .._platform_.platform import Platform
+    from .._platform_.platform import Platform, NativeElement, NativeContainer
 
 _T = TypeVar("_T")
 
@@ -26,7 +25,7 @@ class PlatformWidget(Widget):
 
     # --- widget attributes ---
     _platform_module_name_: ClassVar[str | None] = None
-    _margin_: Pixels = themedattr(default=5, init=False)
+    _margin_: ThemedAttr[Pixels] = themedattr(default=5, build=True)
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
