@@ -4,7 +4,8 @@ from ._shared import uid, UID, Pixels
 
 from .widget import Widget, widget
 from .container_widget import ContainerWidget
-from .platform_support import _Platform_
+
+# from .platform_support import _Platform_
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 
@@ -22,8 +23,8 @@ class RootWidget(ContainerWidget, Generic[_W]):
 
     _id_: UID
 
-    _superior_: None
-    _platform_: _Platform_
+    _superior_: None  # type: ignore[assignment]
+    _platform_: Platform
 
     _pos_: tuple[Pixels, Pixels] | None = None
     _abs_pos_: tuple[Pixels, Pixels] | None = None
