@@ -88,13 +88,6 @@ class Platform(platform_support._Platform_):
         Sets the position of the element relative to the container.
         """
         element.move(position[0], position[1])
-        print(
-            "@@ set_relative",
-            "element =",
-            element,
-            element.pos(),
-            sys._getframe(1).f_locals["self"],
-        )
 
     def show_element(self, element: NativeElement) -> None:
         """

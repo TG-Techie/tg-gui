@@ -34,7 +34,6 @@ def _build_native_(
     button.show()
     suggested = button.size().toTuple()
     button.hide()
-    print("_build_native_", self, suggested)
     return button, suggested
 
 

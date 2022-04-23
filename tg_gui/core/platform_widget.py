@@ -63,7 +63,6 @@ class PlatformWidget(Widget):
         assert self._superior_ is not None, f"cannot place {self}, it is not nested"
 
         self._pos_ = w, h = position
-        print(f"{self} || {self._superior_}")
         sw, sh = self._superior_._abs_pos_
         self._abs_pos_ = (sw + w, sh + h)
         self._platform_.set_relative(self._superior_._native_, self._native_, position)

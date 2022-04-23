@@ -30,7 +30,7 @@ _sys.modules[f"{__name__}._platform_"] = _platform_
 from .prelude import main
 
 # --- etc... ? ---
-from .view import View, ViewBody
+from .view import View, BodySyntax
 from .stacks import VStack
 
 # --- platform widgets ---
