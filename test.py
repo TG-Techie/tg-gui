@@ -1,54 +1,21 @@
 from __future__ import annotations
 
-
-import tg_gui
-
-
-def prettydict(d: dict[Any, Any]) -> str:
-    return (
-        "{\n    "
-        + ",\n    ".join(
-            f"{k!r}: \t{prettydict(v) if isinstance(v, dict) else repr(v)}"
-            for k, v in sorted(d.items())
-            if not k.startswith("_")
-        )
-        + "\n}"
-    )
-
-
-print(prettydict(tg_gui.__dict__))
-
 from tg_gui import *
-
-
-from typing import *
-
-
-def VStack(w):
-    return w
-
-
-SomeWidget = TypeVar("SomeWidget", bound=Widget)
-
-from tg_gui import *
-
-from tg_gui.view import ViewBody
+import sys
 
 
 @widget
 class Application(View):
 
-    body: ViewBody[Application] = lambda self: Button(
-        "hello",
-        action=self.say("hello"),
+    body: BodySyntax[Application] = lambda self: VStack(
+        Button("hello", action=self.say("hello")),
+        Button("quit", action=sys.exit),
     )
 
     def say(self, text: str) -> None:
         print(text)
 
 
-print(Application)
-
 if __name__ == "__main__":
-    app = main(Application, size=(100, 90))
-    app.run()
+    window = main(Application, size=(240, 240))
+    window.run()

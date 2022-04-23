@@ -30,10 +30,10 @@ class RootWidget(ContainerWidget, Generic[_W]):
     _superior_: None  # type: ignore[assignment]
     _platform_: Platform
 
-    _pos_: tuple[Pixels, Pixels] | None = None  # type: ignore[assignment]
-    _abs_pos_: tuple[Pixels, Pixels] | None = None  # type: ignore[assignment]
-    _dims_: tuple[Pixels, Pixels] | None = None  # type: ignore[assignment]
-    _native_: NativeRootContainer | None = None  # type: ignore[assignment]
+    _pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
+    _abs_pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
+    _dims_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
+    _native_: NativeRootContainer = None  # type: ignore[assignment]
 
     # unique inst. attributes
     _wrapped: _W
@@ -66,12 +66,13 @@ class RootWidget(ContainerWidget, Generic[_W]):
         size = size or self._platform_.default_size()
         self._build_(size)
         self._place_(None)
+        self._show_()
 
     def _nested_widgets_(self) -> Iterable[_W]:
         return (self._wrapped,)
 
     def _is_nested(self) -> bool:
-        # TODO: review this... it's not tested but never will be...
+        # TODO: review this... it's not tested but should never be...
         return True
 
     def _build_(self, exactly: tuple[Pixels, Pixels]) -> None:

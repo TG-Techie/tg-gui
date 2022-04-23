@@ -31,6 +31,7 @@ from .prelude import main
 
 # --- etc... ? ---
 from .view import View, ViewBody
+from .stacks import VStack
 
 # --- platform widgets ---
 from .button import Button

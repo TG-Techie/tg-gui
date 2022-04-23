@@ -30,21 +30,14 @@ class PlatformWidget(Widget):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def _on_nest_(self, superior: ContainerWidget, platform: Platform) -> None:
+    def _on_nest_(self, platform: Platform) -> None:
+        """
+        Called when the widget is nested in a container widget. Not __TO__ nest this in a container widget,
+        """
         pass
 
-    def _on_unnest_(self, superior: ContainerWidget, platform: Platform) -> None:
+    def _on_unnest_(self, platform: Platform) -> None:
         pass
-
-    # def _on_nest_(self, superior: ContainerWidget, platform: Platform) -> None:
-    #     assert (
-    #         superior._native_ is not None
-    #     ), f"cannot nest {self}, superior is not built"
-    #     assert self._native_ is not None, f"cannot nest {self}, it is already built"
-    #     platform.nest_element(superior._native_, self._native_)
-
-    # def _on_unnest_(self, superior: ContainerWidget, platform: Platform) -> None:
-    #     platform.unnest_element(superior._native_, self._native_)
 
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
         assert self._is_nested(), f"cannot build {self}, it is not nested"
@@ -76,12 +69,13 @@ class PlatformWidget(Widget):
         self._platform_.set_relative(self._superior_._native_, self._native_, position)
 
     def _pickup_(self) -> None:
-        assert self._is_placed()
+        assert self._is_placed(), f"cannot pickup {self}, it is not placed"
         return super()._pickup_()
 
     def _show_(self) -> None:
         assert self._platform_ is not None, f"cannot show {self}, it is not nested"
         assert self._native_ is not None, f"cannot show {self}, it is not built"
+
         self._platform_.show_element(self._native_)
 
     def _hide_(self) -> None:

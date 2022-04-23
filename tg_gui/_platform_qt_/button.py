@@ -31,7 +31,11 @@ def _build_native_(
     """
     button = QPushButton(text)
     button.clicked.connect(action)
-    return button, button.size().toTuple()
+    button.show()
+    suggested = button.size().toTuple()
+    button.hide()
+    print("_build_native_", self, suggested)
+    return button, suggested
 
 
 @platformmethod
@@ -44,4 +48,5 @@ def _native_style_(
     active_fill: Color,
     active_foreground: Color,
 ) -> tuple[NativeElement, tuple[Pixels, Pixels],]:
+
     raise NotImplementedError

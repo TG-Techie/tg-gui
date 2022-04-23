@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 _W = TypeVar("_W", bound=Widget)
 _SomeView = TypeVar("_SomeView", bound="View")
-ViewBody = Callable[[_SomeView], _W]
+BodySyntax = Callable[[_SomeView], _W]
 
 
 @widget
@@ -35,7 +35,7 @@ class View(ContainerWidget, Generic[_W, _SomeView]):
     # def body(self: _SubSelf) -> Widget:
     #     raise NotImplementedError
 
-    body: ClassVar[ViewBody] = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
+    body: ClassVar[BodySyntax] = abstractstaticmethod(lambda self: None)  # type: ignore[assignment]
 
     def __init__(self: _SomeView, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -61,13 +61,12 @@ class View(ContainerWidget, Generic[_W, _SomeView]):
     def _nested_widgets_(self) -> Iterable[Widget]:
         return (self._body,)
 
-    def _on_nest_(self, superior: ContainerWidget, platform: Platform) -> None:
+    def _on_nest_(self, platform: Platform) -> None:
+        # this is an optimizaiont to avoid looping over ._nested_widgets_()
         self._body._nest_in_(self, platform)
 
-    def _on_unnest_(self, superior: ContainerWidget, platform: Platform) -> None:
-        assert (
-            self._superior_ is not None
-        ), f"{self} is not nested, internal error. This should not have been called"
+    def _on_unnest_(self, platform: Platform) -> None:
+        # this is an optimizaiont to avoid looping over ._nested_widgets_()
         self._body._unnest_from_(self, self._platform_)
 
     @property

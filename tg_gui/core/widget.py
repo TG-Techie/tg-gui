@@ -150,7 +150,7 @@ class Widget(ABC):
     _pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
     _abs_pos_: tuple[Pixels, Pixels] = None  # type: ignore[assignment]
 
-    # --- runtime lint checks ---
+    # --- runtime lint checks (ikik sorry, it's @TG-Techie on github) ---
     if __debug__ and not TYPE_CHECKING:
 
         def __new__(cls, *args, **kwargs):
@@ -227,7 +227,7 @@ class Widget(ABC):
         assert not self._is_nested()
         self._superior_ = superior
         self._platform_ = platform
-        self._on_nest_(superior, platform)
+        self._on_nest_(platform)
 
     def _unnest_from_(self, superior: ContainerWidget, platform: Platform) -> None:
         assert self._is_nested()
@@ -235,22 +235,25 @@ class Widget(ABC):
             self._superior_ is superior
         ), f"{self} nested in {self._superior_}, cannot unnest from {superior}"
         assert self._platform_ is platform
-        self._on_unnest_(superior, platform)
+        self._on_unnest_(platform)
         self._superior_ = None  # type: ignore[assignment]
         self._platform_ = None  # type: ignore[assignment]
 
     @abstractmethod
-    def _on_nest_(self, superior: ContainerWidget, platform: Platform) -> None:
+    def _on_nest_(self, platform: Platform) -> None:
+        """
+        Called when the widget is nested in a container widget.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def _on_unnest_(self, superior: ContainerWidget, platform: Platform) -> None:
+    def _on_unnest_(self, platform: Platform) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def _build_(self, suggestion: tuple[Pixels, Pixels]) -> None:
         """
-        must set _dims_
+        must set _dims_ and _native_ (as applicable)
         """
         raise NotImplementedError
 
@@ -267,7 +270,7 @@ class Widget(ABC):
         """
         must set _pos_ and _abs_pos_
         """
-        raise NotImplementedError
+        raise NotImplementedError(f"{self}._place_({position})")
 
     @abstractmethod
     def _pickup_(self) -> None:
@@ -307,9 +310,8 @@ class Widget(ABC):
         else:
             yield Widget
 
-    if __debug__:
-
-        def __repr__(self) -> str:
+    def __repr__(self) -> str:
+        if __debug__:
             attrdebug = ", ".join(
                 f"{k}={repr(v.get(self))}"
                 for k, v in self._initkwargs_.items()
@@ -317,13 +319,11 @@ class Widget(ABC):
             )
             return f"<widget:{self._id_} {type(self).__name__}({attrdebug or '...'})>"
 
-    else:
-
-        def __repr__(self) -> str:
+        else:
             return f"<{type(self).__name__}: {self._id_}>"
 
 
-_Self = TypeVar("_Self", bound="InitAttr")
+_SomeInitAttr = TypeVar("_SomeInitAttr", bound="InitAttr")
 
 
 class InitAttr(GenericABC[_T]):
@@ -384,7 +384,7 @@ class InitAttr(GenericABC[_T]):
         ), f"{name} is the same as the private name in __set_name__"
 
     @overload
-    def __get__(self: _Self, owner: None, ownertype: Type[_W]) -> _Self:
+    def __get__(self: _SomeInitAttr, owner: None, ownertype: Type[_W]) -> _SomeInitAttr:
         ...
 
     @overload

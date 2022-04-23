@@ -12,60 +12,13 @@ if TYPE_CHECKING:
     from typing import Callable, Type, Literal
 
 
-@overload
 def main(
     cls: Type[_MainWidget],
-) -> RootWidget[_MainWidget]:
-    ...
-
-
-@overload
-def main(
-    *,
-    platform: Platform | None = ...,
-    size: tuple[Pixels, Pixels] | None = ...,
-    setup: Literal[True] = True,
-) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
-    ...
-
-
-@overload
-def main(
-    *,
-    platform: Platform | None = ...,
-    setup: Literal[False] = ...,
-) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
-    ...
-
-
-@overload
-def main(
-    cls: Type[_MainWidget],
-    *,
-    platform: Platform | None = ...,
-    size: tuple[Pixels, Pixels] | None = ...,
-    setup: Literal[True] = True,
-) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
-    ...
-
-
-@overload
-def main(
-    cls: Type[_MainWidget],
-    *,
-    platform: Platform | None = ...,
-    setup: Literal[False] = ...,
-) -> Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
-    ...
-
-
-def main(
-    cls: Type[_MainWidget] | None = None,
     *,
     platform: Platform | None = None,
     size: tuple[Pixels, Pixels] | None = None,
     setup: bool = True,
-) -> RootWidget | Callable[[Type[_MainWidget]], RootWidget[_MainWidget]]:
+) -> RootWidget[_MainWidget]:
     """
     a wrapper for for widget to run it as the main widget in a window or UI root
     This qualifies as a widget wrapper, additional decotation with @widget is not needed
@@ -78,10 +31,10 @@ def main(
     platform = platform or Platform.default()
     size = size or platform.default_size()
 
-    if cls is None:
-        return lambda cls: _main(cls, platform=platform, size=size, setup=setup)
-    else:
-        return _main(cls, platform=platform, size=size, setup=setup)
+    # if cls is None:
+    #     return lambda cls: _main(cls, platform=platform, size=size, setup=setup)
+    # else:
+    return _main(cls, platform=platform, size=size, setup=setup)
 
 
 def _main(

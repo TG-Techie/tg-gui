@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from tg_gui.core import Pixels, RootWidget, platform_support
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -13,7 +15,7 @@ class Platform(platform_support._Platform_):
     def __init__(self) -> None:
         self._app = QtWidgets.QApplication([])
         self._window = QtWidgets.QMainWindow()
-        self._central_qtwidget: NativeRootContainer  # type: ignore[assignment]
+        self._central_qtwidget: NativeRootContainer
 
     def run(self) -> None:
         self._window.show()
@@ -86,6 +88,13 @@ class Platform(platform_support._Platform_):
         Sets the position of the element relative to the container.
         """
         element.move(position[0], position[1])
+        print(
+            "@@ set_relative",
+            "element =",
+            element,
+            element.pos(),
+            sys._getframe(1).f_locals["self"],
+        )
 
     def show_element(self, element: NativeElement) -> None:
         """
