@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .implementation_support import isoncircuitpython
 from ._shared import uid, UID
-from .widget import Widget, InitAttr, _Missing
+from .widget import Widget, WidgetAttr, _Missing
 
 
 from typing import TYPE_CHECKING, TypeVar, Generic
@@ -14,7 +14,7 @@ _T = TypeVar("_T")
 if TYPE_CHECKING:
     from typing import Type, Any, ClassVar, Literal
 
-    ThemeEntry = dict[InitAttr[_T], _T]
+    ThemeEntry = dict[WidgetAttr[_T], _T]
     ThemeDict = dict[Type[Widget], ThemeEntry]
 
 
@@ -64,11 +64,11 @@ class Theme:
 
 # circuitpython-compat(__class_getitem__) not supported
 if not TYPE_CHECKING and isoncircuitpython():
-    _InitAttr = InitAttr
-    InitAttr = {_T: _InitAttr}
+    _InitAttr = WidgetAttr
+    WidgetAttr = {_T: _InitAttr}
 
 
-class ThemedAttr(InitAttr[_T]):
+class ThemedAttr(WidgetAttr[_T]):
 
     _required_: Literal[False] = False
     _positional_: Literal[False] = False
@@ -94,9 +94,14 @@ class ThemedAttr(InitAttr[_T]):
 
         # climb up the widger tree to find themes
         superior = owner._superior_
+        # debug # print(superior)
         while superior is not None:
             theme = superior._theme_
+            # debug # print(f"@{theme} :: {self._name_=}")
             if theme is None:
+                return self._default
+                # TODO(Jay): is this correct?
+                assert False
                 continue
             for widcls in owner._iter_widgetcls_resolution():
                 if theme.get(widcls, None) is not None:
@@ -114,5 +119,5 @@ class ThemedAttr(InitAttr[_T]):
 
 # circuitpython-compat(__class_getitem__) finish
 if not TYPE_CHECKING and isoncircuitpython():
-    InitAttr = _InitAttr
+    WidgetAttr = _InitAttr
     del _InitAttr

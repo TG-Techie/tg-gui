@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, Callable
 if TYPE_CHECKING:
     from typing import Iterable
     from ._platform_.platform import Platform, NativeElement, NativeContainer
+    from typing_extensions import Self
 
 _W = TypeVar("_W", bound=Widget)
 _SomeView = TypeVar("_SomeView", bound="View")

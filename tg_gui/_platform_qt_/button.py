@@ -25,15 +25,20 @@ def _build_native_(
     *,
     text: str,
     action: Callable[[], None],
+    _margin_: Pixels,
 ) -> tuple[NativeElement, tuple[Pixels, Pixels],]:
     """
     Build the native button widget, set the text and connect the click event.
     """
     button = QPushButton(text)
+    # print(button.contentsMargins())
     button.clicked.connect(action)
     button.show()
     suggested = button.size().toTuple()
     button.hide()
+    # print(button.contentsMargins())
+    # print(button.setContentsMargins(_margin_, _margin_, _margin_, _margin_))
+
     return button, suggested
 
 

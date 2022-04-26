@@ -16,42 +16,21 @@ def main(
     cls: Type[_MainWidget],
     *,
     platform: Platform | None = None,
-    size: tuple[Pixels, Pixels] | None = None,
     setup: bool = True,
+    **kwargs,
 ) -> RootWidget[_MainWidget]:
     """
     a wrapper for for widget to run it as the main widget in a window or UI root
     This qualifies as a widget wrapper, additional decotation with @widget is not needed
     """
-    if __debug__ and setup is False:
-        assert (
-            size is None
-        ), f"setup and size are mutually exclusive, got setup=False and size={size}"
 
     platform = platform or Platform.default()
-    size = size or platform.default_size()
 
-    # if cls is None:
-    #     return lambda cls: _main(cls, platform=platform, size=size, setup=setup)
-    # else:
-    return _main(cls, platform=platform, size=size, setup=setup)
-
-
-def _main(
-    cls: Type[_MainWidget],
-    *,
-    platform: Platform,
-    size: tuple[Pixels, Pixels],
-    setup: bool,
-) -> RootWidget:
-    """
-    a wrapped for for widget to run it as the main widget in a window or UI root
-    """
     assert iswidgetclass(cls), f"{cls} is not a widget class, has bases {cls.__bases__}"
 
     mainwidget = cls()
-    root = RootWidget(mainwidget, platform=platform)
+    root = RootWidget(mainwidget, platform=platform, **kwargs)
     if setup:
-        root.setup(size=size)
+        root.setup()
 
     return root

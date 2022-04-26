@@ -4,7 +4,7 @@ from random import randint
 
 from .implementation_support import isoncircuitpython
 
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic, Protocol
 from abc import ABC, abstractmethod
 
 # add_elemets = lambda *args: tuple(map(sum, zip(*args)))
@@ -32,6 +32,12 @@ def uid() -> UID:
     new_uid = __next_int
     __next_int = UID(new_uid + 1)
     return new_uid
+
+
+class Identifiable(Protocol):
+    @property
+    def _id_(self) -> UID:
+        ...
 
 
 if TYPE_CHECKING or not isoncircuitpython():

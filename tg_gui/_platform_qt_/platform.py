@@ -52,9 +52,10 @@ class Platform(platform_support._Platform_):
             return self._central_qtwidget
         else:
             # make the central widget
-            self._central_qtwidget = widget = NativeRootContainer()
+            self._central_qtwidget = widget = QtWidgets.QWidget()
             widget.setFixedSize(dimensions[0], dimensions[1])
             self._window.setCentralWidget(widget)
+            self._window.setFixedSize(dimensions[0], dimensions[1])
             return widget
 
     def nest_element(

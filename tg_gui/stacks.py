@@ -74,17 +74,23 @@ class _XYStack(ContainerWidget, ABC):
 
         n_widget = len(nested)
 
+        self_change, self_fixed = 0, 0
+
         for widget in nested:
             dims = self._merge_size(round(remaining / n_widget), fixed)
             widget._build_(dims)
-            remaining = remaining - self._split_size(widget._dims_)[0]
+            c, f = self._split_size(widget._dims_)
+            remaining = remaining - c
+            self_change += c
+            print(widget, (c, f), (self_change, self_fixed))
+            self_fixed = max(self_fixed, f)
         else:
             self._dims_ = dims = self._merge_size(
                 sum(self._split_size(w._dims_)[0] for w in nested),
-                fixed,
+                max(self._split_size(w._dims_)[1] for w in nested),
             )
         # finish native sterf
-        super()._build_(suggestion)
+        super()._build_(dims)
 
     def _demolish_(self) -> None:
         self._demolish_()

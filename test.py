@@ -7,15 +7,24 @@ import sys
 @widget
 class Application(View):
 
-    body: BodySyntax[Application] = lambda self: VStack(
-        Button("hello", action=self.say("hello")),
+    count = State(0)
+
+    body = lambda self: VStack(
+        HStack(
+            Button("+", action=self.inc(1)),
+            Button("-", action=self.inc(-1)),
+        ),
+        Button("hello", action=self.say(self.count)),
         Button("quit", action=sys.exit),
     )
 
-    def say(self, text: str) -> None:
+    def say(self, text) -> None:
         print(text)
+
+    def inc(self, by: int) -> None:
+        self.count += by
 
 
 if __name__ == "__main__":
-    window = main(Application, size=(240, 240))
+    window = main(Application, fit=True)  # , size=(50, 50))
     window.run()

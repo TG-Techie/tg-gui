@@ -5,12 +5,11 @@ from .implementation_support import (
     class_id as _class_id,
     GenericABC,
 )
-from ._shared import uid, UID, Pixels, _Missing
+from ._shared import uid, UID, Pixels
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 from abc import ABC, abstractmethod, abstractproperty
 from types import FunctionType
-from enum import Enum, auto
 
 _W = TypeVar("_W", bound="Widget")
 _T = TypeVar("_T")
@@ -18,6 +17,7 @@ _T = TypeVar("_T")
 # circular and annotation-only imports
 if TYPE_CHECKING:
     from ._shared import _Missing
+    from .widget_attrs import WidgetAttr
     from typing import ClassVar, Type, Iterator, Callable, Any
 
     from .container_widget import ContainerWidget
@@ -43,19 +43,20 @@ def widget(cls):
     !!DO NOT ASSIGN TO THE `cls` LOCAL VARIABLE (pylance)!!
     """
     if TYPE_CHECKING:
-        from dataclasses import dataclass
+        return cls
+        # from dataclasses import dataclass
 
-        return dataclass(
-            init=True,
-            repr=False,
-            eq=False,
-            order=False,
-            unsafe_hash=False,
-            frozen=False,
-            match_args=False,
-            kw_only=False,
-            slots=False,
-        )(cls)
+        # return dataclass(
+        #     init=True,
+        #     repr=False,
+        #     eq=False,
+        #     order=False,
+        #     unsafe_hash=False,
+        #     frozen=False,
+        #     match_args=False,
+        #     kw_only=False,
+        #     slots=False,
+        # )(cls)
 
     assert isinstance(cls, type) and issubclass(cls, Widget)
 
@@ -112,8 +113,10 @@ def widget(cls):
 
     # create a flattened dict of the allowed init args
     # only add a dict if there are any new init args
-    newkwargs: dict[str, InitAttr] = {
-        name: attr for name, attr in cls.__dict__.items() if isinstance(attr, InitAttr)
+    newkwargs: dict[str, WidgetAttr] = {
+        name: attr
+        for name, attr in cls.__dict__.items()
+        if isinstance(attr, WidgetAttr)
     }
     # newer args of an existing arg replace the older ones
     if len(newkwargs):
@@ -132,7 +135,7 @@ class Widget(ABC):
 
     _id_: UID
 
-    _initkwargs_: ClassVar[dict[str, InitAttr]] = {}
+    _initkwargs_: ClassVar[dict[str, WidgetAttr]] = {}
     _subclass_sugar_: ClassVar[Callable[[Type[Widget]], None]]
 
     # --- nest phase ---
@@ -204,12 +207,14 @@ class Widget(ABC):
                 )
 
     def _get_init_args(
-        self, kind: Type[InitAttr] | tuple[Type[InitAttr], ...]
+        self,
+        *,
+        build: bool,  # kind: Type[InitAttr] | tuple[Type[InitAttr], ...]
     ) -> dict[str, Any]:
         return {
             name: getattr(self, name)
             for name, attr in self._initkwargs_.items()
-            if isinstance(attr, kind)
+            if attr._build_ is build  # isinstance(attr, kind)
         }
 
     def _is_nested(self) -> bool:
@@ -321,115 +326,3 @@ class Widget(ABC):
 
         else:
             return f"<{type(self).__name__}: {self._id_}>"
-
-
-_SomeInitAttr = TypeVar("_SomeInitAttr", bound="InitAttr")
-
-
-class InitAttr(GenericABC[_T]):
-
-    # TODO: add _build_proxy_ method to either throw error, return value, or bind to state
-
-    # --- public attributes ---
-    _id_: UID
-    _name_: str
-
-    # --- abstract attributes ---
-    _required_: bool
-    _build_: bool
-
-    # --- private concrete attributes ---
-    _private_name: str
-    _repr: bool
-    _owning_cls: Type[Widget]
-
-    def __init__(
-        self,
-        *,
-        repr: bool = False,
-        private_name: str | None = None,
-    ) -> None:
-        self._id_ = uid()
-
-        self._repr = repr
-
-        # set in __set_name__
-        self._name_ = None  # type: ignore[assignment]
-        self._owning_cls = None  # type: ignore[assignment]
-        self._private_name = private_name  # type: ignore[assignment]
-
-    def __repr__(self) -> str:
-        if self._name_ is None:
-            return f"<{self.__class__.__name__}: {self._id_}>"
-        else:
-            return (
-                f"<{type(self).__name__} "
-                + f"{self._owning_cls.__module__}.{self._owning_cls.__name__}.{self._name_}>"
-            )
-
-    def __set_name__(self, cls: Type[Widget], name: str) -> None:
-        assert self._name_ is None, f"{self} already set, cannot set again to {name}"
-        assert self._owning_cls is None
-        assert name.startswith("_") == name.endswith(
-            "_"
-        ), f"invalid {type(self).__name__} name {name}, cannot be private (ie if it starts with _ it must end with _)"
-
-        self._name_ = name
-        self._owning_cls = cls
-        if not self._private_name:
-            self._private_name = f"_{name if __debug__ else ''}_{self._id_}"
-
-        assert (
-            name != self._private_name
-        ), f"{name} is the same as the private name in __set_name__"
-
-    @overload
-    def __get__(self: _SomeInitAttr, owner: None, ownertype: Type[_W]) -> _SomeInitAttr:
-        ...
-
-    @overload
-    def __get__(self, owner: _W, ownertype: Type[_W]) -> _T:
-        ...
-
-    def __get__(self, owner: None | _W, ownertype: Type[_W]) -> _T | InitAttr[_T]:
-        assert self._name_ is not None, f"{self} not initialized with __set_name__"
-        # circuitpython-compat(__get__)
-        if owner is None:
-            return self  # type: ignore[return-value]
-        return self.get(owner)
-
-    @abstractmethod
-    def get(self, owner: Widget) -> _T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def _set_(self, owner: Widget, value: _T) -> None:
-        raise NotImplementedError
-
-
-# circuitpython-compat(__class_getitem__) not supported, so we have to do this
-if not TYPE_CHECKING and isoncircuitpython():
-    _InitAttr = InitAttr
-    InitAttr = {_T: _InitAttr}
-
-
-def buildattr(*, repr=False, private_name: str | None = None) -> BuildAttr:
-    return BuildAttr(repr=repr, private_name=private_name)  # type: ignore
-
-
-class BuildAttr(InitAttr[_T]):
-
-    _required_: bool = True
-    _build_: bool = True
-
-    def get(self, owner: Widget) -> _T:
-        return getattr(owner, self._private_name)
-
-    def _set_(self, owner: Widget, value: _T) -> None:
-        setattr(owner, self._private_name, value)
-
-
-# circuitpython-compat(__class_getitem__) finish
-if not TYPE_CHECKING and isoncircuitpython():
-    InitAttr = _InitAttr
-    del _InitAttr

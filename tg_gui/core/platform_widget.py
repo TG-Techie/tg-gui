@@ -25,7 +25,7 @@ class PlatformWidget(Widget):
 
     # --- widget attributes ---
     _platform_module_name_: ClassVar[str | None] = None
-    _margin_: ThemedAttr[Pixels] = themedattr(default=5, build=True)
+    _margin_: ThemedAttr[Pixels] = themedattr(default=30, build=True)
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -45,7 +45,7 @@ class PlatformWidget(Widget):
         w, h = suggestion
         self._native_, native_dims = self._build_native_(
             suggestion,
-            **self._get_init_args(BuildAttr),
+            **self._get_init_args(build=True),
         )
         self._dims_ = native_dims
 

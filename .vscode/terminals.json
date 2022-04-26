@@ -1,0 +1,12 @@
+{
+  "autorun": false,
+  "terminals": [
+    {
+      "name": "RunTest",
+      "description": "Runs test.py",
+      "focus": true,
+      "autorun": false,
+      "command": "python3 test.py"
+    }
+  ]
+}

@@ -31,7 +31,7 @@ from .prelude import main
 
 # --- etc... ? ---
 from .view import View, BodySyntax
-from .stacks import VStack
+from .stacks import VStack, HStack
 
 # --- platform widgets ---
 from .button import Button

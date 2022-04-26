@@ -7,10 +7,23 @@ from .container_widget import ContainerWidget
 
 # from .platform_support import _Platform_
 
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic, overload
+
+try:
+
+    import tg_debugtools as debug
+    import builtins
+
+    builtins.print = debug.new_printfn("{absfilepath}:{lineno}: {function}({self}):")
+
+    del debug, builtins
+
+    print("debug printing!!")
+except:
+    pass
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Iterable, Literal
 
     from .._platform_.platform import Platform, NativeRootContainer
 
@@ -43,16 +56,22 @@ class RootWidget(ContainerWidget, Generic[_W]):
         widget: _W,
         *,
         platform: Platform,
-    ):
+        fit: bool = False,
+        size: tuple[Pixels, Pixels] | None = None,
+    ) -> None:
         self._id_ = uid()
+
+        # None = fit size to the wrapped widget
+        self._size_suggest = size or platform.default_size()
+        self._fit = fit
 
         self._superior_ = None
         self._platform_ = platform
 
-        self._pos_ = None
-        self._abs_pos_ = None
+        self._pos_ = None  # type: ignore[assignment]
+        self._abs_pos_ = None  # type: ignore[assignment]
 
-        self._dims_ = None
+        self._dims_ = None  # type: ignore[assignment]
 
         self._native_: NativeRootContainer | None = None
 
@@ -62,9 +81,8 @@ class RootWidget(ContainerWidget, Generic[_W]):
     def run(self) -> None:
         self._platform_.run()
 
-    def setup(self, size: tuple[Pixels, Pixels] | None = None) -> None:
-        size = size or self._platform_.default_size()
-        self._build_(size)
+    def setup(self) -> None:
+        self._build_()
         self._place_(None)
         self._show_()
 
@@ -75,23 +93,30 @@ class RootWidget(ContainerWidget, Generic[_W]):
         # TODO: review this... it's not tested but should never be...
         return True
 
-    def _build_(self, exactly: tuple[Pixels, Pixels]) -> None:
+    def _build_(self) -> None:
 
-        self._wrapped._build_(exactly)
-        self._dims_ = exactly
+        suggest = self._size_suggest
 
-        assert self._wrapped._native_ is not None, f"{self._wrapped} failed to build"
+        wrapped = self._wrapped
+
+        wrapped._build_(suggest)
+        self._dims_ = dims = wrapped._dims_ if self._fit else suggest
+
+        print(dims)
+
+        assert wrapped._native_ is not None, f"{wrapped} failed to build"
         platform = self._platform_
 
         # make the root element if it doesn't exist, or throw a fit if it does
         if platform.native_root is not None:
             raise RuntimeError(
-                f"{platform} already has a root element, cannot build another root with size {exactly}. Found {platform.native_root}"
+                f"{platform} already has a root element, cannot build another root with size {self._size_suggest}. Found {platform.native_root}"
             )
-        self._native_ = native = platform.init_native_root_container(exactly)
+
+        self._native_ = native = platform.init_native_root_container(dims)
 
         # nest the native element of that this widget wraps into the native root element
-        platform.nest_element(native, self._wrapped._native_)
+        platform.nest_element(native, wrapped._native_)
 
     def _demolish_(self) -> None:
         assert (
@@ -102,7 +127,7 @@ class RootWidget(ContainerWidget, Generic[_W]):
         self._platform_.unnest_element(self._native_, self._wrapped._native_)
 
         self._wrapped._demolish_()
-        self._dims_ = None
+        self._dims_ = None  # type: ignore[assignment]
 
         self._native_ = None
 
@@ -121,13 +146,18 @@ class RootWidget(ContainerWidget, Generic[_W]):
         self._pos_ = (0, 0)
         self._abs_pos_ = (0, 0)
 
-        self._wrapped._place_((0, 0))
-        self._platform_.set_relative(self._native_, self._wrapped._native_, (0, 0))
+        wrapped = self._wrapped
+
+        rt_w, rt_h = self._dims_
+        wd_w, wd_h = wrapped._dims_
+        pos = ((rt_w - wd_w) // 2, (rt_h - wd_h) // 2)
+        wrapped._place_(pos)
+        self._platform_.set_relative(self._native_, wrapped._native_, pos)
 
     def _pickup_(self) -> None:
         self._wrapped._pickup_()
-        self._pos_ = None
-        self._abs_pos_ = None
+        self._pos_ = None  # type: ignore[assignment]
+        self._abs_pos_ = None  # type: ignore[assignment]
 
     def _show_(self) -> None:
         assert (

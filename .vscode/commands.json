@@ -1,0 +1,27 @@
+{
+  // https://primer.style/octicons/
+  "commands": [
+    {
+      "command": "commands.refresh",
+      "text": "$(sync)",
+      "tooltip": "Refresh commands",
+      "color": "#FFCC00"
+    },
+    {
+      "command": "terminals.runTerminalByName",
+      "text": "$(browser)",
+      "tooltip": "Run test.py",
+      "arguments": [
+        "RunTest"
+      ]
+    },
+    {
+      "command": "workbench.action.terminal.detachSession",
+      "text": "$(x)",
+      "tooltip": "close the  terminal",
+      "arguments": [
+        "RunTest"
+      ]
+    }
+  ]
+}
