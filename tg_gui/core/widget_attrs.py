@@ -94,13 +94,11 @@ class WidgetAttr(GenericABC[_T]):
             return self  # type: ignore[return-value]
         return self.get(owner)
 
-    @abstractmethod
     def get(self, owner: Widget) -> _T:
-        raise NotImplementedError
+        return getattr(owner, self._private_name)
 
-    @abstractmethod
-    def _set_(self, owner: Widget, value: _T) -> None:
-        raise NotImplementedError
+    def set(self, owner: Widget, value: _T) -> None:
+        setattr(owner, self._private_name, value)
 
 
 # circuitpython-compat(__class_getitem__) not supported, so we have to do this
@@ -121,7 +119,7 @@ class BuildAttr(WidgetAttr[_T]):
     def get(self, owner: Widget) -> _T:
         return getattr(owner, self._private_name)
 
-    def _set_(self, owner: Widget, value: _T) -> None:
+    def set(self, owner: Widget, value: _T) -> None:
         setattr(owner, self._private_name, value)
 
 

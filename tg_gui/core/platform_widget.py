@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from .platform_support import requiredplatformmethod
 from ._shared import uid, UID, Pixels
-from .widget import Widget, widget, buildattr, BuildAttr
+from .widget import Widget, widget
+from .widget_attrs import buildattr, BuildAttr
 from .themeing import themedattr, ThemedAttr
 
 from typing import TYPE_CHECKING, TypeVar, Generic

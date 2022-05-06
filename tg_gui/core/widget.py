@@ -6,6 +6,7 @@ from .implementation_support import (
     GenericABC,
 )
 from ._shared import uid, UID, Pixels
+from .widget_attrs import WidgetAttr
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 from abc import ABC, abstractmethod, abstractproperty
@@ -199,7 +200,7 @@ class Widget(ABC):
             if attr._required_ and name not in kwargs:
                 missing.add(name)
             elif name in kwargs:
-                attr._set_(self, kwargs[name])
+                attr.set(self, kwargs[name])
         else:
             if len(missing):
                 raise TypeError(

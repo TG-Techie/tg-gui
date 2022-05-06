@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tg_gui.core import State
 
 Color = int

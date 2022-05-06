@@ -20,6 +20,11 @@ if TYPE_CHECKING:
             ...
 
 
+class State:
+    def __init__(self, value: Any) -> None:
+        self._value = value
+
+
 # class State(Generic[_T]):
 
 #     def bound(self, *, relative_to: Widget) -> _T:

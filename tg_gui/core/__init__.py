@@ -5,7 +5,8 @@ from .implementation_support import enum_compat
 
 from ._shared import uid, UID, Pixels, add_elemets
 
-from .widget import Widget, widget, iswidgetclass, BuildAttr, buildattr
+from .widget import Widget, widget, iswidgetclass
+from .widget_attrs import BuildAttr, buildattr
 from .themeing import Theme, ThemedAttr, themedattr
 
 from .stateful import State

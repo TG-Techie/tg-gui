@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from .implementation_support import isoncircuitpython
-from ._shared import uid, UID
-from .widget import Widget, WidgetAttr, _Missing
+from ._shared import uid, UID, _Missing
+from .widget import Widget
+from .widget_attrs import WidgetAttr
 
 
 from typing import TYPE_CHECKING, TypeVar, Generic
@@ -113,7 +114,7 @@ class ThemedAttr(WidgetAttr[_T]):
         else:
             return self._default
 
-    def _set_(self, owner: Widget, value: _T) -> None:
+    def set(self, owner: Widget, value: _T) -> None:
         setattr(owner, self._private_name, value)
 
 

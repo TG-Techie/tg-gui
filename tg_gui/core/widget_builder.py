@@ -100,19 +100,19 @@ class BuildProxy(Generic[_SomeWidget]):
         proxied = self._proxied
 
         cls = type(proxied)
-        clsattr: Any = getattr(cls, name, None)
+        cls_descriptor: Any = getattr(cls, name, None)
         proxiedattr: Any
-        if isinstance(clsattr, State):
-            proxiedattr = clsattr
-        elif isinstance(clsattr, FunctionType):
+        if isinstance(cls_descriptor, State):
+            proxiedattr = cls_descriptor
+        elif isinstance(cls_descriptor, FunctionType):
             proxiedattr = ForwardMethodCall(
                 boundto=proxied,
                 boundmethod=getattr(proxied, name),
-                methodname=clsattr.__name__,
+                methodname=cls_descriptor.__name__,
                 clsname=f"{cls.__module__}.{cls.__qualname__}",
             )
         # tg-gui-feature(experimental): protocol for behavior in widget builder proxies
-        elif is_build_proxy_provider(clsattr):
+        elif is_build_proxy_provider(cls_descriptor):
             # TODO: is this is implemented, add it to the State class
             return getattr(proxied, name)._build_proxy_()
         else:
