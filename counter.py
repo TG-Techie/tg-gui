@@ -1,20 +1,12 @@
-from tg_gui import *
+from tg_gui.prelude import *
 
 
 @widget
 class Application(View):
 
-    count = State(0)
+    # count = State(0)
 
-    body = lambda self: VStack(
-        Text(count >> "count: {}".format),
-        Button("+", self.add_count(1)),
-        Button("-", self.add_count(-1)),
-        Button("done", action=close),
-    )
-
-    def add_count(self, amount: int) -> None:
-        self.count += amount
+    body = lambda self: Widget()
 
 
 app = main(Application)

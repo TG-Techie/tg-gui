@@ -22,8 +22,9 @@ def warn(msg: str) -> None:
 
 from ._circuitpy_compat_module import Generic as GenericABC  # type: ignore[attr-defined, misc]
 
-MissingType = type("MissingType", (), {})
+MissingType = type("MissingType", (), {"__bool__": lambda self: False})
 Missing = MissingType()
+MissingType.__new__ = Missing  # type: ignore[assignment]
 
 
 def generic_compat(cls: type):  # type: ignore[misc]

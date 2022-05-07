@@ -58,18 +58,18 @@ Generic = GetItemBypass(
 
 TypeVar = lambda *_, **__: None
 
-overload = (
-    lambda fn: None
-    if __debug__
-    else lambda fn: (
-        lambda *_, **__: _raise(
-            SyntaxError(
-                f"overloaded only function defined, "
-                + f"{fn.__globals__['__name__']}.{fn.__name__} is not defined without overloads"
-            )
-        )
-    )
-)
+# overload = (
+#     lambda fn: None
+#     if __debug__
+#     else lambda fn: (
+#         lambda *_, **__: _raise(
+#             SyntaxError(
+#                 f"overloaded only function defined, "
+#                 + f"{fn.__globals__['__name__']}.{fn.__name__} is not defined without overloads"
+#             )
+#         )
+#     )
+# )
 
 # ---- module: types ----
 @type
@@ -93,19 +93,25 @@ def auto():
     return None
 
 
-def enum_compat(cls):
-    cls.__dict__.update({k: cls(v) for k, v in cls.__dict__.items()})
+def enum_compat(cls: type):
+    for k, v in cls.__dict__.items():
+        setattr(cls, k, cls(k, v))
 
 
 class Enum:
-    def __init__(self, value):
+    def __init__(self, name: str, value: object):
         self.value = value
+        self.name = name
 
 
 # ---- module: abc ----
 # ABC, abstractmethod, abstractproperty
 
-ABC = object
+
+class ABC:
+    pass
+
+
 if __debug__:
 
     def _raise(e: Exception) -> None:

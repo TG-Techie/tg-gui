@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, TypeVar, Generic, Callable, TypeGuard
+from typing import TYPE_CHECKING, TypeVar, Generic, Callable, TypeGuard, Literal
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -35,10 +35,20 @@ from enum import Enum, auto
 
 
 class MissingType(Enum):
-    missing = auto()
+    Missing = None
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def __repr__(self) -> str:
+        return "Missing"
+
+    @property
+    def value(self) -> MissingType:
+        return Missing
 
 
-Missing = MissingType.missing
+Missing = MissingType.Missing
 
 
 def generic_compat(cls):

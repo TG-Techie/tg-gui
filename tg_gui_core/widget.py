@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
-    from typing import ClassVar, Type, Iterator, Any
+    from typing import ClassVar, Type, Iterator, Any, Literal
     from typing_extensions import Self
     from tg_gui.platform import Platform, NativeElement
     from .container import ContainerWidget
@@ -13,29 +13,26 @@ if TYPE_CHECKING:
 from abc import ABC, abstractmethod
 
 from .shared import UID, Pixels
-from .attrs import WidgetAttr, ReservedAttr
+from .attrs import WidgetAttr, widget
 from .implementation_support import Missing, isoncircuitpython
-
-if TYPE_CHECKING:
-    _W = TypeVar("_W", bound="Widget")
-
-    def widget(cls: Type[_W]) -> Type[_W]:
-        return cls
 
 
 ## subclasses require the @widget decorator
+@widget
 class Widget(ABC):
-    id: UID
+    __is_widget_class__: ClassVar[Literal[True]] = True
     __widget_class_id__: ClassVar[UID]
-    __widget_attrs__: dict[str, WidgetAttr[Any]] = {}
+    __widget_attrs__: ClassVar[dict[str, WidgetAttr[Any]]]
 
-    superior: ReservedAttr[ContainerWidget] = ReservedAttr()
-    platform: ReservedAttr[Platform] = ReservedAttr()
-    native: ReservedAttr[NativeElement] = ReservedAttr()
+    id: UID = WidgetAttr(init=False, default_factory=UID)
 
-    dims: ReservedAttr[tuple[Pixels, Pixels]] = ReservedAttr()
-    pos: ReservedAttr[tuple[Pixels, Pixels]] = ReservedAttr()
-    abs_pos: ReservedAttr[tuple[Pixels, Pixels]] = ReservedAttr()
+    superior: ContainerWidget = WidgetAttr(init=False)
+    platform: Platform = WidgetAttr(init=False)
+    native: NativeElement = WidgetAttr(init=False)
+
+    dims: tuple[Pixels, Pixels] = WidgetAttr(init=False)
+    pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
+    abs_pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
     # --- runtime lint checks (ikik sorry, it's @TG-Techie on github) ---
     if __debug__ and not TYPE_CHECKING:
 
@@ -51,21 +48,16 @@ class Widget(ABC):
 
             return object.__new__(cls)
 
-    def __init__(self, **kwargs: object):
+    def __init_subclass__(cls) -> None:
+        # check single inheritance
+        assert 1 == len(
+            overlap := set(filter(lambda base: issubclass(base, Widget), cls.__bases__))
+        ), f"widgets cannot subclass multiple widgets types: {cls} inheriets from {overlap}"
 
-        self._id_ = UID()
-
-        # init the widget attrs, this may reserve space fetch from the kwargs, etc
-        for attr in self._iter_widget_attrs():
-            init_value = kwargs.pop(attr.name, Missing) if attr.in_init else Missing
-
-            if attr.init_required and init_value is Missing:
-                raise TypeError(
-                    f"{self.__class__.__name__}.__init__(...) "
-                    + f"missing required argument '{attr.name}'"
-                )
-            else:
-                attr.init(self, init_value)
+        # check widget parent is first
+        assert issubclass(
+            cls.__bases__[0], Widget
+        ), f"widget parent must be first base class: found {cls}'s first base class as {cls.__bases__[0]}"
 
     def _nest_in_(self, superior: ContainerWidget, platform: Platform) -> None:
         self._superior_ = superior
@@ -78,8 +70,9 @@ class Widget(ABC):
         ), f"{self} nested in {self._superior_}, cannot unnest from {superior}"
         assert self._platform_ is platform
         self.on_unnest(platform)
-        self.superior = Missing
-        self.platform = Missing
+        # clear the vars
+        self.superior = Missing  # type: ignore[assignment]
+        self.platform = Missing  # type: ignore[assignment]
 
     def on_nest(self, platform: Platform) -> None:
         """
@@ -154,55 +147,3 @@ class Widget(ABC):
     @classmethod
     def _iter_widget_attrs(cls) -> Iterator[WidgetAttr[Any]]:
         return iter(cls.__widget_attrs__.values())
-
-
-# ... below
-if not TYPE_CHECKING:
-
-    def widget(cls: Type[Widget]):
-        """
-        Decorator for widget classes that performs the following:
-        - circuitpython-compat(__set_name__), call `__set_name__` for the attributes in the class
-        - validates widgets use only single inheritance for widget base classes
-        - validate it's parent widget class is in it's first position
-        - sets the widget class id (runtime id)
-        - setup the widget attrs if included in `__init__` signature
-        """
-
-        # check single inheritance
-        assert 1 == len(
-            overlap := set(filter(lambda base: issubclass(base, Widget), cls.__bases__))
-        ), f"widgets cannot subclass multiple widgets types: {cls} inheriets from {overlap}"
-
-        # check widget parent is first
-        assert issubclass(
-            cls.__bases__[0], Widget
-        ), f"widget parent must be first base class: found {cls}'s first base class as {cls.__bases__[0]}"
-
-        # set an id for the widget class, unless it already has one
-        assert (
-            "__widget_class_id__" not in cls.__dict__
-        ), f"widget class {cls} already has a class id, make sure it is not decorated with `@widget` twice"
-        cls.__widget_class_id__ = UID()
-
-        # circuitpython-compat(__set_name__)
-        if isoncircuitpython():
-            for name, attr in cls.__dict__.items():
-                if hasattr(attr, "__set_name__"):
-                    attr.__set_name__(cls, name)
-
-        # stash widget_attrs
-        widget_attrs: dict[str, WidgetAttr[Any]] = {
-            k: v for k, v in cls.__dict__.items() if isinstance(v, WidgetAttr)
-        }
-        # if there are new init attrs, make a new dict based on the old one
-        # and override the old init attrs
-        if len(widget_attrs):
-            assert hasattr(
-                cls, "__widget_attrs__"
-            ), f"internal error: widget {cls} has no __widget_attrs__, this should never be the case"
-            init_attrs = getattr(cls, "__widget_attrs__").copy()
-            init_attrs.update(widget_attrs)
-            cls.__widget_attrs__ = init_attrs
-
-        return cls
