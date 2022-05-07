@@ -4,17 +4,21 @@ import sys
 import builtins
 
 try:
-    from typing import Any
-except ImportError:
+    from typing import Any, TYPE_CHECKING
+    from typing_extensions import LiteralString
+except:
     pass
 else:
-    assert (
-        False
-    ), f"the {__name__} module should not be imported except when on circuitpython"
+    if not TYPE_CHECKING:
+        assert (
+            False
+        ), f"the {__name__} module should not be imported except when on circuitpython"
 
 
 class GetItemBypass:
-    def __init__(self, name: str, value: Any) -> None:
+    _value: Any  # type: ignore
+
+    def __init__(self, name: str, value) -> None:
         self._name = name
         self._value = value
 
@@ -24,7 +28,7 @@ class GetItemBypass:
     def __call__(self, *args, **kwds):
         return self._value(args, kwds)
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: LiteralString):
         return getattr(self._value, name)
 
     def __isinstance_hook__(self, inst):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
@@ -16,61 +16,14 @@ from .shared import UID, Pixels
 from .attrs import WidgetAttr, ReservedAttr
 from .implementation_support import Missing, isoncircuitpython
 
+if TYPE_CHECKING:
+    _W = TypeVar("_W", bound="Widget")
 
-def widget(cls: Type[Widget]):
-    """
-    Decorator for widget classes that performs the following:
-    - circuitpython-compat(__set_name__), call `__set_name__` for the attributes in the class
-    - validates widgets use only single inheritance for widget base classes
-    - validate it's parent widget class is in it's first position
-    - sets the widget class id (runtime id)
-    - setup the widget attrs if included in `__init__` signature
-    """
-    # --- DO NOT CHANGE THE TYPE SIGNATURE OF THIS FUNCTION ---
-    # pyright uses this to infer the decorator returns the exact same object it decorates
-
-    if TYPE_CHECKING:
+    def widget(cls: Type[_W]) -> Type[_W]:
         return cls
 
-    # check single inheritance
-    assert 1 == len(
-        overlap := set(filter(lambda base: issubclass(base, Widget), cls.__bases__))
-    ), f"widgets cannot subclass multiple widgets types: {cls} inheriets from {overlap}"
 
-    # check widget parent is first
-    assert issubclass(
-        cls.__bases__[0], Widget
-    ), f"widget parent must be first base class: found {cls}'s first base class as {cls.__bases__[0]}"
-
-    # set an id for the widget class, unless it already has one
-    assert (
-        "__widget_class_id__" not in cls.__dict__
-    ), f"widget class {cls} already has a class id, make sure it is not decorated with `@widget` twice"
-    cls.__widget_class_id__ = UID()
-
-    # circuitpython-compat(__set_name__)
-    if isoncircuitpython():
-        for name, attr in cls.__dict__.items():
-            if hasattr(attr, "__set_name__"):
-                attr.__set_name__(cls, name)
-
-    # stash widget_attrs
-    widget_attrs: dict[str, WidgetAttr[Any]] = {
-        k: v for k, v in cls.__dict__.items() if isinstance(v, WidgetAttr)
-    }
-    # if there are new init attrs, make a new dict based on the old one
-    # and override the old init attrs
-    if len(widget_attrs):
-        assert hasattr(
-            cls, "__widget_attrs__"
-        ), f"internal error: widget {cls} has no __widget_attrs__, this should never be the case"
-        init_attrs = getattr(cls, "__widget_attrs__").copy()
-        init_attrs.update(widget_attrs)
-        cls.__widget_attrs__ = init_attrs
-
-    return cls
-
-
+## subclasses require the @widget decorator
 class Widget(ABC):
     id: UID
     __widget_class_id__: ClassVar[UID]
@@ -201,3 +154,55 @@ class Widget(ABC):
     @classmethod
     def _iter_widget_attrs(cls) -> Iterator[WidgetAttr[Any]]:
         return iter(cls.__widget_attrs__.values())
+
+
+# ... below
+if not TYPE_CHECKING:
+
+    def widget(cls: Type[Widget]):
+        """
+        Decorator for widget classes that performs the following:
+        - circuitpython-compat(__set_name__), call `__set_name__` for the attributes in the class
+        - validates widgets use only single inheritance for widget base classes
+        - validate it's parent widget class is in it's first position
+        - sets the widget class id (runtime id)
+        - setup the widget attrs if included in `__init__` signature
+        """
+
+        # check single inheritance
+        assert 1 == len(
+            overlap := set(filter(lambda base: issubclass(base, Widget), cls.__bases__))
+        ), f"widgets cannot subclass multiple widgets types: {cls} inheriets from {overlap}"
+
+        # check widget parent is first
+        assert issubclass(
+            cls.__bases__[0], Widget
+        ), f"widget parent must be first base class: found {cls}'s first base class as {cls.__bases__[0]}"
+
+        # set an id for the widget class, unless it already has one
+        assert (
+            "__widget_class_id__" not in cls.__dict__
+        ), f"widget class {cls} already has a class id, make sure it is not decorated with `@widget` twice"
+        cls.__widget_class_id__ = UID()
+
+        # circuitpython-compat(__set_name__)
+        if isoncircuitpython():
+            for name, attr in cls.__dict__.items():
+                if hasattr(attr, "__set_name__"):
+                    attr.__set_name__(cls, name)
+
+        # stash widget_attrs
+        widget_attrs: dict[str, WidgetAttr[Any]] = {
+            k: v for k, v in cls.__dict__.items() if isinstance(v, WidgetAttr)
+        }
+        # if there are new init attrs, make a new dict based on the old one
+        # and override the old init attrs
+        if len(widget_attrs):
+            assert hasattr(
+                cls, "__widget_attrs__"
+            ), f"internal error: widget {cls} has no __widget_attrs__, this should never be the case"
+            init_attrs = getattr(cls, "__widget_attrs__").copy()
+            init_attrs.update(widget_attrs)
+            cls.__widget_attrs__ = init_attrs
+
+        return cls

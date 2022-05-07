@@ -6,9 +6,16 @@ from tg_gui.prelude import *
 @widget
 class App(View):
 
-    body: ViewSyntax[App] = lambda self: (
+    body = lambda self: (
         Button(
             "test",
-            action=lambda: print("Hello, world!"),
+            action=self.say(("Hello, world!", self)),
         )
     )
+
+    def say(self, message: str, view: View) -> None:
+        print(message, view)
+
+
+if __name__ == "__main__":
+    main(App).run()

@@ -12,17 +12,24 @@ else:
     ViewSyntax = object()
 
 # ---
+
+from abc import ABC, abstractmethod
+
 from tg_gui_core import (
     ContainerWidget,
     Widget,
     implementation_support as impl_support,
 )
 
-_SomeView = TypeVar("_SomeView", bound="View")
+_SomeView = TypeVar("_SomeView", bound="View", contravariant=True)
 _W = TypeVar("_W", bound="Widget")
 
 
 @impl_support.generic_compat
-class View(ContainerWidget, Generic[_W]):
+class View(ContainerWidget, ABC, Generic[_W, _SomeView]):
+    def __init__(self: _SomeView, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
-    body: ClassVar[ViewSyntax[Self]]
+    @abstractmethod
+    def body(self: _SomeView) -> _W:
+        raise NotImplementedError

@@ -18,13 +18,16 @@ from .shared import UID, Missing, MissingType
 from .implementation_support import enum_compat, generic_compat
 
 
+_W = TypeVar("_W", bound="Widget")
+
+
 @generic_compat
 class WidgetAttr(ABC, Generic[_A]):
 
     id: UID
     # flags in the subclass
     in_init: bool = False
-    init_required: bool
+    kw_only: bool
     in_build: bool
     in_style: bool
     # set by the base protocol
@@ -32,6 +35,7 @@ class WidgetAttr(ABC, Generic[_A]):
     owning_cls: type
     private_name: str
 
+    @abstractmethod
     def __init__(self) -> None:
         self.id = UID()
 
@@ -73,7 +77,7 @@ class WidgetAttr(ABC, Generic[_A]):
     def __set__(self, widget: _W, value: _A | MissingType = Missing) -> None:
         return self.set(widget, value)
 
-    def __set_name__(self, cls, name) -> None:
+    def __set_name__(self, cls: Widget, name: str) -> None:
         assert (
             getattr(self, "name", None) is not None
         ), f"{self} already set, cannot set again to {name}"
