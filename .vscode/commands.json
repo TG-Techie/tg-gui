@@ -1,0 +1,62 @@
+{
+    "commands": [
+        {
+            "text": "$(refresh)",
+            "command": "commands.refresh",
+            "tooltip": "reload these commands"
+        },
+        {
+            "text": "CirPy (",
+            "tooltip": "CircuitPython Commands"
+        },
+        {
+            "text": "Main$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_MAIN"
+            ],
+            "tooltip": "Sync the `main.py` file to CIRCUITPY"
+        },
+        {
+            "text": "GUI$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_GUI"
+            ],
+            "tooltip": "Sync everything that starts with `tg_gui` to CIRCUITPY"
+        },
+        {
+            "text": "[$(sign-out)...]",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "Lib$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_LIB"
+            ],
+            "tooltip": "Sync the lib file to CIRCUITPY"
+        },
+        {
+            "text": "All$(sign-out)",
+            "command": "terminals.runTerminalByName",
+            "arguments": [
+                "CirPySyncFiles_ALL"
+            ],
+            "tooltip": "Sync ALL required file to CIRCUITPY"
+        },
+        {
+            "text": "$(file-symlink-file)",
+            "command": "workbench.action",
+            "tooltip": "workbench.action"
+        },
+        {
+            "text": ")",
+            "tooltip": "..."
+        }
+    ]
+}

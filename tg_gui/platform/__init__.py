@@ -1,0 +1,3 @@
+Platform = object
+
+NativeElement = object

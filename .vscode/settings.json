@@ -1,0 +1,28 @@
+{
+    "python.analysis.autoImportCompletions": false,
+    "python.languageServer": "Pylance",
+    "python.linting.mypyEnabled": false,
+    "python.analysis.diagnosticSeverityOverrides": {
+        // https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+        "reportMissingModuleSource": "none",
+        "reportMissingImports": "error",
+        "reportWildcardImportFromLibrary": "none",
+        "reportFunctionMemberAccess": "error",
+        "reportUnknownMemberType": "error",
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.blackPath": "black",
+    "python.formatting.blackArgs": [
+        "--target-version",
+        "py310"
+    ],
+    "python.linting.pylintEnabled": false,
+    "python.analysis.extraPaths": [
+        "/Users/jonahym/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.17-darwin-x64/boards/0x239A/0x80AC",
+        "/Users/jonahym/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.17-darwin-x64/stubs",
+        "/Users/jonahym/Library/Application Support/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20220504/adafruit-circuitpython-bundle-py-20220504/lib"
+    ],
+    "circuitpython.board.version": null,
+    "circuitpython.board.vid": "0x239A",
+    "circuitpython.board.pid": "0x80AC",
+}
