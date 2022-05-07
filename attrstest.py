@@ -8,8 +8,8 @@ from tg_gui_core.attrs import *
 class Widget:
     __is_widget_class__: ClassVar[Literal[True]] = True  # impl detail
 
-    id = WidgetAttr(init=False, default_factory=UID)
-    superior = WidgetAttr(init=False)
+    id: UID = WidgetAttr(init=False, default_factory=UID)
+    superior: ContainerWidget = WidgetAttr(init=False)
     ...
 
 

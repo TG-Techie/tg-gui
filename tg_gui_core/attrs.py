@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
     from typing import Callable, overload, Type, Any, Literal, overload, Union
-    from typing_extensions import Self
+    from typing_extensions import Self, Annotated
     from .widget import Widget
 
     _WidgetAttrDefaultSource = Union[
@@ -149,7 +149,7 @@ class WidgetAttr(Generic[_Attr]):
             init: Literal[False],
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
         @overload
@@ -161,7 +161,7 @@ class WidgetAttr(Generic[_Attr]):
             # TODO: add repr=:bool = False, # when init is True
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
         @overload
@@ -172,7 +172,7 @@ class WidgetAttr(Generic[_Attr]):
             init: Literal[False],
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
         @overload
@@ -184,7 +184,7 @@ class WidgetAttr(Generic[_Attr]):
             kw_only: bool = True,
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
         @overload
@@ -195,7 +195,7 @@ class WidgetAttr(Generic[_Attr]):
             init: Literal[False],
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
         @overload
@@ -207,10 +207,10 @@ class WidgetAttr(Generic[_Attr]):
             kw_only: bool = True,
             build: bool = False,
             style: bool = False,
-        ) -> Any | _Attr:
+        ) -> Annotated[Any, _Attr]:
             ...
 
-        def __new__(cls: type[Self], *_, **__):
+        def __new__(cls: type[Self], *_, **__) -> Any:
             ...
 
 
@@ -219,6 +219,7 @@ class WidgetAttr(Generic[_Attr]):
 if TYPE_CHECKING:
     # NOTE: this uses, the yet to be approved, pep 681
     from typing_extensions import dataclass_transform
+    from .widget import Widget
 
     _W = TypeVar("_W", bound="Widget")
 
@@ -230,13 +231,15 @@ if TYPE_CHECKING:
         order_default=False,  # widgets are not ordered...
     )
     def widget(cls: Type[_W]) -> Type[_W]:
-        return cls
+        ...
 
 else:
 
-    def widget(cls: Type[Widget]) -> Type[Widget]:
+    def widget(cls):
         return _widget(cls)
 
+
+# ---
 
 # ----------- decorator impl -----------
 
@@ -363,6 +366,7 @@ def _widget_decorator__init__inject(
             raise TypeError(
                 f"{self.__class__.__name__}(...) got unexpected kwarg(s) ({'=..., '.join(kwargs)}=...)"
             )
+
 
 # ----------- init for WidgetAttrs class -----------
 # NOTE: set the init for WidgetAttr since the type system cannot have one in the body

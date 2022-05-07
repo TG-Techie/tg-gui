@@ -18,7 +18,7 @@ from .implementation_support import Missing, isoncircuitpython
 
 
 ## subclasses require the @widget decorator
-@widget
+# @widget
 class Widget(ABC):
     __is_widget_class__: ClassVar[Literal[True]] = True
     __widget_class_id__: ClassVar[UID]
