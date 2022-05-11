@@ -21,7 +21,7 @@ _W = TypeVar("_W", bound="Widget")
 
 
 @widget
-class View(ContainerWidget, ABC, Generic[_W, _SomeView]):
+class View(ContainerWidget, Generic[_W, _SomeView], ABC):
 
     # body: Callable[[_SomeView], _W] = abstractmethod(
     #     lambda self: None

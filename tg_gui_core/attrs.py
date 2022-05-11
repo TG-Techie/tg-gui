@@ -40,8 +40,8 @@ class WidgetAttr(Generic[_Attr]):
     # NOTE: __new__ defined at the bottom of this class
 
     # -- widget runtime related --
-    build: bool
-    style: bool
+    # build: bool
+    # style: bool
 
     # -- init usage related --
     init: bool
@@ -56,9 +56,9 @@ class WidgetAttr(Generic[_Attr]):
     owning_cls: type
     private_name: str
 
-    def init_attr(
-        self, widget: Widget, value: _Attr | MissingType
-    ) -> None:
+    # TODO: add del_attr method
+
+    def init_attr(self, widget: Widget, value: _Attr | MissingType) -> None:
         """
         Called when the widget is being initialized, this can be used to reserve the attribute
         for later use, performing any necessary initialization, etc.
@@ -73,9 +73,7 @@ class WidgetAttr(Generic[_Attr]):
         Called when the widget is being accessed, find and return the value of the attribute this widgetattr describes.
         :param owner: the widget being accessed
         """
-        attr: _Attr | MissingType = getattr(
-            self, self.private_name, Missing
-        )
+        attr: _Attr | MissingType = getattr(self, self.private_name, Missing)
         if attr is Missing:
             raise AttributeError(
                 f"{self} has not attribute `.{self.name}`, "
@@ -84,9 +82,7 @@ class WidgetAttr(Generic[_Attr]):
         else:
             return attr
 
-    def set_attr(
-        self, widget: Widget, value: _Attr | MissingType = Missing
-    ) -> None:
+    def set_attr(self, widget: Widget, value: _Attr | MissingType = Missing) -> None:
         """
         Called when the attribute on the widget is being set, ex:
         ```
@@ -105,35 +101,25 @@ class WidgetAttr(Generic[_Attr]):
     if TYPE_CHECKING:
 
         @overload
-        def __get__(
-            self, widget: None, ownertype: Type[Widget]
-        ) -> Self:
+        def __get__(self, widget: None, ownertype: Type[Widget]) -> Self:
             ...
 
         @overload
-        def __get__(
-            self, widget: Widget, ownertype: Type[Widget]
-        ) -> _Attr:
+        def __get__(self, widget: Widget, ownertype: Type[Widget]) -> _Attr:
             ...
 
-    def __get__(
-        self, widget: Widget | None, ownertype: Type[Widget]
-    ) -> _Attr | Self:
+    def __get__(self, widget: Widget | None, ownertype: Type[Widget]) -> _Attr | Self:
         if widget is None:
             return self
 
         value = self.get_attr(widget)
 
         if value is Missing:
-            raise AttributeError(
-                f"{self.name} cleared or not set, cannot be accessed"
-            )
+            raise AttributeError(f"{self.name} cleared or not set, cannot be accessed")
 
         return value
 
-    def __set__(
-        self, widget: Widget, value: _Attr | MissingType = Missing
-    ) -> None:
+    def __set__(self, widget: Widget, value: _Attr | MissingType = Missing) -> None:
         return self.set_attr(widget, value)
 
     def __set_name__(self, cls: Type[Widget], name: str) -> None:
@@ -173,8 +159,8 @@ class WidgetAttr(Generic[_Attr]):
             cls: type[Self],
             *,
             init: Literal[False],
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -185,8 +171,8 @@ class WidgetAttr(Generic[_Attr]):
             init: Literal[True],
             kw_only: bool = True,
             # TODO: add repr=:bool = False, # when init is True
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -196,8 +182,8 @@ class WidgetAttr(Generic[_Attr]):
             default: _Attr,
             *,
             init: Literal[False],
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -208,8 +194,8 @@ class WidgetAttr(Generic[_Attr]):
             *,
             init: Literal[True],
             kw_only: bool = True,
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -219,8 +205,8 @@ class WidgetAttr(Generic[_Attr]):
             *,
             default_factory: Callable[[], _Attr],
             init: Literal[False],
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -231,8 +217,8 @@ class WidgetAttr(Generic[_Attr]):
             default_factory: Callable[[], _Attr],
             init: Literal[True],
             kw_only: bool = True,
-            build: bool = False,
-            style: bool = False,
+            # build: bool = False,
+            # style: bool = False,
         ) -> Any:  # -> Any for dataclass transform
             ...
 
@@ -246,8 +232,8 @@ class WidgetAttr(Generic[_Attr]):
         default: _Attr | MissingType = Missing,
         *,
         init: bool | MissingType = Missing,
-        build: bool = False,
-        style: bool = False,
+        # build: bool = False,
+        # style: bool = False,
         default_factory: Callable[[], _Attr] | MissingType = Missing,
         kw_only: bool | MissingType = Missing,
     ) -> None:
@@ -256,8 +242,8 @@ class WidgetAttr(Generic[_Attr]):
         ), f"{self.__class__.__name__} init is a required keyword argument"
 
         self.id = UID()
-        self.build = build
-        self.style = style
+        # self.build = build
+        # self.style = style
         # assing to this with None to reserve teh entries (b/c widgetattrs don't exits for themselves)
         self.private_name = None  # type: ignore[assignment]
         self.owning_cls = None  # type: ignore[assignment]
@@ -361,9 +347,7 @@ def _widget(cls: Type[_W]) -> Type[_W]:
         "__widget_attrs__" not in cls.__dict__
     ), f"{cls} already has a '__widget_attrs__' .__dict__ entry"
     widget_attrs: dict[str, WidgetAttr[Any]] = {
-        k: v
-        for k, v in cls.__dict__.items()
-        if isinstance(v, WidgetAttr)
+        k: v for k, v in cls.__dict__.items() if isinstance(v, WidgetAttr)
     }
     # if there are new init attrs, make a new dict based on the old one
     # and override the old init attrs
@@ -397,9 +381,7 @@ def _widget_decorator__init__inject(
     # --- positional args ---
     # find which positional args are init attrs, sort by order by id (childmost -> parentmost, top -> down)
     pos_args = sorted(
-        filter(
-            lambda wa: wa.init and not wa.kw_only, init_attrs.values()
-        ),
+        filter(lambda wa: wa.init and not wa.kw_only, init_attrs.values()),
         key=idattr,
     )
     # number of function arguments
@@ -443,9 +425,7 @@ def _widget_decorator__init__inject(
             value = src[1]() if value is Missing else value
         # behind covering
         else:
-            raise TypeError(
-                f"internal error: unknown default_source kind {src[0]}"
-            )
+            raise TypeError(f"internal error: unknown default_source kind {src[0]}")
 
         wa.init_attr(self, value)
     else:

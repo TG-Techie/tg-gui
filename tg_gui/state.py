@@ -28,6 +28,7 @@ _W = TypeVar("_W", bound=Widget)
 
 class State(Proxy[_T], ProxyProvider[_T]):
     def __init__(self, value: _T) -> None:
+        super().__init__()
         self._value = value
         self._subscribed: dict[UID, _OnupdateCallback[_T]] = {}
 
@@ -67,75 +68,16 @@ class StatefulAttr(WidgetAttr[_T]):
 
     _onupdate: _OnupdateCallback[_T] | None
 
-    if TYPE_CHECKING:
-
-        @overload
-        @classmethod
-        def onupdate(
-            cls, of: _T
-        ) -> Callable[[_OnupdateMthd[_W, _T]], _OnupdateMthd[_W, _T]]:
-            ...
-
-        @overload
-        @classmethod
-        def onupdate(
-            cls, of: Proxy[_T]
-        ) -> Callable[[_OnupdateMthd[_W, _T]], _OnupdateMthd[_W, _T]]:
-            ...
-
-        @overload
-        @classmethod
-        def onupdate(cls, of: _T, do: _OnupdateMthd[_W, _T]) -> _OnupdateMthd[_W, _T]:
-            ...
-
-        @overload
-        @classmethod
-        def onupdate(
-            cls, of: Proxy[_T], do: _OnupdateMthd[_W, _T]
-        ) -> _OnupdateMthd[_W, _T]:
-            ...
-
-    @classmethod
-    def onupdate(
-        cls,
-        of: _T | Proxy[_T],
-        do: Callable[["_W", "_T"], None] | None = None,
-    ) -> Any:
-        """
-        Decorator or method used specify the assoicated onupdate callback for State or
-        Proxy values passed to this attribute.
-        There are several ways to use this decorator:
-        ```
-        class _(Widget):
-            foo: F = StatefulAttr(...)
-            bar: B = StatefulAttr(...)
-
-            onupdate_foo = StatefulAttr.onupdate(foo, do=lambda foo: ...)
-
-            @State.onupdate(bar)
-            def onupdate_foo(self, foo: B) -> None:
-                ...
-        ```
-        """
-        assert isinstance(of, StatefulAttr), (
-            f"StatefulAttr.onupdate(...) must be called on a StatefulAttr, not a {of.__class__.__name__}."
-            "the `_T | Self` type is provided for type-checking compatibility."
-        )
-        # branch for each overload signature
-        if do is None:
-            return of._set_onupdate
-        else:
-            return of._set_onupdate(do)
-
-    def _set_onupdate(self, onupdate: _OnupdateMthd[_W, _T]) -> _OnupdateMthd[_W, _T]:
+    def set_onupdate(self, onupdate: _OnupdateMthd[_W, _T]) -> _OnupdateMthd[_W, _T]:
         # make sure one is not already set
-        if onupdate is not None:
+        if self._onupdate is not None:
             raise ValueError(f"onupdate is already proided for {self}.")
         else:
+            # TODO: fix this?
             self._onupdate = onupdate
-
         return onupdate
 
+    # NOTE: this uses pep 681, which is to be approved
     if TYPE_CHECKING:
         # NOTE: this uses pep 681 that is yet to be approved.
         # see tg_gui_core.attrs.py for what this is overriding.

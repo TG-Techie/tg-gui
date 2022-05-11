@@ -1,10 +1,7 @@
-from tg_gui_core._import_env import *
+from tg_gui_core import *
+from ._platform_setup_ import *
+from .platform import *
 
-from .retype import widget
-
-from .state import StatefulAttr
+Text
 
 from .view import View, ViewSyntax
-
-from .text import Text
-from .button import Button
