@@ -7,9 +7,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     ViewSyntax = Callable[["_SomeView"], "_W"]
-
 else:
-    ViewSyntax = object()
+    ViewSyntax = object
 
 # ---
 
@@ -22,7 +21,18 @@ _W = TypeVar("_W", bound="Widget")
 
 
 @widget
-@impl_support.generic_compat
 class View(ContainerWidget, ABC, Generic[_W, _SomeView]):
 
-    body: Callable[[_SomeView], _W] = WidgetAttr(init=False)
+    # body: Callable[[_SomeView], _W] = abstractmethod(
+    #     lambda self: None
+    # )  # type: ignore[assignment]
+
+    # @abstractmethod
+    # def body(self: _SomeView) -> _W:
+    #     raise NotImplementedError
+
+    def __init_subclass__(cls) -> None:
+        pass
+        # print(f"View.__init_subclass__: {cls}")
+        # assert
+        super().__init_subclass__()

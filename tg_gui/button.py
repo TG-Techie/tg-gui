@@ -1,5 +1,5 @@
-from tg_gui_core import PlatformWidget, Widget, implementation_support as impl_support
+from tg_gui_core._lib_env import Widget, impl_support
 
 
-class Button(PlatformWidget):
+class Button:
     pass

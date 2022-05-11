@@ -31,7 +31,7 @@ class GetItemBypass:
     def __getattr__(self, name: LiteralString):
         return getattr(self._value, name)
 
-    def __isinstance_hook__(self, inst):
+    def check_if_isinstance(self, inst):
         return isinstance(inst, self._value) or (
             hasattr(self._value, "__cp_compat_instancecheck__")
             and self._value.__cp_compat_instancecheck__(inst)

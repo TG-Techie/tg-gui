@@ -1,5 +1,10 @@
 from sys import implementation as _implementation
 
+
+def type_checking():
+    return False
+
+
 if _implementation.name == "cpython":
     from ._impl_support_cpython import *
 elif _implementation.name == "circuitpython":

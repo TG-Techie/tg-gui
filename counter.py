@@ -1,15 +1,16 @@
+from __future__ import annotations
+
 from tg_gui.prelude import *
 
 
 @widget
 class Application(View):
 
-    # count = State(0)
+    message: str = StatefulAttr("hello")
 
-    body = lambda self: Widget()
+    body: ViewSyntax[Application] = lambda self: Text(self.message)
 
-
-app = main(Application)
 
 if __name__ == "__main__":
+    app = main(Application)
     app.run()

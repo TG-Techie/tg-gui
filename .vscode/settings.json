@@ -9,6 +9,8 @@
         "reportWildcardImportFromLibrary": "none",
         "reportFunctionMemberAccess": "error",
         "reportUnknownMemberType": "error",
+        "reportInvalidTypeVarUse": "information",
+        "reportMissingSuperCall": "error",
     },
     "python.analysis.typeCheckingMode": "basic",
     "python.formatting.blackPath": "black",
@@ -25,4 +27,5 @@
     "circuitpython.board.version": null,
     "circuitpython.board.vid": "0x239A",
     "circuitpython.board.pid": "0x80AC",
+    "editor.wordWrapColumn": 70,
 }

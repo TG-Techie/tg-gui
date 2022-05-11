@@ -5,10 +5,10 @@
             "command": "commands.refresh",
             "tooltip": "reload these commands"
         },
-        {
-            "text": "CirPy (",
-            "tooltip": "CircuitPython Commands"
-        },
+        // {
+        //     "text": "CirPy (",
+        //     "tooltip": "CircuitPython Commands"
+        // },
         {
             "text": "Main$(sign-out)",
             "command": "terminals.runTerminalByName",
@@ -48,15 +48,15 @@
                 "CirPySyncFiles_ALL"
             ],
             "tooltip": "Sync ALL required file to CIRCUITPY"
-        },
-        {
-            "text": "$(file-symlink-file)",
-            "command": "workbench.action",
-            "tooltip": "workbench.action"
-        },
-        {
-            "text": ")",
-            "tooltip": "..."
-        }
+        } //  ,
+        // {
+        //     "text": "$(file-symlink-file)",
+        //     "command": "workbench.action",
+        //     "tooltip": "workbench.action"
+        // },
+        // {
+        //     "text": ")",
+        //     "tooltip": "..."
+        // }
     ]
 }

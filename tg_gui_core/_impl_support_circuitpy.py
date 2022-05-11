@@ -35,7 +35,7 @@ def generic_compat(cls: type):  # type: ignore[misc]
 # --- isinstance and subclass helpers for _GenericBypass etc ---
 class IsinstanceBase:
     pass
-    # __isinstance_hook__ handled by isinstance_cp_compat
+    # check_if_isinstance handled by isinstance_cp_compat
 
 
 _orig_isinstance = builtins.isinstance
@@ -47,8 +47,8 @@ def isinstance_cp_compat(obj, classinfo: type | tuple[type, ...]) -> bool:
     return any(
         # from tg_gui_core.shared import * ; isinstance(9, UID)
         (
-            hasattr(cls, "__isinstance_hook__")
-            and cls.__isinstance_hook__(obj)  # type: ignore
+            hasattr(cls, "check_if_isinstance")
+            and cls.check_if_isinstance(obj)  # type: ignore
         )
         or (_orig_isinstance(obj, cls))
         for cls in classinfo

@@ -6,16 +6,26 @@ if TYPE_CHECKING:
 
     class Identifiable(Protocol):
         @property
-        def id(self) -> int:
+        def id(self) -> UID:
             ...
 
 else:
     Identifiable = object
 
-from .implementation_support import Missing, MissingType, IsinstanceBase
+from .implementation_support import (
+    Missing,
+    MissingType,
+    IsinstanceBase,
+)
 
 
 Pixels = int
+
+
+def add_pixel_pair(
+    __a: tuple[Pixels, Pixels], __b: tuple[Pixels, Pixels]
+) -> tuple[Pixels, Pixels]:
+    return (__a[0] + __b[0], __a[1] + __b[1])
 
 
 def idattr(obj: Identifiable) -> int:
@@ -31,13 +41,13 @@ class UID(int, IsinstanceBase):
         cls.__next_int += 1
         return new_uid  # type: ignore
 
-    def __init__(self) -> None:
+    def __init__(self, *_, **__) -> None:  # pyright: reportMissingSuperCall=false
         raise RuntimeError(
             "UID.__init__ called. "
-            "UID(...) should return an int, "
+            "UID() should return an int (shhhh) and never be given an argument, "
             "thus __init__ should not be called",
         )
 
     @classmethod
-    def __isinstance_hook__(cls, __instance) -> bool:
+    def check_if_isinstance(cls, __instance) -> bool:
         return isinstance(__instance, int) and __instance >= 0

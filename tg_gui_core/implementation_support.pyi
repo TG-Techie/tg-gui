@@ -2,6 +2,7 @@ from typing import Literal, TypeVar, Generic, Any, TypeGuard, Type
 from abc import ABCMeta
 from enum import Enum, auto
 
+def type_checking() -> Literal[True]: ...
 def isoncircuitpython() -> bool: ...
 
 _E = TypeVar("_E", bound=Enum)

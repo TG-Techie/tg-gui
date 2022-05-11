@@ -56,10 +56,10 @@ def generic_compat(cls):
 
 
 class _UIDMeta(type):
-    __isinstance_hook__: Callable[[object], TypeGuard[Self]]
+    check_if_isinstance: Callable[[object], TypeGuard[Self]]
 
     def __instancecheck__(self, __instance) -> bool:
-        return self.__isinstance_hook__(__instance)
+        return self.check_if_isinstance(__instance)
 
 
 class IsinstanceBase(metaclass=_UIDMeta):
