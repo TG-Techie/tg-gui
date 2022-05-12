@@ -25,16 +25,27 @@ if TYPE_CHECKING:
 
 from enum import Enum, auto
 
-from .shared import UID, Missing, MissingType, idattr
+from .shared import UID, Missing, MissingType, id_attr_as_int
 from . import implementation_support as impl_support
 
 
-_Attr = TypeVar(
-    "_Attr",
-)
+_Attr = TypeVar("_Attr")
 _W = TypeVar("_W", bound="Widget")
 
+# ----------- @widget decorator -----------
+if TYPE_CHECKING:
+    # here we circularaly import if from tg_gui for typing purposes
+    # the @dataclass_transform typing needs some additional type info
+    # only avaible in the tg_gui module. By importing it here the tg_gui
+    # module can be changed without needing to update tg_gui_core
+    from tg_gui._platform_setup_ import widget
+else:
 
+    def widget(cls):
+        return _widget(cls)
+
+
+# ----------- @widget attribute descriptor -----------
 @impl_support.generic_compat
 class WidgetAttr(Generic[_Attr]):
     # NOTE: __new__ defined at the bottom of this class
@@ -280,36 +291,11 @@ def _WidgetAttr__init__(self: WidgetAttr, *args, **kwargs) -> None:
     """
     NOTE: this is a hack to make the type system happy
     """
-    self.__widattr_init__(*args, **kwargs)
+    print(self, self.__widattr_init__, args, kwargs)
+    self.__widattr_init__(*args, **kwargs)  # type: ignore[member]
 
 
 WidgetAttr.__init__ = _WidgetAttr__init__  # type: ignore[assignment]
-
-
-# ----------- decorator -----------
-
-if TYPE_CHECKING:
-    # NOTE: this uses, the yet to be approved, pep 681
-    from typing_extensions import dataclass_transform
-    from .widget import Widget
-
-    @dataclass_transform(
-        # all widget attrs are
-        kw_only_default=True,
-        field_descriptors=(WidgetAttr,),
-        eq_default=False,  # widgets are never equatable
-        order_default=False,  # widgets are not ordered...
-    )
-    def widget(cls: Type[_W]) -> Type[_W]:
-        ...
-
-else:
-
-    def widget(cls):
-        return _widget(cls)
-
-
-# ---
 
 
 # ----------- decorator impl -----------
@@ -332,6 +318,12 @@ def _widget(cls: Type[_W]) -> Type[_W]:
 
     # circuitpython-compat(__set_name__)
     if impl_support.isoncircuitpython():
+        from ._circuitpy_compat_module import GetItemBypass
+
+        if is_generic := isinstance(cls, GetItemBypass):
+            clsbypass = cls
+            cls = cls._value
+
         # circuitpython-compat(__init_subclass__), does not support **kwargs
         if hasattr(super(cls, cls), "__init_subclass__"):
             super(cls, cls).__init_subclass__()  # type: ignore[attr-defined]
@@ -339,13 +331,15 @@ def _widget(cls: Type[_W]) -> Type[_W]:
         for name, attr in cls.__dict__.items():
             if hasattr(attr, "__set_name__"):
                 attr.__set_name__(cls, name)
-
+    else:
+        is_generic = False
     # --- setup the argument and inst attrs ---
     # inject the init that will parse and apply the arguemtn parsing that @widget proivides
 
     assert (
         "__widget_attrs__" not in cls.__dict__
     ), f"{cls} already has a '__widget_attrs__' .__dict__ entry"
+
     widget_attrs: dict[str, WidgetAttr[Any]] = {
         k: v for k, v in cls.__dict__.items() if isinstance(v, WidgetAttr)
     }
@@ -367,7 +361,10 @@ def _widget(cls: Type[_W]) -> Type[_W]:
     ), f"widget class {cls} already has a class id, make sure it is not decorated with `@widget` twice"
     cls.__widget_class_id__ = UID()
 
-    return cls
+    if is_generic:  # type: ignore
+        cls = clsbypass  # type: ignore
+
+    return cls  # type: ignore
 
 
 def _widget_decorator__init__inject(
@@ -382,7 +379,7 @@ def _widget_decorator__init__inject(
     # find which positional args are init attrs, sort by order by id (childmost -> parentmost, top -> down)
     pos_args = sorted(
         filter(lambda wa: wa.init and not wa.kw_only, init_attrs.values()),
-        key=idattr,
+        key=id_attr_as_int,
     )
     # number of function arguments
     if not (len(args) <= len(pos_args)):

@@ -16,10 +16,14 @@ from .._platform_setup_ import *
 
 # ---
 
+_NativeTextElement = NativeElement
+
 @widget
-class Text(NativeWidget):
+class Text(NativeWidget[_NativeTextElement]):
 
     text: str = StatefulAttr(init=True, kw_only=False)
+
+    # --- class specific side implementation methods ---
     @onupdate(text)
     def onupdate_text(self, text: str) -> None:
         raise NotImplementedError
@@ -28,23 +32,20 @@ class Text(NativeWidget):
         called when a dependent themed attribute changes
         """
         raise NotImplementedError
+    # --- abstract implementation methods ---
     def _build_(
-        self, suggestion: tuple[Pixels, Pixels]
-    ) -> tuple[NativeElement, tuple[Pixels, Pixels]]:
-        raise NotImplementedError
-    def _demolish_(self, native: NativeElement) -> None:
-        raise NotImplementedError
+        self, suggestion: tuple[Pixels, Pixels], *, text: str | State[str]
+    ) -> tuple[NativeElement, tuple[Pixels, Pixels]]: ...
+    def _demolish_(self, native: NativeElement) -> None: ...
     def _place_(
         self,
         container: NativeContainer,
         native: NativeElement,
         pos: tuple[Pixels, Pixels],
         abs_pos: tuple[Pixels, Pixels],
-    ) -> None:
-        raise NotImplementedError
+    ) -> None: ...
     def _pickup_(
         self,
         container: NativeContainer,
         native: NativeElement,
-    ) -> None:
-        raise NotImplementedError
+    ) -> None: ...

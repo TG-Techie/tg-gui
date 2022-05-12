@@ -4,18 +4,20 @@ from tg_gui_core import *
 
 from typing import TYPE_CHECKING
 
+from .shared import Color
+
+from .stateful import State, StatefulAttr
+from .theming import ThemedAttr
 
 from .native import NativeWidget
-from .proxying import Proxy
-from .state import State, StatefulAttr
-from .theming import ThemedAttr
+
 
 # re-type @widget to include StatefulAttr, ThemedAttr, etc
 if TYPE_CHECKING:
     from typing import TypeVar, Type, overload, Callable, Any
     from typing_extensions import dataclass_transform
 
-    _T = TypeVar("_T")
+    _W = TypeVar("_W", bound=Widget)
 
     @dataclass_transform(
         eq_default=False,
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
             ThemedAttr,
         ),
     )
-    def widget(cls: Type[_T]) -> Type[_T]:
+    def widget(cls: Type[_W]) -> Type[_W]:
         ...
 
 else:
@@ -39,7 +41,7 @@ if TYPE_CHECKING:
     _T = TypeVar("_T")
     _W = TypeVar("_W", bound=Widget)
 
-    _OnupdateOf = _T | Proxy[_T] | StatefulAttr[_T]
+    _OnupdateOf = _T | State[_T] | StatefulAttr[_T]
     _OnupdateMethod = Callable[[_W, _T], None]
 
     @overload

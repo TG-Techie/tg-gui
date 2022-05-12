@@ -1,6 +1,6 @@
 from . import implementation_support
 
-from .implementation_support import type_checking
+from .implementation_support import annotation_only
 
 from .shared import Identifiable, Pixels, UID
 

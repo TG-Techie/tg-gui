@@ -28,11 +28,11 @@ def add_pixel_pair(
     return (__a[0] + __b[0], __a[1] + __b[1])
 
 
-def idattr(obj: Identifiable) -> int:
-    return int(obj.id)
+def id_attr_as_int(obj: Identifiable) -> int:
+    return int(obj.id)  # type: ignore
 
 
-class UID(int, IsinstanceBase):
+class UID(IsinstanceBase):
 
     __next_int: int = 0
 

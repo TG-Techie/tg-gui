@@ -24,12 +24,12 @@ from .implementation_support import Missing, isoncircuitpython
 ## subclasses require the @widget decorator
 @widget
 class Widget(ABC):
-    if TYPE_CHECKING:
-        _Self = TypeVar("_Self", bound="Widget", contravariant=True)
+    # if TYPE_CHECKING:
+    #     _Self = TypeVar("_Self", bound="Widget", contravariant=True)
 
     __is_widget_class__: ClassVar[Literal[True]] = True
     __widget_class_id__: ClassVar[UID]
-    __widget_attrs__: ClassVar[dict[str, WidgetAttr[Any]]] = {}
+    __widget_attrs__: ClassVar[dict[str, WidgetAttr[Any]]]
 
     id: UID = WidgetAttr(init=False, default_factory=UID)
 
@@ -43,7 +43,8 @@ class Widget(ABC):
     abs_pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
 
     # set the init method, it is defined in .attrs b/c more info there is related
-    from .attrs import _widget_decorator__init__inject as __init__
+    if not TYPE_CHECKING:
+        from .attrs import _widget_decorator__init__inject as __init__
 
     # -------- public, override-able methods --------
     def on_nest(self) -> None:
@@ -91,7 +92,9 @@ class Widget(ABC):
         """
         Called when the widget is destroyed.
         """
-        self._demolish_(self.native)
+        native = self.native
+        self.native = Missing  # clear the superior and platform attributes using a hidden WidgetAttr method
+        self._demolish_(native)
 
     def place(self, pos: tuple[Pixels, Pixels]) -> None:
         """
@@ -132,7 +135,7 @@ class Widget(ABC):
     # --- build / demolish ---
     @abstractmethod
     def _build_(
-        self: _Self, suggestion: tuple[Pixels, Pixels]
+        self, suggestion: tuple[Pixels, Pixels]
     ) -> tuple[NativeElement, tuple[Pixels, Pixels]]:
         """
         builds a native element that is the concrete implementation of the
@@ -143,7 +146,7 @@ class Widget(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _demolish_(self: _Self, native: NativeElement) -> None:
+    def _demolish_(self, native: NativeElement) -> None:
         """
         demolishes the widget's native element.
         This may be responsible for nesting the native element in the native container.
@@ -154,7 +157,7 @@ class Widget(ABC):
     # --- place / unplace ---
     @abstractmethod
     def _place_(
-        self: _Self,
+        self,
         container: NativeContainer,
         native: NativeElement,
         pos: tuple[Pixels, Pixels],
@@ -168,7 +171,7 @@ class Widget(ABC):
 
     @abstractmethod
     def _pickup_(
-        self: _Self,
+        self,
         container: NativeContainer,
         native: NativeElement,
     ) -> None:
@@ -182,7 +185,7 @@ class Widget(ABC):
     # --- re-layout / utilites ---
     # both can/should be overridden by subclasses to provide more efficient implementations
     def _rebuild_(
-        self: _Self, native: NativeElement, suggestion: tuple[Pixels, Pixels]
+        self, native: NativeElement, suggestion: tuple[Pixels, Pixels]
     ) -> tuple[NativeElement, tuple[Pixels, Pixels]]:
         """
         Called when the widget is resized.
@@ -196,7 +199,7 @@ class Widget(ABC):
         return self._build_(suggestion)
 
     def _move_(
-        self: _Self,
+        self,
         container: NativeContainer,
         native: NativeElement,
         pos: tuple[Pixels, Pixels],

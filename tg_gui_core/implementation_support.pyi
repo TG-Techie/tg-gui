@@ -1,8 +1,9 @@
-from typing import Literal, TypeVar, Generic, Any, TypeGuard, Type
-from abc import ABCMeta
+from typing import Literal, TypeVar, Generic, Any, TypeGuard, Type, Callable
+from typing_extensions import Self
+from abc import ABCMeta, abstractclassmethod
 from enum import Enum, auto
 
-def type_checking() -> Literal[True]: ...
+def annotation_only() -> Literal[True]: ...
 def isoncircuitpython() -> bool: ...
 
 _E = TypeVar("_E", bound=Enum)
@@ -30,5 +31,11 @@ def generic_compat(cls: Type[_T]) -> Type[_T]:
     """
     ...
 
-class IsinstanceBase(type):
-    def __instancecheck__(self, __instance: Any) -> TypeGuard[UID]: ...
+class _IsinstMeta(type, metaclass=ABCMeta):
+    check_if_isinstance: Callable[[object], TypeGuard[Self]]
+    def __instancecheck__(self, __instance) -> bool:
+        return self.check_if_isinstance(__instance)
+
+class IsinstanceBase(_IsinstMeta):
+    @abstractclassmethod
+    def _inst_isinstance_check_(self, __instance: Any) -> TypeGuard[Self]: ...

@@ -31,7 +31,14 @@ class GetItemBypass:
     def __getattr__(self, name: LiteralString):
         return getattr(self._value, name)
 
-    def check_if_isinstance(self, inst):
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__qualname__} {self._name} = {self._value}>"
+
+    def _inst_isinstance_check_(self, *inst):
+        if len(inst) == 1:
+            inst = inst
+        else:
+            return False
         return isinstance(inst, self._value) or (
             hasattr(self._value, "__cp_compat_instancecheck__")
             and self._value.__cp_compat_instancecheck__(inst)
@@ -47,7 +54,7 @@ TYPE_CHECKING = False
 
 def Generic__new__(cls, *args, **kwds):
     assert getattr(
-        cls, "__generirc_compat__", False
+        cls, "__generic_compat__", False
     ), f"generic class {cls} not decorated with @generic_compat"
     return object.__new__(cls)
 
@@ -55,6 +62,7 @@ def Generic__new__(cls, *args, **kwds):
 Generic = GetItemBypass(
     "Generic", type("Generic", (object,), {"__new__": Generic__new__})
 )
+Protocol = GetItemBypass("Protocol", type("Protocol", (object,), {}))
 
 TypeVar = lambda *_, **__: None
 
@@ -144,6 +152,11 @@ __bypassed_modules__ = (
     "types",
     "enum",
     "abc",
+)
+
+
+GenericABC = GetItemBypass(
+    "GenericABC", type("GenericABC", (object,), {"__new__": Generic__new__})
 )
 
 

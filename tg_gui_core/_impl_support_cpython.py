@@ -55,12 +55,16 @@ def generic_compat(cls):
     return cls
 
 
-class _UIDMeta(type):
+class _IsinstMeta(type):
     check_if_isinstance: Callable[[object], TypeGuard[Self]]
 
-    def __instancecheck__(self, __instance) -> bool:
+    def _inst_isinstance_check_(self, __instance) -> bool:
         return self.check_if_isinstance(__instance)
 
 
-class IsinstanceBase(metaclass=_UIDMeta):
+class IsinstanceBase(metaclass=_IsinstMeta):
+    pass
+
+
+class GenericABC(Generic[_T], metaclass=ABCMeta):
     pass

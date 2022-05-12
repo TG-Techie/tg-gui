@@ -23,7 +23,7 @@ class Text(NativeWidget[QLabel]):
         self.native.setText(text)
 
     def _build_(
-        self, suggestion: tuple[Pixels, Pixels]
+        self, suggestion: tuple[Pixels, Pixels], *, text: str | State[str]
     ) -> tuple[NativeElement, tuple[Pixels, Pixels]]:
         native = QLabel()
         native.setText(self.text)

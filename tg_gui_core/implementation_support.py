@@ -1,7 +1,7 @@
 from sys import implementation as _implementation
 
 
-def type_checking():
+def annotation_only():
     return False
 
 

@@ -3,14 +3,7 @@
     "python.languageServer": "Pylance",
     "python.linting.mypyEnabled": false,
     "python.analysis.diagnosticSeverityOverrides": {
-        // https://github.com/microsoft/pyright/blob/main/docs/configuration.md
-        "reportMissingModuleSource": "none",
-        "reportMissingImports": "error",
-        "reportWildcardImportFromLibrary": "none",
-        "reportFunctionMemberAccess": "error",
-        "reportUnknownMemberType": "error",
-        "reportInvalidTypeVarUse": "information",
-        "reportMissingSuperCall": "error",
+        "reportMissingModuleSource": "none"
     },
     "python.analysis.typeCheckingMode": "basic",
     "python.formatting.blackPath": "black",
@@ -20,12 +13,12 @@
     ],
     "python.linting.pylintEnabled": false,
     "python.analysis.extraPaths": [
-        "/Users/jonahym/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.17-darwin-x64/boards/0x239A/0x80AC",
+        "/Users/jonahym/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.17-darwin-x64/boards/0x239A/0x810E",
         "/Users/jonahym/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.17-darwin-x64/stubs",
-        "/Users/jonahym/Library/Application Support/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20220510/adafruit-circuitpython-bundle-py-20220510/lib"
+        "/Users/jonahym/Library/Application Support/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20220512/adafruit-circuitpython-bundle-py-20220512/lib"
     ],
     "circuitpython.board.version": null,
     "circuitpython.board.vid": "0x239A",
-    "circuitpython.board.pid": "0x80AC",
+    "circuitpython.board.pid": "0x810E",
     "editor.wordWrapColumn": 70,
 }

@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-from tg_gui.prelude import *
+
+from tg_gui.all import *
 
 
 @widget
-class App(View):
+class Application(View):
 
-    body = lambda self: (
-        Button(
-            "test",
-            action=self.say(("Hello, world!", self)),
-        )
-    )
+    message = State("hello")
 
-    def say(self, message: str, view: View) -> None:
-        print(message, view)
+    body: ViewSyntax[Application] = lambda self: Text(self.message)
 
 
 if __name__ == "__main__":
-    main(App).run()
+    app = main(Application)
+    app.run()
+else:
+    app = Application()

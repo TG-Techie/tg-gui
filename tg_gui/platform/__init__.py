@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from sys import implementation as _implementation
 
+
 if TYPE_CHECKING or _implementation.name == "cpython":
     from .._platform_qt_ import *
 elif _implementation.name == "circuitpython":
