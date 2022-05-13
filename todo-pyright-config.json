@@ -1,4 +1,5 @@
-{ // https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+{
+    // https://github.com/microsoft/pyright/blob/main/docs/configuration.md
     "reportMissingModuleSource": "none",
     "reportMissingImports": "error",
     "reportWildcardImportFromLibrary": "none",
@@ -6,4 +7,5 @@
     "reportUnknownMemberType": "error",
     "reportInvalidTypeVarUse": "information",
     "reportMissingSuperCall": "error",
+    "reportSelfClsParameterName": "information",
 }

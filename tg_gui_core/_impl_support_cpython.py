@@ -25,10 +25,6 @@ def warn(msg: str) -> None:
 _T = TypeVar("_T")
 
 
-class GenericABC(Generic[_T], metaclass=ABCMeta):
-    pass
-
-
 from functools import wraps as _wraps
 
 from enum import Enum, auto
@@ -49,10 +45,6 @@ class MissingType(Enum):
 
 
 Missing = MissingType.Missing
-
-
-def generic_compat(cls):
-    return cls
 
 
 class _IsinstMeta(type):
