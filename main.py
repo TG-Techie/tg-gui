@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from tg_gui.all import *
 
 
@@ -9,7 +8,7 @@ class Application(View):
 
     message = State("hello")
 
-    body: ViewSyntax[Application] = lambda self: Text(self.message)
+    body: View.Syntax[Self] = lambda self: Text(self.message)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,6 @@ else:
 
 
 # ----------- @widget attribute descriptor -----------
-@impl_support.generic_compat
 class WidgetAttr(Generic[_Attr]):
     # NOTE: __new__ defined at the bottom of this class
 

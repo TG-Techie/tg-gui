@@ -24,8 +24,6 @@ from tg_gui_core import (
     implementation_support as impl_support,
 )
 
-from tg_gui_core.implementation_support import GenericABC
-
 # ---
 
 from .stateful import State, StatefulAttr
@@ -34,9 +32,9 @@ from .theming import ThemedAttr
 # ---
 
 
-@impl_support.generic_compat
 @widget
-class NativeWidget(Widget, GenericABC[_NE]):
+class NativeWidget(Widget, ABC, Generic[_NE]):
+
     native: _NE = WidgetAttr(init=False)
 
     def build(self, suggestion: tuple[Pixels, Pixels]) -> None:

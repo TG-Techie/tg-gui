@@ -1,38 +1,26 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, Protocol
 
 if TYPE_CHECKING:
-    from typing import Callable, ClassVar
+    from typing import Callable, ClassVar, Any
     from typing_extensions import Self
-
-    ViewSyntax = Callable[["_SomeView"], "_W"]
-else:
-    ViewSyntax = object
-
 # ---
 
 from abc import ABC, abstractmethod
 
 from tg_gui_core._lib_env import *
 
-_SomeView = TypeVar("_SomeView", bound="View", contravariant=True)
-_W = TypeVar("_W", bound="Widget")
+
+WidgetType = TypeVar("WidgetType", bound=Widget)
+SomeSelf = TypeVar("SomeSelf", bound="View", contravariant=True)
 
 
 @widget
-class View(ContainerWidget, Generic[_W, _SomeView], ABC):
+class View(ContainerWidget, Generic[WidgetType], ABC):
+    class Syntax(Protocol[SomeSelf]):
+        @staticmethod
+        def __call__(self: SomeSelf) -> Any | WidgetType:
+            ...
 
-    # body: Callable[[_SomeView], _W] = abstractmethod(
-    #     lambda self: None
-    # )  # type: ignore[assignment]
-
-    # @abstractmethod
-    # def body(self: _SomeView) -> _W:
-    #     raise NotImplementedError
-
-    def __init_subclass__(cls) -> None:
-        pass
-        # print(f"View.__init_subclass__: {cls}")
-        # assert
-        super().__init_subclass__()
+    body: ClassVar[Syntax[Self]]
