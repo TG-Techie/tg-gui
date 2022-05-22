@@ -1,7 +1,7 @@
 # import tg_gui_core first incase we are running on
 import tg_gui_core
 
-from typing import TYPE_CHECKING
+from tg_gui_core import annotation_only
 
 from sys import implementation as _implementation
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from tg_gui_core import annotation_only
 
-if TYPE_CHECKING:
+if annotation_only():
     from typing import Any, TypeGuard, overload, ClassVar
     from typing_extensions import Self, LiteralString
 

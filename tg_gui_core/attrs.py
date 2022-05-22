@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
+from .implementation_support import annotation_only
 
-if TYPE_CHECKING:
+if annotation_only():
     from typing import (
         Callable,
         overload,
@@ -33,7 +34,7 @@ _Attr = TypeVar("_Attr")
 _W = TypeVar("_W", bound="Widget")
 
 # ----------- @widget decorator -----------
-if TYPE_CHECKING:
+if annotation_only():
     # here we circularaly import if from tg_gui for typing purposes
     # the @dataclass_transform typing needs some additional type info
     # only avaible in the tg_gui module. By importing it here the tg_gui
@@ -108,7 +109,7 @@ class WidgetAttr(Generic[_Attr]):
             f"{self.name} is a read-only attribute, tried to set to {value} on {widget}"
         )
 
-    if TYPE_CHECKING:
+    if annotation_only():
 
         @overload
         def __get__(self, widget: None, ownertype: Type[Widget]) -> Self:
@@ -152,7 +153,7 @@ class WidgetAttr(Generic[_Attr]):
         ), f"{name} is the same as the private name in __set_name__"
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}:{self.id} `{self.owning_cls.__module__}.{self.owning_cls.__name__}.{self.name}`>"
+        return f"<{self.__class__.__name__} `{self.owning_cls.__module__}.{self.owning_cls.__name__}.{self.name}`>"
 
     # NOTE: this uses pep 681 that is yet to be approved.
     # https://peps.python.org/pep-0681/#field-specifiers
@@ -162,7 +163,7 @@ class WidgetAttr(Generic[_Attr]):
     #    class Foo(View):
     #        counter: int | None = State(default=None)
     #    ```
-    if TYPE_CHECKING:
+    if annotation_only():
 
         @overload
         def __new__(
@@ -290,7 +291,6 @@ def _WidgetAttr__init__(self: WidgetAttr, *args, **kwargs) -> None:
     """
     NOTE: this is a hack to make the type system happy
     """
-    print(self, self.__widattr_init__, args, kwargs)
     self.__widattr_init__(*args, **kwargs)  # type: ignore[member]
 
 

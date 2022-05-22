@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
+from tg_gui_core import annotation_only
 
 # circuilar imports
-if TYPE_CHECKING:
+if annotation_only():
     from typing import Callable, ClassVar, Any
     from .platform.shared import NativeElement, NativeContainer
-
 
 _T = TypeVar("_T")
 _NE = TypeVar("_NE", bound="NativeElement")
@@ -56,7 +56,7 @@ class NativeWidget(Widget, ABC, Generic[_NE]):
         """
         raise NotImplementedError
 
-    if TYPE_CHECKING:
+    if annotation_only():
 
         @abstractmethod
         def _build_(

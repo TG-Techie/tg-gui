@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
+from .implementation_support import annotation_only
 
 
-if TYPE_CHECKING:
+if annotation_only():
     from typing import ClassVar, Type, Iterator, Any, Literal
 
     # from typing_extensions import _Self
@@ -24,7 +25,7 @@ from .implementation_support import Missing, isoncircuitpython
 ## subclasses require the @widget decorator
 @widget
 class Widget(ABC):
-    # if TYPE_CHECKING:
+    # if annotation_only():
     #     _Self = TypeVar("_Self", bound="Widget", contravariant=True)
 
     __is_widget_class__: ClassVar[Literal[True]] = True
@@ -43,7 +44,7 @@ class Widget(ABC):
     abs_pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
 
     # set the init method, it is defined in .attrs b/c more info there is related
-    if not TYPE_CHECKING:
+    if not annotation_only():
         from .attrs import _widget_decorator__init__inject as __init__
 
     # -------- public, override-able methods --------
@@ -236,7 +237,7 @@ class Widget(ABC):
         ), f"widget parent must be first base class: found {cls}'s first base class as {cls.__bases__[0]}"
 
     # --- runtime lint checks (ikik sorry, @TG-Techie on github) ---
-    if __debug__ and not TYPE_CHECKING:
+    if __debug__ and not annotation_only():
 
         def __new__(cls, *args, **kwargs):
             # widget classes must be decorated, _widget_cls_id_ is set if it is decorated

@@ -1,7 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Protocol
 
-if TYPE_CHECKING:
+from typing import Protocol
+from .implementation_support import annotation_only
+
+
+if annotation_only():
     from typing import TypeGuard, Any
 
     class Identifiable(Protocol):

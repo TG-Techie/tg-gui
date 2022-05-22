@@ -8,8 +8,10 @@ from .._platform_setup_ import *
 
 
 @widget
-class Text(NativeWidget[QLabel]):
+# class Text(NativeWidget[QLabel]):
+class Text(NativeWidget):
 
+    native: QLabel
     text: str = StatefulAttr(init=True, kw_only=False)
 
     def onupdate_theme(self, attr: ThemedAttr[Any] | None) -> None:

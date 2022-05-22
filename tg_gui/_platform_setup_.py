@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from tg_gui_core import *
 
-from typing import TYPE_CHECKING
+from tg_gui_core import annotation_only
 
 from .shared import Color
 
@@ -13,7 +13,7 @@ from .native import NativeWidget
 
 
 # re-type @widget to include StatefulAttr, ThemedAttr, etc
-if TYPE_CHECKING:
+if annotation_only():
     from typing import TypeVar, Type, overload, Callable, Any
     from typing_extensions import dataclass_transform
 
@@ -36,7 +36,7 @@ else:
     from tg_gui_core.attrs import widget
 
 
-if TYPE_CHECKING:
+if annotation_only():
 
     _T = TypeVar("_T")
     _W = TypeVar("_W", bound=Widget)

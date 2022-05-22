@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
 # ---
 from tg_gui_core.attrs import WidgetAttr

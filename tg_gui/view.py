@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, Protocol
+from typing import Generic, TypeVar, Protocol
+from tg_gui_core import annotation_only
 
-if TYPE_CHECKING:
+if annotation_only():
     from typing import Callable, ClassVar, Any
     from typing_extensions import Self
 # ---

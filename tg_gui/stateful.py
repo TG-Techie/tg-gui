@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar, Protocol
+from tg_gui_core import annotation_only
 
-if TYPE_CHECKING:
+if annotation_only():
     from typing import (
         Callable,
         ClassVar,
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     _C = TypeVar("_C", bound="Callable")
+    _W = Widget
 
     _OnupdateCallback = Callable[["_T"], None]
     _OnupdateMthd = Callable[["_W", "_T"], None]
@@ -24,12 +26,15 @@ if TYPE_CHECKING:
     Stateful: TypeAlias = "State[_T] | _T"
 
 
-class ProxyProvider(Protocol["_T"]):
+_T = TypeVar("_T")
+
+
+class ProxyProvider(Protocol[_T]):
     def get_proxy(self, owner: Widget) -> Proxy[_T]:
         ...
 
 
-class Proxy(Protocol["_T"]):
+class Proxy(Protocol[_T]):
     def value(self, *, reader: Identifiable) -> _T:
         ...
 
@@ -51,10 +56,6 @@ class Proxy(Protocol["_T"]):
 # ---
 
 from tg_gui_core._lib_env import *
-
-_T = TypeVar("_T")
-# _W = TypeVar("_W", bound=Widget)
-_W = Widget
 
 
 def isstate(__obj: State[_T] | _T) -> TypeGuard[State[_T]]:
@@ -104,7 +105,7 @@ class State(Generic[_T]):
     def unsubscribe(self, *, subscriber: Identifiable) -> bool:
         return self._subscribed.pop(subscriber.id, None) is not None
 
-    if TYPE_CHECKING:
+    if annotation_only():
 
         @overload
         def __get__(self, instance: _W, owner: Type[_W]) -> _T:
@@ -126,7 +127,7 @@ class State(Generic[_T]):
     def __bool__(self) -> bool:
         raise TypeError("Cannot use a state as a boolean")
 
-    if TYPE_CHECKING:
+    if annotation_only():
 
         def __new__(cls: type[Self], value: _T) -> _T:
             ...
@@ -207,7 +208,7 @@ class StatefulAttr(WidgetAttr[_T]):
             )
 
     # NOTE: this uses pep 681, which is to be approved
-    if TYPE_CHECKING:
+    if annotation_only():
         # NOTE: this uses pep 681 that is yet to be approved.
         # see tg_gui_core.attrs.py for what this is overriding.
 
@@ -259,8 +260,6 @@ class StatefulAttr(WidgetAttr[_T]):
         kw_only: bool | MissingType = Missing,
     ) -> None:
         assert init is True, "init must be True"
-
-        assert False
 
         if default is not Missing:
             assert (

@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING
+from tg_gui_core import annotation_only
 
-if TYPE_CHECKING:
+if annotation_only():
     from displayio import Shape, Group, TileGrid, Palette, Bitmap, OnDiskBitmap
 
     NativeElement = Group | Shape | TileGrid | Palette | Bitmap | OnDiskBitmap

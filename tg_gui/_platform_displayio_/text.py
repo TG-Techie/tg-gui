@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from tg_gui_core import annotation_only
 
 # ---
 
@@ -11,7 +11,7 @@ from .._platform_setup_ import *
 
 # ---
 
-if TYPE_CHECKING:
+if annotation_only():
     from fontio import BuiltinFont
     from adafruit_bitmap_font.bdf import BDF
     from adafruit_bitmap_font.pcf import PCF
