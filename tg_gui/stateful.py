@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
+from tg_gui_core import *
+from tg_gui_core.shared import Missing, MissingType, as_any
+
 
 if TYPE_CHECKING:
     from typing import (
@@ -19,9 +22,14 @@ if TYPE_CHECKING:
     _C = TypeVar("_C", bound="Callable")
 
     _OnupdateCallback = Callable[["_T"], None]
-    _OnupdateMthd = Callable[["_W", "_T"], None]
+    _OnupdateMthd = Callable[["_Widget", "_T"], None]
 
     Stateful: TypeAlias = "State[_T] | _T"
+
+# ---
+
+_T = TypeVar("_T")
+_Widget = Widget
 
 
 class ProxyProvider(Protocol["_T"]):
@@ -46,15 +54,6 @@ class Proxy(Protocol["_T"]):
 
     def unsubscribe(self, *, subscriber: Identifiable) -> bool:
         ...
-
-
-# ---
-
-from tg_gui_core._lib_env import *
-
-_T = TypeVar("_T")
-# _W = TypeVar("_W", bound=Widget)
-_W = Widget
 
 
 def isstate(__obj: State[_T] | _T) -> TypeGuard[State[_T]]:
@@ -107,11 +106,11 @@ class State(Generic[_T]):
     if TYPE_CHECKING:
 
         @overload
-        def __get__(self, instance: _W, owner: Type[_W]) -> _T:
+        def __get__(self, instance: _Widget, owner: Type[_Widget]) -> _T:
             ...
 
         @overload
-        def __get__(self, instance: None, owner: Type[_W]) -> Self:
+        def __get__(self, instance: None, owner: Type[_Widget]) -> Self:
             ...
 
     def __get__(self, instance, owner):
@@ -120,7 +119,7 @@ class State(Generic[_T]):
         else:
             return self.value(reader=instance)
 
-    def __set__(self, instance: _W, value: _T) -> None:
+    def __set__(self, instance: _Widget, value: _T) -> None:
         self.update(value, writer=instance)
 
     def __bool__(self) -> bool:
@@ -144,29 +143,29 @@ _T = TypeVar("_T")
 
 class StatefulAttr(WidgetAttr[_T]):
 
-    _onupdate: _OnupdateMthd[Widget, _T] | None
+    _onupdate: _OnupdateMthd[_T] | None
 
     # TODO: add get_attr, set_attr, and init_attr methods
 
-    def init_attr(self, owner: _W, value: _T | State[_T] | MissingType) -> None:
+    def init_attr(self, owner: _Widget, value: _T | State[_T] | MissingType) -> None:
         setattr(owner, self.private_name, value)
 
         if value is not Missing and isstate(value):
             self._subscribe_to_state(owner, value)
 
-    def del_attr(self, owner: _W) -> None:
+    def del_attr(self, owner: _Widget) -> None:
         # unsubscribe from the old state if it is a state
         existing = self.get_raw_attr(owner)
         if isstate(existing):
             existing.unsubscribe(subscriber=owner)
 
-    def get_raw_attr(self, widget: _W) -> _T | State[_T]:
+    def get_raw_attr(self, widget: _Widget) -> _T | State[_T]:
         """
         returns the unsugared instance attribute value. This may be a raw value or a State instance that wraps that value.
         """
         return getattr(widget, self.private_name)
 
-    def get_attr(self, owner: _W) -> _T:
+    def get_attr(self, owner: _Widget) -> _T:
         attr: _T | State[_T] = self.get_raw_attr(owner)
 
         if isstate(attr):
@@ -177,7 +176,7 @@ class StatefulAttr(WidgetAttr[_T]):
 
         return value
 
-    def get_proxy(self, owner: _W) -> State[_T]:
+    def get_proxy(self, owner: _Widget) -> State[_T]:
         existing = self.get_raw_attr(owner)
 
         if isstate(existing):
@@ -185,12 +184,12 @@ class StatefulAttr(WidgetAttr[_T]):
         else:
             assert not isinstance(existing, State)
             # auto-generate a state, set it and re-turn it
-            value: State[_T] = State(existing)
+            value: State[_T] = as_any(State(existing))
             self._subscribe_to_state(owner, value)
             setattr(owner, self.private_name, value)
             return value
 
-    def set_onupdate(self, onupdate: _OnupdateMthd[_W, _T]) -> _OnupdateMthd[_W, _T]:
+    def set_onupdate(self, onupdate: _OnupdateMthd[_T]) -> _OnupdateMthd[_T]:
         # make sure one is not already set
         if self._onupdate is not None:
             raise ValueError(f"onupdate is already proided for {self}.")
@@ -199,7 +198,7 @@ class StatefulAttr(WidgetAttr[_T]):
             self._onupdate = onupdate
         return onupdate
 
-    def _subscribe_to_state(self, owner: _W, state: State[_T]) -> None:
+    def _subscribe_to_state(self, owner: _Widget, state: State[_T]) -> None:
         if self._onupdate is not None:
             state.subscribe(
                 subscriber=owner,

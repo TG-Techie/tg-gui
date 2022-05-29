@@ -51,3 +51,7 @@ class UID(IsinstanceBase):
     @classmethod
     def check_if_isinstance(cls, __instance) -> bool:
         return isinstance(__instance, int) and __instance >= 0
+
+
+def as_any(__obj: Any) -> Any:
+    return __obj

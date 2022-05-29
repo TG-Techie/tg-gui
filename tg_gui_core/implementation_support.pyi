@@ -3,7 +3,17 @@ from typing_extensions import Self
 from abc import ABCMeta, abstractclassmethod
 from enum import Enum, auto
 
-def annotation_only() -> Literal[True]: ...
+__all__ = (
+    "TYPE_CHECKING",
+    "isoncircuitpython",
+    "enum_compat",
+    "Missing",
+    "MissingType",
+    "IsinstanceBase",
+)
+
+from typing import TYPE_CHECKING
+
 def isoncircuitpython() -> bool: ...
 
 _E = TypeVar("_E", bound=Enum)
@@ -23,7 +33,7 @@ Missing = MissingType.missing
 
 class _IsinstMeta(type, metaclass=ABCMeta):
     check_if_isinstance: Callable[[object], TypeGuard[Self]]
-    def __instancecheck__(self, __instance) -> bool:
+    def __instancecheck__(self, __instance) -> TypeGuard[Self]:
         return self.check_if_isinstance(__instance)
 
 class IsinstanceBase(_IsinstMeta):
