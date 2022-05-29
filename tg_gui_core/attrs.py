@@ -66,8 +66,12 @@ class WidgetAttr(Generic[_Attr]):
     owning_cls: type
     private_name: str
 
-    # TODO: add del_attr method
+    # alias __init__ to __widattr_init__ to make the type checker happy
+    locals()["__init__"] = lambda self, *args, **kwargs: (
+        self.__widattr_init__(*args, **kwargs)  # pyright: reportUnknownMemberType=false
+    )
 
+    # TODO: add del_attr method
     def init_attr(self, widget: Widget, value: _Attr | MissingType) -> None:
         """
         Called when the widget is being initialized, this can be used to reserve the attribute
@@ -286,17 +290,6 @@ class WidgetAttr(Generic[_Attr]):
             self.default_source = ("required", None)
 
 
-def _WidgetAttr__init__(self: WidgetAttr, *args, **kwargs) -> None:
-    """
-    NOTE: this is a hack to make the type system happy
-    """
-    print(self, self.__widattr_init__, args, kwargs)
-    self.__widattr_init__(*args, **kwargs)  # type: ignore[member]
-
-
-WidgetAttr.__init__ = _WidgetAttr__init__  # type: ignore[assignment]
-
-
 # ----------- decorator impl -----------
 
 
@@ -317,11 +310,6 @@ def _widget(cls: Type[_W]) -> Type[_W]:
 
     # circuitpython-compat(__set_name__)
     if impl_support.isoncircuitpython():
-        from ._circuitpy_compat_module import GetItemBypass
-
-        if is_generic := isinstance(cls, GetItemBypass):
-            clsbypass = cls
-            cls = cls._value
 
         # circuitpython-compat(__init_subclass__), does not support **kwargs
         if hasattr(super(cls, cls), "__init_subclass__"):
@@ -330,8 +318,7 @@ def _widget(cls: Type[_W]) -> Type[_W]:
         for name, attr in cls.__dict__.items():
             if hasattr(attr, "__set_name__"):
                 attr.__set_name__(cls, name)
-    else:
-        is_generic = False
+
     # --- setup the argument and inst attrs ---
     # inject the init that will parse and apply the arguemtn parsing that @widget proivides
 
@@ -360,13 +347,10 @@ def _widget(cls: Type[_W]) -> Type[_W]:
     ), f"widget class {cls} already has a class id, make sure it is not decorated with `@widget` twice"
     cls.__widget_class_id__ = UID()
 
-    if is_generic:  # type: ignore
-        cls = clsbypass  # type: ignore
-
     return cls  # type: ignore
 
 
-def _widget_decorator__init__inject(
+def _widget_init_attrs(
     self: Widget,
     *args,
     **kwargs: object,

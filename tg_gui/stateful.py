@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, Protocol
 from tg_gui_core import *
 from tg_gui_core.shared import Missing, MissingType, as_any
 
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
         Literal,
         Type,
         TypeGuard,
-        Protocol,
         TypeAlias,
     )
     from typing_extensions import Self
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     _C = TypeVar("_C", bound="Callable")
 
     _OnupdateCallback = Callable[["_T"], None]
-    _OnupdateMthd = Callable[["_Widget", "_T"], None]
+    _OnupdateMthd = Callable[[Widget, "_T"], None]
 
     Stateful: TypeAlias = "State[_T] | _T"
 
@@ -32,12 +31,12 @@ _T = TypeVar("_T")
 _Widget = Widget
 
 
-class ProxyProvider(Protocol["_T"]):
+class ProxyProvider(Protocol[_T]):
     def get_proxy(self, owner: Widget) -> Proxy[_T]:
         ...
 
 
-class Proxy(Protocol["_T"]):
+class Proxy(Protocol[_T]):
     def value(self, *, reader: Identifiable) -> _T:
         ...
 
@@ -258,8 +257,6 @@ class StatefulAttr(WidgetAttr[_T]):
         kw_only: bool | MissingType = Missing,
     ) -> None:
         assert init is True, "init must be True"
-
-        assert False
 
         if default is not Missing:
             assert (

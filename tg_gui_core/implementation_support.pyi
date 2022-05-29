@@ -31,11 +31,10 @@ class MissingType(Enum):
 
 Missing = MissingType.missing
 
-class _IsinstMeta(type, metaclass=ABCMeta):
-    check_if_isinstance: Callable[[object], TypeGuard[Self]]
-    def __instancecheck__(self, __instance) -> TypeGuard[Self]:
-        return self.check_if_isinstance(__instance)
+class _IsinstMeta(type):
+    _inst_isinstance_check_: Callable[[object], TypeGuard[Self]]
+    def __instancecheck__(self, __instance) -> bool: ...
 
-class IsinstanceBase(_IsinstMeta):
+class IsinstanceBase(metaclass=_IsinstMeta):
     @abstractclassmethod
     def _inst_isinstance_check_(self, __instance: Any) -> TypeGuard[Self]: ...

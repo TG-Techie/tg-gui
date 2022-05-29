@@ -7,4 +7,4 @@ if TYPE_CHECKING:
 
 from .view import View
 
-from platform.text import Text
+from .platform.text import Text

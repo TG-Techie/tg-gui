@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 from abc import ABC, abstractmethod
 
 from .shared import UID, Pixels, add_pixel_pair as _add_pixel_pair
-from .attrs import WidgetAttr, widget
+from .attrs import WidgetAttr, widget, _widget_init_attrs as _widget_init_attrs
 from .implementation_support import Missing, isoncircuitpython
 
 
@@ -42,9 +42,8 @@ class Widget(ABC):
     pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
     abs_pos: tuple[Pixels, Pixels] = WidgetAttr(init=False)
 
-    # set the init method, it is defined in .attrs b/c more info there is related
-    if not TYPE_CHECKING:
-        from .attrs import _widget_decorator__init__inject as __init__
+    # alias __init__ to make the type-checker happy
+    locals()["__init__"] = _widget_init_attrs
 
     # -------- public, override-able methods --------
     def on_nest(self) -> None:
@@ -219,6 +218,7 @@ class Widget(ABC):
         """
         Use this to enfoce single inheritance for widget classes.
         """
+        super().__init_subclass__()
 
         # check single inheritance
         assert 1 == len(

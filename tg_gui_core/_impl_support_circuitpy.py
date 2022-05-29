@@ -20,8 +20,15 @@ MissingType.__new__ = Missing  # type: ignore[assignment]
 
 # --- isinstance and subclass helpers for _GenericBypass etc ---
 class IsinstanceBase:
-    pass
-    # check_if_isinstance handled by isinstance_cp_compat
+    ## check_if_isinstance handled by isinstance_cp_compat
+    ## subclasses must have
+    # @classmethod
+    # def _inst_isinstance_check_(cls, instance: Any) -> TypeGuard[Self]:...
+    if __debug__:
+
+        @classmethod
+        def _inst_isinstance_check_(cls, inst):
+            raise NotImplementedError(f"{cls}._inst_isinstance_check_")
 
 
 def isinstance_cp_compat(obj: object, classinfo: type | tuple[type, ...]) -> bool:
@@ -31,8 +38,10 @@ def isinstance_cp_compat(obj: object, classinfo: type | tuple[type, ...]) -> boo
         if cls.__class__ is type
         else (
             hasattr(cls, "_inst_isinstance_check_")
-            # and cls.__class__ is not type
-            and cls._inst_isinstance_check_(obj)
+            # ducktype the custom _inst_isinstance_check_ on circuitpython
+            and cls._inst_isinstance_check_(  # pyright: reportGeneralTypeIssues=false, reportUnknownMemberType=false
+                obj
+            )
         )
         for cls in classinfo
     )

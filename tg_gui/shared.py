@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self, LiteralString
 
 from tg_gui_core.shared import IsinstanceBase
+
+# OPTIMIZATION: # from tg_gui_core.implementation_support import isoncircuitpython
 from .stateful import State
 
 
@@ -31,18 +33,22 @@ class Color(int, IsinstanceBase):
     foreground: ClassVar[Color | State[Color]] = 0xFFFFFF  # type: ignore[override]
     fill: ClassVar[Color | State[Color]] = lightgray  # type: ignore[override]
 
-    def __new__(cls, value: int) -> Color:
+    def __new__(cls, rgb_value: int) -> Color:
         """
         :param value: The int to convert to a Color.
         (lie to the type system and check it with IsinstanceBase's _inst_isinstance_check_)
         """
-        assert isinstance(value, int)
-        if not (0 <= value <= 0xFFFFFF):
+        assert isinstance(rgb_value, int)
+        if not (0 <= rgb_value <= 0xFFFFFF):
             raise TypeError(
-                f"Color must be an integer between 0 and 0xFFFFFF, not {value}"
+                f"Color must be an integer between 0 and 0xFFFFFF, not {rgb_value}"
             )
-        return value  # type: ignore[return-value]
+        # OPTIMIZATION: # if isoncircuitpython():
+        return rgb_value  # type: ignore[return-value]
+        # OPTIMIZATION: # else:
+        # OPTIMIZATION: #     return int.__new__(cls, rgb_value)
 
+    # OPTIMIZATION: # if isoncircuitpython():
     @classmethod
     def _inst_isinstance_check_(cls, __instance: Any) -> TypeGuard[Self]:
         return isinstance(__instance, int) and 0 <= __instance <= 0xFFFFFF

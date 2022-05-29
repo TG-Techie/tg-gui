@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, TypeVar, Generic, Callable, TypeGuard, Literal
+from typing import TYPE_CHECKING, TypeVar, Generic, Callable, TypeGuard, Literal, Any
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractclassmethod
 
 
 def isoncircuitpython() -> bool:
@@ -48,14 +48,16 @@ Missing = MissingType.Missing
 
 
 class _IsinstMeta(type):
-    check_if_isinstance: Callable[[object], TypeGuard[Self]]
+    _inst_isinstance_check_: Callable[[object], TypeGuard[Self]]
 
-    def _inst_isinstance_check_(self, __instance) -> bool:
-        return self.check_if_isinstance(__instance)
+    def __instancecheck__(self, __instance) -> TypeGuard[Self]:
+        return self._inst_isinstance_check_(__instance)
 
 
 class IsinstanceBase(metaclass=_IsinstMeta):
-    pass
+    @abstractclassmethod
+    def _inst_isinstance_check_(self, __instance: Any) -> TypeGuard[Self]:
+        ...
 
 
 class GenericABC(Generic[_T], metaclass=ABCMeta):
