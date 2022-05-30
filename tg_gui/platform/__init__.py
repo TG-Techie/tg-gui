@@ -18,5 +18,6 @@ else:
     )
 
 # alias the implementation for this platform to `tg_gui.platform`
-_sys_modules["tg_gui.platform"] = _platform_
+assert __name__ == "tg_gui.platform", "module resolution error"
+_sys_modules[__name__] = _platform_
 del _implementation, _sys_modules, TYPE_CHECKING  # do not release the _platform_ module
