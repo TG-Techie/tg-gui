@@ -6,5 +6,4 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 from .view import View
-
 from .platform.text import Text
